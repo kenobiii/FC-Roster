@@ -538,15 +538,190 @@ export default function App() {
   function handleEraseAll() { setStrokes([]); setCurrentStroke(null); setBallPos(null); }
 
   async function handleExport() {
-    if (!exportRef.current) return;
     setExporting(true);
     try {
-      const html2canvas = (await import("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.esm.js")).default;
-      const canvas = await html2canvas(exportRef.current,{backgroundColor:"#030712",scale:2,useCORS:true,logging:false});
+      const SCALE = 2;
+      const W = 420 * SCALE;
+      const PITCH_H = 630 * SCALE;
+      // Extra space above (nameplate) and below (GK labels)
+      const TOP_PAD = 80 * SCALE;
+      const BOT_PAD = 100 * SCALE;
+      const H = TOP_PAD + PITCH_H + BOT_PAD;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      // Background
+      ctx.fillStyle = "#030712";
+      ctx.fillRect(0, 0, W, H);
+
+      // ── Nameplate ──
+      const npY = TOP_PAD * 0.5;
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold ${28 * SCALE}px 'Bebas Neue', Impact, sans-serif`;
+      ctx.fillText(teamName || "MY TEAM FC", W / 2, npY);
+      ctx.font = `${8 * SCALE}px system-ui, sans-serif`;
+      ctx.fillStyle = "#6b7280";
+      ctx.letterSpacing = "4px";
+      ctx.fillText(`${format}v${format}  ·  ${formation}`, W / 2, npY + 20 * SCALE);
+      ctx.letterSpacing = "0px";
+
+      // ── Pitch background ──
+      const pr = 12 * SCALE; // border radius
+      const px = 0, py = TOP_PAD, pw = W, ph = PITCH_H;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(px + pr, py);
+      ctx.lineTo(px + pw - pr, py);
+      ctx.arcTo(px + pw, py, px + pw, py + pr, pr);
+      ctx.lineTo(px + pw, py + ph - pr);
+      ctx.arcTo(px + pw, py + ph, px + pw - pr, py + ph, pr);
+      ctx.lineTo(px + pr, py + ph);
+      ctx.arcTo(px, py + ph, px, py + ph - pr, pr);
+      ctx.lineTo(px, py + pr);
+      ctx.arcTo(px, py, px + pr, py, pr);
+      ctx.closePath();
+
+      // Pitch gradient fill
+      const grad = ctx.createRadialGradient(W/2, py + ph*0.35, 0, W/2, py + ph*0.35, ph*0.8);
+      const pc = pitchColor;
+      grad.addColorStop(0, pc + "f2");
+      grad.addColorStop(0.65, pc + "bb");
+      grad.addColorStop(1, "#122018");
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+
+      // ── Pitch lines ──
+      const lc = "rgba(255,255,255,0.45)";
+      const lw = 1.5 * SCALE;
+      ctx.strokeStyle = lc;
+      ctx.lineWidth = lw;
+
+      function px2x(pct) { return (pct / 100) * W; }
+      function px2y(pct) { return py + (pct / 100) * ph; }
+      function line(x1p,y1p,x2p,y2p){ ctx.beginPath(); ctx.moveTo(px2x(x1p),px2y(y1p)); ctx.lineTo(px2x(x2p),px2y(y2p)); ctx.stroke(); }
+      function rect(xp,yp,wp,hp){ ctx.strokeRect(px2x(xp), px2y(yp), px2x(wp)-px2x(0), px2y(hp)-px2y(0)); }
+
+      rect(3,3,94,154); // outer
+      line(3,80,97,80); // halfway
+      ctx.beginPath(); ctx.arc(px2x(50), px2y(80), px2x(14)-px2x(0), 0, Math.PI*2); ctx.stroke(); // centre circle
+      rect(23,3,54,22); rect(35,3,30,9); rect(40,0.5,20,4); // top boxes
+      rect(23,135,54,22); rect(35,148,30,9); rect(40,155.5,20,4); // bottom boxes
+
+      // Turf bands
+      for(let i=0;i<7;i++){
+        if(i%2===0){
+          ctx.fillStyle = "rgba(0,0,0,0.05)";
+          ctx.fillRect(px2x(3), px2y(3+i*22), px2x(94)-px2x(0), px2y(11)-px2y(0));
+        }
+      }
+
+      // ── Draw strokes (playmaker) ──
+      strokes.forEach(s => {
+        if (s.points.length < 2) return;
+        ctx.strokeStyle = s.color; ctx.fillStyle = s.color;
+        ctx.lineWidth = 2.5 * SCALE; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.setLineDash(s.dashed ? [7*SCALE, 5*SCALE] : []);
+        const pts = s.points.map(p => ({ x: p.x * SCALE, y: py + p.y * SCALE }));
+        ctx.moveTo(pts[0].x, pts[0].y);
+        pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke(); ctx.setLineDash([]);
+        const last = pts[pts.length-1], prev = pts[Math.max(0,pts.length-5)];
+        const angle = Math.atan2(last.y-prev.y, last.x-prev.x), sz = 11*SCALE;
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(last.x - sz*Math.cos(angle-Math.PI/6), last.y - sz*Math.sin(angle-Math.PI/6));
+        ctx.lineTo(last.x - sz*Math.cos(angle+Math.PI/6), last.y - sz*Math.sin(angle+Math.PI/6));
+        ctx.closePath(); ctx.fill();
+      });
+
+      // ── Draw players ──
+      function drawPlayer(p, sub, jColor, isOpp) {
+        const cx = px2x(p.x);
+        const cy = px2y(p.y);
+        const r = 22 * SCALE;
+        const isGK = p.pos === "GK";
+        const fg = contrastColor(jColor);
+
+        // Circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = isOpp ? "rgba(0,0,0,0.35)" : jColor;
+        ctx.fill();
+        ctx.strokeStyle = isOpp ? jColor : "rgba(255,255,255,0.7)";
+        ctx.lineWidth = 2 * SCALE;
+        ctx.stroke();
+
+        // Position label
+        ctx.font = `600 ${11*SCALE}px system-ui,sans-serif`;
+        ctx.fillStyle = isOpp ? jColor : fg;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(isOpp ? "✕" : p.pos, cx, cy);
+
+        if (isOpp) return;
+
+        // Name labels — GK renders above, others below
+        const name = p.name || "";
+        const subName = sub || "";
+        const lineH = 18 * SCALE;
+
+        ctx.textBaseline = "top";
+        ctx.font = `500 ${14*SCALE}px system-ui,sans-serif`;
+        ctx.fillStyle = "#ffffff";
+
+        if (isGK) {
+          // +sub above starter above circle
+          const subY = cy - r - lineH * 2 - 4*SCALE;
+          const nameY = cy - r - lineH - 2*SCALE;
+          if (subName) {
+            ctx.font = `400 ${13*SCALE}px system-ui,sans-serif`;
+            ctx.fillStyle = "#fde047";
+            ctx.fillText(subName, cx, subY);
+          }
+          ctx.font = `500 ${14*SCALE}px system-ui,sans-serif`;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(name || "Starter", cx, nameY);
+        } else {
+          const nameY = cy + r + 4*SCALE;
+          const subY  = nameY + lineH + 2*SCALE;
+          ctx.fillText(name || "Starter", cx, nameY);
+          if (subName) {
+            ctx.font = `400 ${13*SCALE}px system-ui,sans-serif`;
+            ctx.fillStyle = "#fde047";
+            ctx.fillText(subName, cx, subY);
+          }
+        }
+      }
+
+      // Opposition
+      if (showOpp) oppPlayers.forEach(p => drawPlayer(p, "", oppColor, true));
+      // Home
+      players.forEach((p, i) => drawPlayer(p, subs[i] ?? "", jerseyColor, false));
+
+      // Ball
+      if (ballPos) {
+        ctx.font = `${22*SCALE}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("⚽", px2x(ballPos.x), px2y(ballPos.y));
+      }
+
+      // Download
       const link = document.createElement("a");
       link.download = `${(teamName||"StrategyFC").replace(/\s+/g,"_")}_${formation}.png`;
-      link.href = canvas.toDataURL("image/png"); link.click();
-    } catch { alert("Export failed — try a screenshot instead."); }
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+    } catch(e) {
+      console.error(e);
+      alert("Export failed — try a screenshot instead.");
+    }
     finally { setExporting(false); }
   }
 
