@@ -200,26 +200,28 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
       <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
         className="text-[16px] text-white"
         textStyle={{
-          fontFamily:"system-ui,sans-serif",
+          fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
           fontWeight:500,
           lineHeight:1.4,
           WebkitFontSmoothing:"antialiased",
           MozOsxFontSmoothing:"grayscale",
-          WebkitTextStroke:"2px rgba(0,0,0,0.8)",
-          paintOrder:"stroke fill",
+          textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
+          transform:"translateZ(0)",
+          letterSpacing:"0.01em",
         }} />
       <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
         className="text-[15px]"
         textStyle={{
-          fontFamily:"system-ui,sans-serif",
+          fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
           fontWeight:400,
           color:"#fde047",
           fontStyle:"italic",
           lineHeight:1.4,
           WebkitFontSmoothing:"antialiased",
           MozOsxFontSmoothing:"grayscale",
-          WebkitTextStroke:"2px rgba(0,0,0,0.7)",
-          paintOrder:"stroke fill",
+          textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
+          transform:"translateZ(0)",
+          letterSpacing:"0.01em",
         }} />
     </div>
   );
@@ -584,7 +586,7 @@ export default function App() {
       <main className="flex-1 flex flex-col items-center py-4 px-3 gap-4 overflow-y-auto">
 
         {/* Export zone */}
-        <div ref={exportRef} className="flex flex-col items-center gap-3 px-4 pt-4 pb-5 rounded-2xl" style={{background:"#030712"}}>
+        <div ref={exportRef} className="flex flex-col items-center gap-3 rounded-2xl" style={{background:"#030712",padding:"16px 32px 24px 32px",overflow:"visible"}}>
           <div className="text-center leading-none">
             <div className="text-3xl sm:text-4xl tracking-widest" style={{textShadow:`0 2px 20px ${jerseyColor}99`}}>
               {teamName||"MY TEAM FC"}
@@ -597,7 +599,7 @@ export default function App() {
           {/* Pitch */}
           <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
             style={{width:"min(420px,88vw)",aspectRatio:"2/3",background:pitchBg,
-              boxShadow:`0 0 60px ${pitchColor}50, 0 20px 60px rgba(0,0,0,0.7)`,overflow:"hidden"}}
+              boxShadow:`0 0 60px ${pitchColor}50, 0 20px 60px rgba(0,0,0,0.7)`,overflow:"visible"}}
             onDragOver={e=>e.preventDefault()}
             onDrop={handleDrop}
             onClick={e=>{
@@ -610,7 +612,7 @@ export default function App() {
               setBallMode(false);
             }}
           >
-            <div className="absolute inset-0 rounded-2xl overflow-hidden"><PitchLines/></div>
+            <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{zIndex:1}}><PitchLines/></div>
 
             <DrawingCanvas strokes={strokes} currentStroke={currentStroke}
               active={activePen!==null} onStrokeStart={onStrokeStart}
