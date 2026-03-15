@@ -522,10 +522,10 @@ export default function App() {
     try {
       const SCALE = 2;
       const W = 420 * SCALE;
-      const PITCH_H = 630 * SCALE;
+      const PITCH_H = 580 * SCALE; // slightly shorter so GK labels fall inside border
       // Extra space above (nameplate) and below (GK labels)
       const TOP_PAD = 80 * SCALE;
-      const BOT_PAD = 100 * SCALE;
+      const BOT_PAD = 140 * SCALE; // generous bottom for GK name + sub
       const H = TOP_PAD + PITCH_H + BOT_PAD;
 
       const canvas = document.createElement("canvas");
@@ -581,24 +581,31 @@ export default function App() {
       ctx.strokeStyle = lc;
       ctx.lineWidth = lw;
 
+      // px2x maps 0-100 horizontally, px2y maps 0-160 vertically (matching SVG viewBox)
       function px2x(pct) { return (pct / 100) * W; }
-      function px2y(pct) { return py + (pct / 100) * ph; }
-      function line(x1p,y1p,x2p,y2p){ ctx.beginPath(); ctx.moveTo(px2x(x1p),px2y(y1p)); ctx.lineTo(px2x(x2p),px2y(y2p)); ctx.stroke(); }
-      function rect(xp,yp,wp,hp){ ctx.strokeRect(px2x(xp), px2y(yp), px2x(wp)-px2x(0), px2y(hp)-px2y(0)); }
+      function px2y(u160) { return py + (u160 / 160) * ph; }
+      function lx(w100) { return (w100 / 100) * W; } // width in x units
+      function ly(h160) { return (h160 / 160) * ph; } // height in y units
+      function line(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(px2x(x1),px2y(y1)); ctx.lineTo(px2x(x2),px2y(y2)); ctx.stroke(); }
+      function rect(x,y,w,h){ ctx.strokeRect(px2x(x), px2y(y), lx(w), ly(h)); }
 
-      rect(3,3,94,154); // outer
-      line(3,80,97,80); // halfway
-      ctx.beginPath(); ctx.arc(px2x(50), px2y(80), px2x(14)-px2x(0), 0, Math.PI*2); ctx.stroke(); // centre circle
-      rect(23,3,54,22); rect(35,3,30,9); rect(40,0.5,20,4); // top boxes
-      rect(23,135,54,22); rect(35,148,30,9); rect(40,155.5,20,4); // bottom boxes
+      rect(3,3,94,154);        // outer border
+      line(3,80,97,80);        // halfway line
+      ctx.beginPath(); ctx.arc(px2x(50), px2y(80), lx(14), 0, Math.PI*2); ctx.stroke(); // centre circle
+      rect(23,3,54,22); rect(35,3,30,9); rect(40,0.5,20,4);         // top boxes + goal
+      rect(23,135,54,22); rect(35,148,30,9); rect(40,155.5,20,4);   // bottom boxes + goal
 
       // Turf bands
       for(let i=0;i<7;i++){
         if(i%2===0){
           ctx.fillStyle = "rgba(0,0,0,0.05)";
-          ctx.fillRect(px2x(3), px2y(3+i*22), px2x(94)-px2x(0), px2y(11)-px2y(0));
+          ctx.fillRect(px2x(3), px2y(3+i*22), lx(94), ly(11));
         }
       }
+
+      // Player positions also need px2y on 0-100 scale — remap here
+      // Override px2y for players only using percent scale
+      const px2yPct = (pct) => py + (pct / 100) * ph;
 
       // ── Draw strokes (playmaker) ──
       strokes.forEach(s => {
@@ -623,7 +630,7 @@ export default function App() {
       // ── Draw players ──
       function drawPlayer(p, sub, jColor, isOpp) {
         const cx = px2x(p.x);
-        const cy = px2y(p.y);
+        const cy = px2yPct(p.y);
         const r = 22 * SCALE;
         const isGK = p.pos === "GK";
         const fg = contrastColor(jColor);
@@ -676,7 +683,7 @@ export default function App() {
         ctx.font = `${22*SCALE}px serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("⚽", px2x(ballPos.x), px2y(ballPos.y));
+        ctx.fillText("⚽", px2x(ballPos.x), px2yPct(ballPos.y));
       }
 
       // Download
