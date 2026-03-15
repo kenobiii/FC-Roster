@@ -217,41 +217,21 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
     fontStyle:"italic",
   };
 
-  const circle = (
-    <div className="rounded-full flex items-center justify-center shadow-xl border-2 border-white/60"
-      style={{width:44,height:44,flexShrink:0,background:jerseyColor,color:fg,
-        fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",
-        WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
-      {player.pos}
-    </div>
-  );
-  const starterLabel = (
-    <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
-      className="text-[16px] text-white" textStyle={labelStyle} />
-  );
-  const subLabel = (
-    <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
-      className="text-[15px]" textStyle={subLabelStyle} />
-  );
-
   return (
     <div className="absolute flex flex-col items-center select-none"
       style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",
         zIndex:20,cursor:locked?"crosshair":"grab",gap:4,willChange:"transform"}}
       draggable={!locked} onDragStart={e=>!locked&&onDragStart(e,player.id)}>
-      {isGK ? (
-        <>
-          {subLabel}
-          {starterLabel}
-          {circle}
-        </>
-      ) : (
-        <>
-          {circle}
-          {starterLabel}
-          {subLabel}
-        </>
-      )}
+      <div className="rounded-full flex items-center justify-center shadow-xl border-2 border-white/60"
+        style={{width:44,height:44,flexShrink:0,background:jerseyColor,color:fg,
+          fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",
+          WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
+        {player.pos}
+      </div>
+      <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
+        className="text-[16px] text-white" textStyle={labelStyle} />
+      <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
+        className="text-[15px]" textStyle={subLabelStyle} />
     </div>
   );
 }
