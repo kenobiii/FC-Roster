@@ -177,7 +177,7 @@ function InlineEdit({ value, onChange, placeholder, textStyle={}, className="" }
   return (
     <span onClick={open}
       className={`cursor-pointer select-none text-center block truncate leading-tight ${className}`}
-      style={{maxWidth:76,...textStyle}} title="Tap to edit">
+      style={{maxWidth:80,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale",...textStyle}} title="Tap to edit">
       {value||<span style={{opacity:0.38}}>{placeholder}</span>}
     </span>
   );
@@ -188,18 +188,22 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
   const fg = contrastColor(jerseyColor);
   return (
     <div className="absolute flex flex-col items-center select-none"
-      style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",zIndex:20,cursor:locked?"crosshair":"grab",gap:1}}
+      style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",zIndex:20,cursor:locked?"crosshair":"grab",gap:4}}
       draggable={!locked} onDragStart={e=>!locked&&onDragStart(e,player.id)}>
-      <div className="rounded-full flex items-center justify-center font-black shadow-xl border-2 border-white/60"
-        style={{width:40,height:40,flexShrink:0,background:jerseyColor,color:fg,fontSize:11}}>
+      <div className="rounded-full flex items-center justify-center font-semibold shadow-xl border-2 border-white/60"
+        style={{width:40,height:40,flexShrink:0,background:jerseyColor,color:fg,fontSize:11,
+          WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale",textRendering:"optimizeLegibility"}}>
         {player.pos}
       </div>
       <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
-        className="text-[13px] font-bold text-white"
-        textStyle={{textShadow:"0 1px 3px rgba(0,0,0,0.8)",fontWeight:700}} />
+        className="text-[13px] text-white"
+        textStyle={{fontWeight:600,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale",
+          background:"rgba(0,0,0,0.45)",borderRadius:3,padding:"1px 4px",lineHeight:1.5}} />
       <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
-        className="text-[12px] font-medium"
-        textStyle={{textShadow:"0 1px 2px rgba(0,0,0,0.75)",color:"#fde047",opacity:0.85,fontStyle:"italic"}} />
+        className="text-[12px]"
+        textStyle={{fontWeight:500,color:"#fde047",opacity:0.9,fontStyle:"italic",
+          WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale",
+          background:"rgba(0,0,0,0.4)",borderRadius:3,padding:"1px 4px",lineHeight:1.5}} />
     </div>
   );
 }
