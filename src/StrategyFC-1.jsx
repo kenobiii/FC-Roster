@@ -168,8 +168,20 @@ function InlineEdit({ value, onChange, placeholder, textStyle={}, className="" }
   function commit() { setEditing(false); onChange(draft); }
   if (editing) return (
     <input ref={ref} autoFocus
-      className="text-center text-[10px] font-bold bg-white text-gray-900 rounded px-1 outline-none border-2 border-yellow-400 shadow-xl"
-      style={{width:72,zIndex:60,position:"relative"}}
+      className="text-center outline-none border-2 border-yellow-400 rounded"
+      style={{
+        width:84, zIndex:60, position:"relative",
+        fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
+        fontSize: className.includes("16px") ? 16 : className.includes("15px") ? 15 : 14,
+        fontWeight:500,
+        background:"rgba(0,0,0,0.75)",
+        color:"#ffffff",
+        WebkitFontSmoothing:"antialiased",
+        MozOsxFontSmoothing:"grayscale",
+        letterSpacing:"0.01em",
+        padding:"1px 4px",
+        lineHeight:1.4,
+      }}
       value={draft} onChange={e=>setDraft(e.target.value)}
       onBlur={commit} onKeyDown={e=>{if(e.key==="Enter")commit();if(e.key==="Escape")setEditing(false);}}
       onClick={e=>e.stopPropagation()} />
@@ -596,9 +608,10 @@ export default function App() {
             </div>
           </div>
 
-          {/* Pitch */}
+          {/* Pitch wrapper — extra bottom padding so GK labels aren't cropped in export */}
+          <div style={{position:"relative",width:"min(420px,88vw)",paddingBottom:56,background:"#030712"}}>
           <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
-            style={{width:"min(420px,88vw)",aspectRatio:"2/3",background:pitchBg,
+            style={{width:"100%",aspectRatio:"2/3",background:pitchBg,
               boxShadow:`0 0 60px ${pitchColor}50, 0 20px 60px rgba(0,0,0,0.7)`,overflow:"visible"}}
             onDragOver={e=>e.preventDefault()}
             onDrop={handleDrop}
@@ -649,6 +662,7 @@ export default function App() {
               </div>
             )}
           </div>
+          </div>{/* end pitch wrapper */}
         </div>
 
         {/* ── Playmaker section ── */}
