@@ -196,10 +196,10 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
       </div>
       <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
         className="text-[13px] font-bold text-white"
-        textStyle={{textShadow:"0 1px 6px rgba(0,0,0,1)",fontWeight:700}} />
+        textStyle={{textShadow:"0 1px 3px rgba(0,0,0,0.8)",fontWeight:700}} />
       <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
         className="text-[12px] font-medium"
-        textStyle={{textShadow:"0 1px 5px rgba(0,0,0,0.95)",color:"#fde047",opacity:0.85,fontStyle:"italic"}} />
+        textStyle={{textShadow:"0 1px 2px rgba(0,0,0,0.75)",color:"#fde047",opacity:0.85,fontStyle:"italic"}} />
     </div>
   );
 }
