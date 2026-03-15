@@ -655,27 +655,14 @@ export default function App() {
         ctx.font = `500 ${14*SCALE}px system-ui,sans-serif`;
         ctx.fillStyle = "#ffffff";
 
-        if (isGK) {
-          // +sub above starter above circle
-          const subY = cy - r - lineH * 2 - 4*SCALE;
-          const nameY = cy - r - lineH - 2*SCALE;
-          if (subName) {
-            ctx.font = `400 ${13*SCALE}px system-ui,sans-serif`;
-            ctx.fillStyle = "#fde047";
-            ctx.fillText(subName, cx, subY);
-          }
-          ctx.font = `500 ${14*SCALE}px system-ui,sans-serif`;
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(name || "Starter", cx, nameY);
-        } else {
-          const nameY = cy + r + 4*SCALE;
-          const subY  = nameY + lineH + 2*SCALE;
-          ctx.fillText(name || "Starter", cx, nameY);
-          if (subName) {
-            ctx.font = `400 ${13*SCALE}px system-ui,sans-serif`;
-            ctx.fillStyle = "#fde047";
-            ctx.fillText(subName, cx, subY);
-          }
+        // All players — labels below circle, same order
+        const nameY = cy + r + 4*SCALE;
+        const subY  = nameY + lineH + 2*SCALE;
+        ctx.fillText(name || "Starter", cx, nameY);
+        if (subName) {
+          ctx.font = `400 ${13*SCALE}px system-ui,sans-serif`;
+          ctx.fillStyle = "#fde047";
+          ctx.fillText(subName, cx, subY);
         }
       }
 
