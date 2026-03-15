@@ -4,136 +4,136 @@ import { useState, useRef, useEffect } from "react";
 const FORMATIONS = {
   11: {
     "4-4-2": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rb",  x:80, y:72, pos:"RB" }, { id:"rcb", x:62, y:72, pos:"CB" },
-      { id:"lcb", x:38, y:72, pos:"CB" }, { id:"lb",  x:20, y:72, pos:"LB" },
-      { id:"rm",  x:80, y:50, pos:"RM" }, { id:"rcm", x:62, y:50, pos:"CM" },
-      { id:"lcm", x:38, y:50, pos:"CM" }, { id:"lm",  x:20, y:50, pos:"LM" },
-      { id:"rs",  x:35, y:25, pos:"ST" }, { id:"ls",  x:65, y:25, pos:"ST" },
-    ],
-    "4-3-3": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rb",  x:80, y:72, pos:"RB" }, { id:"rcb", x:62, y:72, pos:"CB" },
-      { id:"lcb", x:38, y:72, pos:"CB" }, { id:"lb",  x:20, y:72, pos:"LB" },
-      { id:"rcm", x:65, y:50, pos:"CM" }, { id:"cm",  x:50, y:50, pos:"CM" },
-      { id:"lcm", x:35, y:50, pos:"CM" },
-      { id:"rw",  x:75, y:22, pos:"RW" }, { id:"st",  x:50, y:16, pos:"ST" },
-      { id:"lw",  x:25, y:22, pos:"LW" },
-    ],
-    "4-2-3-1": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rb",  x:80, y:72, pos:"RB" }, { id:"rcb", x:62, y:72, pos:"CB" },
-      { id:"lcb", x:38, y:72, pos:"CB" }, { id:"lb",  x:20, y:72, pos:"LB" },
-      { id:"rdm", x:62, y:58, pos:"DM" }, { id:"ldm", x:38, y:58, pos:"DM" },
-      { id:"ram", x:72, y:38, pos:"AM" }, { id:"cam", x:50, y:38, pos:"CAM"},
-      { id:"lam", x:28, y:38, pos:"AM" },
-      { id:"st",  x:50, y:18, pos:"ST" },
-    ],
-    "3-5-2": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rcb", x:68, y:72, pos:"CB" }, { id:"cb",  x:50, y:72, pos:"CB" },
-      { id:"lcb", x:32, y:72, pos:"CB" },
-      { id:"rwb", x:84, y:52, pos:"RWB"}, { id:"rcm", x:64, y:52, pos:"CM" },
-      { id:"cm",  x:50, y:48, pos:"CM" }, { id:"lcm", x:36, y:52, pos:"CM" },
-      { id:"lwb", x:16, y:52, pos:"LWB"},
-      { id:"rs",  x:62, y:22, pos:"ST" }, { id:"ls",  x:38, y:22, pos:"ST" },
-    ],
-    "3-4-3": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rcb", x:68, y:72, pos:"CB" }, { id:"cb",  x:50, y:72, pos:"CB" },
-      { id:"lcb", x:32, y:72, pos:"CB" },
-      { id:"rm",  x:78, y:52, pos:"RM" }, { id:"rcm", x:60, y:52, pos:"CM" },
-      { id:"lcm", x:40, y:52, pos:"CM" }, { id:"lm",  x:22, y:52, pos:"LM" },
-      { id:"rw",  x:72, y:22, pos:"RW" }, { id:"st",  x:50, y:16, pos:"ST" },
-      { id:"lw",  x:28, y:22, pos:"LW" },
-    ],
-    "5-3-2": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rwb", x:84, y:72, pos:"RWB"}, { id:"rcb", x:67, y:74, pos:"CB" },
-      { id:"cb",  x:50, y:76, pos:"CB" }, { id:"lcb", x:33, y:74, pos:"CB" },
-      { id:"lwb", x:16, y:72, pos:"LWB"},
-      { id:"rcm", x:65, y:50, pos:"CM" }, { id:"cm",  x:50, y:50, pos:"CM" },
-      { id:"lcm", x:35, y:50, pos:"CM" },
-      { id:"rs",  x:62, y:22, pos:"ST" }, { id:"ls",  x:38, y:22, pos:"ST" },
-    ],
-    "5-4-1": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rwb", x:84, y:72, pos:"RWB"}, { id:"rcb", x:67, y:74, pos:"CB" },
-      { id:"cb",  x:50, y:76, pos:"CB" }, { id:"lcb", x:33, y:74, pos:"CB" },
-      { id:"lwb", x:16, y:72, pos:"LWB"},
-      { id:"rm",  x:78, y:50, pos:"RM" }, { id:"rcm", x:60, y:50, pos:"CM" },
-      { id:"lcm", x:40, y:50, pos:"CM" }, { id:"lm",  x:22, y:50, pos:"LM" },
-      { id:"st",  x:50, y:20, pos:"ST" },
-    ],
-    "4-1-4-1": [
-      { id:"gk",  x:50, y:90, pos:"GK" },
-      { id:"rb",  x:80, y:74, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
-      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:74, pos:"LB" },
-      { id:"dm",  x:50, y:60, pos:"DM" },
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:64, pos:"RB" }, { id:"rcb", x:62, y:64, pos:"CB" },
+      { id:"lcb", x:38, y:64, pos:"CB" }, { id:"lb",  x:20, y:64, pos:"LB" },
       { id:"rm",  x:80, y:44, pos:"RM" }, { id:"rcm", x:62, y:44, pos:"CM" },
       { id:"lcm", x:38, y:44, pos:"CM" }, { id:"lm",  x:20, y:44, pos:"LM" },
-      { id:"st",  x:50, y:20, pos:"ST" },
+      { id:"rs",  x:35, y:22, pos:"ST" }, { id:"ls",  x:65, y:22, pos:"ST" },
+    ],
+    "4-3-3": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:64, pos:"RB" }, { id:"rcb", x:62, y:64, pos:"CB" },
+      { id:"lcb", x:38, y:64, pos:"CB" }, { id:"lb",  x:20, y:64, pos:"LB" },
+      { id:"rcm", x:65, y:44, pos:"CM" }, { id:"cm",  x:50, y:44, pos:"CM" },
+      { id:"lcm", x:35, y:44, pos:"CM" },
+      { id:"rw",  x:75, y:19, pos:"RW" }, { id:"st",  x:50, y:14, pos:"ST" },
+      { id:"lw",  x:25, y:19, pos:"LW" },
+    ],
+    "4-2-3-1": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:64, pos:"RB" }, { id:"rcb", x:62, y:64, pos:"CB" },
+      { id:"lcb", x:38, y:64, pos:"CB" }, { id:"lb",  x:20, y:64, pos:"LB" },
+      { id:"rdm", x:62, y:51, pos:"DM" }, { id:"ldm", x:38, y:51, pos:"DM" },
+      { id:"ram", x:72, y:34, pos:"AM" }, { id:"cam", x:50, y:34, pos:"CAM"},
+      { id:"lam", x:28, y:34, pos:"AM" },
+      { id:"st",  x:50, y:16, pos:"ST" },
+    ],
+    "3-5-2": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:68, y:64, pos:"CB" }, { id:"cb",  x:50, y:64, pos:"CB" },
+      { id:"lcb", x:32, y:64, pos:"CB" },
+      { id:"rwb", x:84, y:46, pos:"RWB"}, { id:"rcm", x:64, y:46, pos:"CM" },
+      { id:"cm",  x:50, y:43, pos:"CM" }, { id:"lcm", x:36, y:46, pos:"CM" },
+      { id:"lwb", x:16, y:46, pos:"LWB"},
+      { id:"rs",  x:62, y:19, pos:"ST" }, { id:"ls",  x:38, y:19, pos:"ST" },
+    ],
+    "3-4-3": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:68, y:64, pos:"CB" }, { id:"cb",  x:50, y:64, pos:"CB" },
+      { id:"lcb", x:32, y:64, pos:"CB" },
+      { id:"rm",  x:78, y:46, pos:"RM" }, { id:"rcm", x:60, y:46, pos:"CM" },
+      { id:"lcm", x:40, y:46, pos:"CM" }, { id:"lm",  x:22, y:46, pos:"LM" },
+      { id:"rw",  x:72, y:19, pos:"RW" }, { id:"st",  x:50, y:14, pos:"ST" },
+      { id:"lw",  x:28, y:19, pos:"LW" },
+    ],
+    "5-3-2": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rwb", x:84, y:64, pos:"RWB"}, { id:"rcb", x:67, y:66, pos:"CB" },
+      { id:"cb",  x:50, y:68, pos:"CB" }, { id:"lcb", x:33, y:66, pos:"CB" },
+      { id:"lwb", x:16, y:64, pos:"LWB"},
+      { id:"rcm", x:65, y:44, pos:"CM" }, { id:"cm",  x:50, y:44, pos:"CM" },
+      { id:"lcm", x:35, y:44, pos:"CM" },
+      { id:"rs",  x:62, y:19, pos:"ST" }, { id:"ls",  x:38, y:19, pos:"ST" },
+    ],
+    "5-4-1": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rwb", x:84, y:64, pos:"RWB"}, { id:"rcb", x:67, y:66, pos:"CB" },
+      { id:"cb",  x:50, y:68, pos:"CB" }, { id:"lcb", x:33, y:66, pos:"CB" },
+      { id:"lwb", x:16, y:64, pos:"LWB"},
+      { id:"rm",  x:78, y:44, pos:"RM" }, { id:"rcm", x:60, y:44, pos:"CM" },
+      { id:"lcm", x:40, y:44, pos:"CM" }, { id:"lm",  x:22, y:44, pos:"LM" },
+      { id:"st",  x:50, y:18, pos:"ST" },
+    ],
+    "4-1-4-1": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:66, pos:"RB" }, { id:"rcb", x:62, y:66, pos:"CB" },
+      { id:"lcb", x:38, y:66, pos:"CB" }, { id:"lb",  x:20, y:66, pos:"LB" },
+      { id:"dm",  x:50, y:53, pos:"DM" },
+      { id:"rm",  x:80, y:39, pos:"RM" }, { id:"rcm", x:62, y:39, pos:"CM" },
+      { id:"lcm", x:38, y:39, pos:"CM" }, { id:"lm",  x:20, y:39, pos:"LM" },
+      { id:"st",  x:50, y:18, pos:"ST" },
     ],
   },
   7: {
     "3-2-1": [
-      { id:"gk", x:50, y:88, pos:"GK" },
-      { id:"rb", x:72, y:70, pos:"RB" }, { id:"cb", x:50, y:70, pos:"CB" },
-      { id:"lb", x:28, y:70, pos:"LB" },
-      { id:"rm", x:68, y:48, pos:"CM" }, { id:"lm", x:32, y:48, pos:"CM" },
-      { id:"st", x:50, y:22, pos:"ST" },
+      { id:"gk", x:50, y:74, pos:"GK" },
+      { id:"rb", x:72, y:62, pos:"RB" }, { id:"cb", x:50, y:62, pos:"CB" },
+      { id:"lb", x:28, y:62, pos:"LB" },
+      { id:"rm", x:68, y:43, pos:"CM" }, { id:"lm", x:32, y:43, pos:"CM" },
+      { id:"st", x:50, y:19, pos:"ST" },
     ],
     "2-3-1": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
-      { id:"rm",  x:75, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
-      { id:"lm",  x:25, y:50, pos:"LM" },
-      { id:"st",  x:50, y:22, pos:"ST" },
+      { id:"gk",  x:50, y:74, pos:"GK" },
+      { id:"rcb", x:65, y:64, pos:"CB" }, { id:"lcb", x:35, y:64, pos:"CB" },
+      { id:"rm",  x:75, y:44, pos:"RM" }, { id:"cm",  x:50, y:44, pos:"CM" },
+      { id:"lm",  x:25, y:44, pos:"LM" },
+      { id:"st",  x:50, y:19, pos:"ST" },
     ],
     "2-2-2": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
-      { id:"rcm", x:65, y:52, pos:"CM" }, { id:"lcm", x:35, y:52, pos:"CM" },
-      { id:"rs",  x:65, y:22, pos:"ST" }, { id:"ls",  x:35, y:22, pos:"ST" },
+      { id:"gk",  x:50, y:74, pos:"GK" },
+      { id:"rcb", x:65, y:64, pos:"CB" }, { id:"lcb", x:35, y:64, pos:"CB" },
+      { id:"rcm", x:65, y:46, pos:"CM" }, { id:"lcm", x:35, y:46, pos:"CM" },
+      { id:"rs",  x:65, y:19, pos:"ST" }, { id:"ls",  x:35, y:19, pos:"ST" },
     ],
     "3-1-2": [
-      { id:"gk", x:50, y:88, pos:"GK" },
-      { id:"rb", x:72, y:70, pos:"RB" }, { id:"cb", x:50, y:70, pos:"CB" },
-      { id:"lb", x:28, y:70, pos:"LB" },
-      { id:"cm", x:50, y:50, pos:"CM" },
-      { id:"rs", x:65, y:22, pos:"ST" }, { id:"ls", x:35, y:22, pos:"ST" },
+      { id:"gk", x:50, y:74, pos:"GK" },
+      { id:"rb", x:72, y:62, pos:"RB" }, { id:"cb", x:50, y:62, pos:"CB" },
+      { id:"lb", x:28, y:62, pos:"LB" },
+      { id:"cm", x:50, y:44, pos:"CM" },
+      { id:"rs", x:65, y:19, pos:"ST" }, { id:"ls", x:35, y:19, pos:"ST" },
     ],
     "1-3-2": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"cb",  x:50, y:72, pos:"CB" },
-      { id:"rm",  x:75, y:52, pos:"RM" }, { id:"cm",  x:50, y:52, pos:"CM" },
-      { id:"lm",  x:25, y:52, pos:"LM" },
-      { id:"rs",  x:65, y:22, pos:"ST" }, { id:"ls",  x:35, y:22, pos:"ST" },
+      { id:"gk",  x:50, y:74, pos:"GK" },
+      { id:"cb",  x:50, y:64, pos:"CB" },
+      { id:"rm",  x:75, y:46, pos:"RM" }, { id:"cm",  x:50, y:46, pos:"CM" },
+      { id:"lm",  x:25, y:46, pos:"LM" },
+      { id:"rs",  x:65, y:19, pos:"ST" }, { id:"ls",  x:35, y:19, pos:"ST" },
     ],
   },
   5: {
     "1-2-1": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"rcb", x:65, y:68, pos:"CB" }, { id:"lcb", x:35, y:68, pos:"CB" },
-      { id:"cm",  x:50, y:46, pos:"CM" },
-      { id:"st",  x:50, y:22, pos:"ST" },
+      { id:"gk",  x:50, y:74, pos:"GK" },
+      { id:"rcb", x:65, y:60, pos:"CB" }, { id:"lcb", x:35, y:60, pos:"CB" },
+      { id:"cm",  x:50, y:41, pos:"CM" },
+      { id:"st",  x:50, y:19, pos:"ST" },
     ],
     "2-1-1": [
-      { id:"gk", x:50, y:88, pos:"GK" },
-      { id:"rd", x:67, y:70, pos:"CB" }, { id:"ld", x:33, y:70, pos:"CB" },
-      { id:"cm", x:50, y:50, pos:"CM" },
-      { id:"st", x:50, y:22, pos:"ST" },
+      { id:"gk", x:50, y:74, pos:"GK" },
+      { id:"rd", x:67, y:62, pos:"CB" }, { id:"ld", x:33, y:62, pos:"CB" },
+      { id:"cm", x:50, y:44, pos:"CM" },
+      { id:"st", x:50, y:19, pos:"ST" },
     ],
     "1-1-2": [
-      { id:"gk", x:50, y:88, pos:"GK" },
-      { id:"cb", x:50, y:70, pos:"CB" },
-      { id:"cm", x:50, y:50, pos:"CM" },
-      { id:"rs", x:67, y:22, pos:"ST" }, { id:"ls", x:33, y:22, pos:"ST" },
+      { id:"gk", x:50, y:74, pos:"GK" },
+      { id:"cb", x:50, y:62, pos:"CB" },
+      { id:"cm", x:50, y:44, pos:"CM" },
+      { id:"rs", x:67, y:19, pos:"ST" }, { id:"ls", x:33, y:19, pos:"ST" },
     ],
     "2-2": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"rd",  x:67, y:68, pos:"CB" }, { id:"ld",  x:33, y:68, pos:"CB" },
-      { id:"ram", x:67, y:32, pos:"AM" }, { id:"lam", x:33, y:32, pos:"AM" },
+      { id:"gk",  x:50, y:74, pos:"GK" },
+      { id:"rd",  x:67, y:60, pos:"CB" }, { id:"ld",  x:33, y:60, pos:"CB" },
+      { id:"ram", x:67, y:28, pos:"AM" }, { id:"lam", x:33, y:28, pos:"AM" },
     ],
   },
 };
@@ -198,43 +198,60 @@ function InlineEdit({ value, onChange, placeholder, textStyle={}, className="" }
 // ─── Home player spot ─────────────────────────────────────────────────────────
 function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange, onDragStart, locked }) {
   const fg = contrastColor(jerseyColor);
+  // For GK (bottom of pitch), flip labels above the circle to avoid goal box overlap
+  const isGK = player.pos === "GK";
+  const labelStyle = {
+    fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
+    fontWeight:500,
+    lineHeight:1.4,
+    WebkitFontSmoothing:"antialiased",
+    MozOsxFontSmoothing:"grayscale",
+    textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
+    transform:"translateZ(0)",
+    letterSpacing:"0.01em",
+  };
+  const subLabelStyle = {
+    ...labelStyle,
+    fontWeight:400,
+    color:"#fde047",
+    fontStyle:"italic",
+  };
+
+  const circle = (
+    <div className="rounded-full flex items-center justify-center shadow-xl border-2 border-white/60"
+      style={{width:44,height:44,flexShrink:0,background:jerseyColor,color:fg,
+        fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",
+        WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
+      {player.pos}
+    </div>
+  );
+  const starterLabel = (
+    <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
+      className="text-[16px] text-white" textStyle={labelStyle} />
+  );
+  const subLabel = (
+    <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
+      className="text-[15px]" textStyle={subLabelStyle} />
+  );
+
   return (
     <div className="absolute flex flex-col items-center select-none"
       style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",
         zIndex:20,cursor:locked?"crosshair":"grab",gap:4,willChange:"transform"}}
       draggable={!locked} onDragStart={e=>!locked&&onDragStart(e,player.id)}>
-      <div className="rounded-full flex items-center justify-center shadow-xl border-2 border-white/60"
-        style={{width:44,height:44,flexShrink:0,background:jerseyColor,color:fg,
-          fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",
-          WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
-        {player.pos}
-      </div>
-      <InlineEdit value={player.name} onChange={onStarterChange} placeholder="Starter"
-        className="text-[16px] text-white"
-        textStyle={{
-          fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
-          fontWeight:500,
-          lineHeight:1.4,
-          WebkitFontSmoothing:"antialiased",
-          MozOsxFontSmoothing:"grayscale",
-          textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
-          transform:"translateZ(0)",
-          letterSpacing:"0.01em",
-        }} />
-      <InlineEdit value={subName} onChange={onSubChange} placeholder="+ sub"
-        className="text-[15px]"
-        textStyle={{
-          fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
-          fontWeight:400,
-          color:"#fde047",
-          fontStyle:"italic",
-          lineHeight:1.4,
-          WebkitFontSmoothing:"antialiased",
-          MozOsxFontSmoothing:"grayscale",
-          textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
-          transform:"translateZ(0)",
-          letterSpacing:"0.01em",
-        }} />
+      {isGK ? (
+        <>
+          {subLabel}
+          {starterLabel}
+          {circle}
+        </>
+      ) : (
+        <>
+          {circle}
+          {starterLabel}
+          {subLabel}
+        </>
+      )}
     </div>
   );
 }
@@ -609,7 +626,7 @@ export default function App() {
           </div>
 
           {/* Pitch wrapper — extra bottom padding so GK labels aren't cropped in export */}
-          <div style={{position:"relative",width:"min(420px,88vw)",paddingBottom:56,background:"#030712"}}>
+          <div style={{position:"relative",width:"min(420px,88vw)",paddingBottom:120,background:"#030712"}}>
           <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
             style={{width:"100%",aspectRatio:"2/3",background:pitchBg,
               boxShadow:`0 0 60px ${pitchColor}50, 0 20px 60px rgba(0,0,0,0.7)`,overflow:"visible"}}
