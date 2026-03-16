@@ -111,6 +111,47 @@ const FORMATIONS = {
       { id:"rs",  x:65, y:19, pos:"ST" }, { id:"ls",  x:35, y:19, pos:"ST" },
     ],
   },
+  9: {
+    "3-2-3": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:68, y:70, pos:"CB" }, { id:"cb",  x:50, y:70, pos:"CB" },
+      { id:"lcb", x:32, y:70, pos:"CB" },
+      { id:"rcm", x:65, y:52, pos:"CM" }, { id:"lcm", x:35, y:52, pos:"CM" },
+      { id:"rw",  x:75, y:28, pos:"RW" }, { id:"st",  x:50, y:22, pos:"ST" },
+      { id:"lw",  x:25, y:28, pos:"LW" },
+    ],
+    "3-3-2": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:68, y:70, pos:"CB" }, { id:"cb",  x:50, y:70, pos:"CB" },
+      { id:"lcb", x:32, y:70, pos:"CB" },
+      { id:"rm",  x:75, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lm",  x:25, y:50, pos:"LM" },
+      { id:"rs",  x:65, y:26, pos:"ST" }, { id:"ls",  x:35, y:26, pos:"ST" },
+    ],
+    "2-3-3": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:65, y:70, pos:"CB" }, { id:"lcb", x:35, y:70, pos:"CB" },
+      { id:"rm",  x:75, y:52, pos:"RM" }, { id:"cm",  x:50, y:52, pos:"CM" },
+      { id:"lm",  x:25, y:52, pos:"LM" },
+      { id:"rw",  x:75, y:28, pos:"RW" }, { id:"st",  x:50, y:22, pos:"ST" },
+      { id:"lw",  x:25, y:28, pos:"LW" },
+    ],
+    "4-2-2": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:70, pos:"RB" }, { id:"rcb", x:62, y:70, pos:"CB" },
+      { id:"lcb", x:38, y:70, pos:"CB" }, { id:"lb",  x:20, y:70, pos:"LB" },
+      { id:"rcm", x:65, y:50, pos:"CM" }, { id:"lcm", x:35, y:50, pos:"CM" },
+      { id:"rs",  x:65, y:26, pos:"ST" }, { id:"ls",  x:35, y:26, pos:"ST" },
+    ],
+    "3-4-1": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rcb", x:68, y:70, pos:"CB" }, { id:"cb",  x:50, y:70, pos:"CB" },
+      { id:"lcb", x:32, y:70, pos:"CB" },
+      { id:"rm",  x:78, y:50, pos:"RM" }, { id:"rcm", x:58, y:50, pos:"CM" },
+      { id:"lcm", x:42, y:50, pos:"CM" }, { id:"lm",  x:22, y:50, pos:"LM" },
+      { id:"st",  x:50, y:22, pos:"ST" },
+    ],
+  },
   5: {
     "1-2-1": [
       { id:"gk",  x:50, y:86, pos:"GK" },
@@ -138,7 +179,7 @@ const FORMATIONS = {
   },
 };
 
-const FORMAT_DEFAULTS = { 11:"4-4-2", 7:"3-2-1", 5:"1-2-1" };
+const FORMAT_DEFAULTS = { 11:"4-4-2", 9:"3-2-3", 7:"3-2-1", 5:"1-2-1" };
 
 // Mirror formation for opposition (flip y: 100 - y, remap to top half)
 function mirrorFormation(players) {
@@ -735,7 +776,7 @@ export default function App() {
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-[9px] font-bold tracking-widest uppercase text-gray-400" style={{letterSpacing:1.5}}>Players</span>
             <div className="flex gap-1.5 justify-center">
-              {[5,7,11].map(f=>(
+              {[5,7,9,11].map(f=>(
                 <button key={f} onClick={()=>handleFormat(f)}
                   className="px-3 py-1 rounded text-xs font-bold transition-all"
                   style={format===f?{background:jerseyColor,color:accentFg}:{background:"#374151",color:"#9ca3af"}}
