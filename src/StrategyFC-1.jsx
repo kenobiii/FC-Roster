@@ -864,7 +864,7 @@ export default function App() {
                 style={{left:`${ballPos.x}%`,top:`${ballPos.y}%`,transform:"translate(-50%,-50%)",zIndex:25,cursor:"pointer"}}
                 onClick={e=>{e.stopPropagation();setBallPos(null);}} title="Click to remove">
                 <div style={{filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.9))"}}>
-                  <SoccerBall size={26}/>
+                  <SoccerBall size={18}/>
                 </div>
               </div>
             )}
