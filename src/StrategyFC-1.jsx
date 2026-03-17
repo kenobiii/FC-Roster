@@ -836,10 +836,10 @@ export default function App() {
       </header>
 
       {/* ── Main ── */}
-      <main className="flex-1 flex flex-col items-center py-4 px-3 gap-4 overflow-y-auto">
+      <main className="flex-1 flex flex-col items-center py-3 px-3 gap-2 overflow-y-auto">
 
         {/* Export zone */}
-        <div ref={exportRef} className="flex flex-col items-center gap-3 rounded-2xl" style={{background:"#030712",padding:"16px 32px 24px 32px",overflow:"visible"}}>
+        <div ref={exportRef} className="flex flex-col items-center gap-3 rounded-2xl" style={{background:"#030712",padding:"16px 32px 8px 32px",overflow:"visible"}}>
           <div className="text-center leading-none">
             <div className="text-3xl sm:text-4xl tracking-widest" style={{textShadow:`0 2px 20px ${jerseyColor}99`}}>
               {teamName||"MY TEAM FC"}
@@ -850,7 +850,7 @@ export default function App() {
           </div>
 
           {/* Pitch wrapper — extra bottom padding so GK labels aren't cropped in export */}
-          <div style={{position:"relative",width:"min(420px,88vw)",paddingBottom:120,background:"#030712"}}>
+          <div style={{position:"relative",width:"min(420px,88vw)",paddingBottom:48,background:"#030712"}}>
           <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
             style={{width:"100%",aspectRatio:"2/3",background:pitchBg,
               boxShadow:`0 0 60px ${pitchColor}50, 0 20px 60px rgba(0,0,0,0.7)`,overflow:"visible"}}
