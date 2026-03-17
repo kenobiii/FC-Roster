@@ -65,6 +65,15 @@ const FORMATIONS = {
       { id:"lcm", x:40, y:44, pos:"CM" }, { id:"lm",  x:22, y:44, pos:"LM" },
       { id:"st",  x:50, y:18, pos:"ST" },
     ],
+    "4-5-1": [
+      { id:"gk",  x:50, y:86, pos:"GK" },
+      { id:"rb",  x:80, y:70, pos:"RB" }, { id:"rcb", x:62, y:70, pos:"CB" },
+      { id:"lcb", x:38, y:70, pos:"CB" }, { id:"lb",  x:20, y:70, pos:"LB" },
+      { id:"rm",  x:84, y:50, pos:"RM" }, { id:"rcm", x:64, y:50, pos:"CM" },
+      { id:"cm",  x:50, y:50, pos:"CM" }, { id:"lcm", x:36, y:50, pos:"CM" },
+      { id:"lm",  x:16, y:50, pos:"LM" },
+      { id:"st",  x:50, y:22, pos:"ST" },
+    ],
     "4-1-4-1": [
       { id:"gk",  x:50, y:86, pos:"GK" },
       { id:"rb",  x:80, y:66, pos:"RB" }, { id:"rcb", x:62, y:66, pos:"CB" },
@@ -237,32 +246,28 @@ function InlineEdit({ value, onChange, placeholder, textStyle={}, className="" }
 }
 
 // ─── Home player spot ─────────────────────────────────────────────────────────
-function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange, onDragStart, locked }) {
+function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange, onDragStart, onTouchMove, onTouchEnd, locked }) {
   const fg = contrastColor(jerseyColor);
-  // For GK (bottom of pitch), flip labels above the circle to avoid goal box overlap
-  const isGK = player.pos === "GK";
   const labelStyle = {
     fontFamily:"system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
-    fontWeight:500,
-    lineHeight:1.4,
-    WebkitFontSmoothing:"antialiased",
-    MozOsxFontSmoothing:"grayscale",
+    fontWeight:500, lineHeight:1.4,
+    WebkitFontSmoothing:"antialiased", MozOsxFontSmoothing:"grayscale",
     textShadow:"0 0 3px rgba(0,0,0,0.9),0 0 3px rgba(0,0,0,0.9)",
-    transform:"translateZ(0)",
-    letterSpacing:"0.01em",
+    transform:"translateZ(0)", letterSpacing:"0.01em",
   };
-  const subLabelStyle = {
-    ...labelStyle,
-    fontWeight:400,
-    color:"#fde047",
-    fontStyle:"italic",
-  };
+  const subLabelStyle = { ...labelStyle, fontWeight:400, color:"#fde047", fontStyle:"italic" };
 
   return (
     <div className="absolute flex flex-col items-center select-none"
       style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",
-        zIndex:20,cursor:locked?"crosshair":"grab",gap:4,willChange:"transform"}}
-      draggable={!locked} onDragStart={e=>!locked&&onDragStart(e,player.id)}>
+        zIndex:20, cursor:locked?"crosshair":"grab", gap:4, willChange:"transform",
+        touchAction:"none"}}
+      draggable={!locked}
+      onDragStart={e => !locked && onDragStart(e, player.id)}
+      onTouchStart={e => !locked && onDragStart(e, player.id)}
+      onTouchMove={e => !locked && onTouchMove(e)}
+      onTouchEnd={e => !locked && onTouchEnd(e)}
+    >
       <div className="rounded-full flex items-center justify-center shadow-xl border-2 border-white/60"
         style={{width:44,height:44,flexShrink:0,background:jerseyColor,color:fg,
           fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",
@@ -278,11 +283,16 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
 }
 
 // ─── Opposition player spot ───────────────────────────────────────────────────
-function OppSpot({ player, color, onDragStart, locked }) {
+function OppSpot({ player, color, onDragStart, onTouchMove, onTouchEnd, locked }) {
   return (
     <div className="absolute flex flex-col items-center select-none"
-      style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",zIndex:19,cursor:locked?"crosshair":"grab",gap:2}}
-      draggable={!locked} onDragStart={e=>!locked&&onDragStart(e,player.id)}>
+      style={{left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",zIndex:19,
+        cursor:locked?"crosshair":"grab",gap:2,touchAction:"none"}}
+      draggable={!locked}
+      onDragStart={e=>!locked&&onDragStart(e,player.id)}
+      onTouchStart={e=>!locked&&onDragStart(e,player.id)}
+      onTouchMove={e=>!locked&&onTouchMove(e)}
+      onTouchEnd={e=>!locked&&onTouchEnd(e)}>
       <div className="rounded-full flex items-center justify-center font-black border-2 shadow-lg"
         style={{width:40,height:40,flexShrink:0,background:"rgba(0,0,0,0.35)",borderColor:color,color:color,fontSize:16,opacity:0.85}}>
         ✕
@@ -524,7 +534,10 @@ export default function App() {
   }
 
   // Home drag
-  function handleDragStart(e,id)  { setDragging(id); e.dataTransfer.effectAllowed="move"; }
+  function handleDragStart(e,id)  {
+    setDragging(id);
+    if (e.dataTransfer) e.dataTransfer.effectAllowed="move";
+  }
   function handleDrop(e) {
     e.preventDefault();
     const target = dragging || draggingOpp;
@@ -535,7 +548,28 @@ export default function App() {
     if (dragging)    { setPlayers(prev=>prev.map(p=>p.id===dragging?{...p,x,y}:p));       setDragging(null); }
     if (draggingOpp) { setOppPlayers(prev=>prev.map(p=>p.id===draggingOpp?{...p,x,y}:p)); setDraggingOpp(null); }
   }
-  function handleOppDragStart(e,id) { setDraggingOpp(id); e.dataTransfer.effectAllowed="move"; }
+  function handleOppDragStart(e,id) {
+    const id2 = id || (e.currentTarget && e.currentTarget.dataset.id);
+    setDraggingOpp(id2 || id);
+    if (e.dataTransfer) e.dataTransfer.effectAllowed="move";
+  }
+
+  // ── Touch drag handlers ──
+  function handleTouchMove(e, isOpp=false) {
+    e.preventDefault();
+    if (!pitchRef.current) return;
+    const touch = e.touches[0];
+    const rect = pitchRef.current.getBoundingClientRect();
+    const x = Math.max(4, Math.min(96, ((touch.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(4, Math.min(96, ((touch.clientY - rect.top) / rect.height) * 100));
+    if (!isOpp && dragging) {
+      setPlayers(prev => prev.map(p => p.id===dragging ? {...p,x,y} : p));
+    }
+    if (isOpp && draggingOpp) {
+      setOppPlayers(prev => prev.map(p => p.id===draggingOpp ? {...p,x,y} : p));
+    }
+  }
+  function handleTouchEnd() { setDragging(null); setDraggingOpp(null); }
 
   // Drawing
   function onStrokeStart(pos) {
@@ -843,7 +877,9 @@ export default function App() {
               <div className="absolute inset-0" style={{pointerEvents:anyActive?"none":"auto"}}>
                 {oppPlayers.map(p=>(
                   <OppSpot key={p.id} player={p} color={oppColor} locked={anyActive}
-                    onDragStart={handleOppDragStart}/>
+                    onDragStart={handleOppDragStart}
+                    onTouchMove={e=>handleTouchMove(e,true)}
+                    onTouchEnd={handleTouchEnd}/>
                 ))}
               </div>
             )}
@@ -854,7 +890,9 @@ export default function App() {
                 <PlayerSpot key={p.id} player={p} subName={subs[i]??""} jerseyColor={jerseyColor} locked={anyActive}
                   onStarterChange={name=>setPlayers(prev=>prev.map(q=>q.id===p.id?{...q,name}:q))}
                   onSubChange={name=>setSubs(prev=>prev.map((s,si)=>si===i?name:s))}
-                  onDragStart={handleDragStart}/>
+                  onDragStart={handleDragStart}
+                  onTouchMove={e=>handleTouchMove(e,false)}
+                  onTouchEnd={handleTouchEnd}/>
               ))}
             </div>
 
@@ -939,7 +977,7 @@ export default function App() {
         </button>
 
         <p className="text-[10px] text-gray-700 pb-2" style={{fontFamily:"system-ui"}}>
-          Tap name to edit · Tap <span style={{color:"#fde047"}}>+ sub</span> to assign substitute · Drag to reposition
+          Tap name to edit · Tap <span style={{color:"#fde047"}}>+ sub</span> to assign sub · Drag or touch-drag to reposition
         </p>
       </main>
     </div>
