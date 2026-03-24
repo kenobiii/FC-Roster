@@ -369,9 +369,9 @@ function ColorSwatch({ label, value, onChange, presets }) {
 // ─── About Tab ────────────────────────────────────────────────────────────────
 function AboutTab() {
   const features = [
+    { icon:"⚽", title:"Players"  },
     { icon:"🎽", title:"Coaches"  },
     { icon:"🏆", title:"Leagues"  },
-    { icon:"⚽", title:"Players"  },
   ];
 
   const [feedback, setFeedback] = useState({ name:"", type:"suggestion", message:"" });
@@ -739,19 +739,17 @@ function BuilderLayout({
   players, setPlayers, subs, setSubs,
   drawMode, drawing, currentPts, strokes, balls,
   showOpposition, oppPlayers,
-  onPitchPointerMove, onPitchPointerUp, onPlayerPointerDown,
-  onCirclePointerDown, onCirclePointerMove, onCirclePointerUp,
-  onPitchActivate, dragging,
+  onCirclePointerDown, onCirclePointerMove, onCirclePointerUp, dragging,
   moveMode, setMoveMode, undoPosition, positionHistoryLen, resetFormation,
-  onDragOver, onDrop, onDrawStart, onDrawMove, onDrawEnd,
+  onDrawStart, onDrawMove, onDrawEnd,
   ptsToSmoothPath, getArrowHead,
-  playmakersOn, togglePlaymaker, setDrawMode,
-  undoLast, clearStrokes,
+  setDrawMode, undoLast, clearStrokes,
   oppFormation, handleOppFormation, setShowOpposition,
   exporting, handleExport, BRAND,
 }) {
   const containerRef = useRef(null);
   const [pitchSize, setPitchSize] = useState({ w: 340, isDesktop: false });
+  const [playmakersOpen, setPlaymakerOpen] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -793,20 +791,17 @@ function BuilderLayout({
         </div>
       </div>
       <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
-        style={{ width: pitchSize.w, aspectRatio:"2/3", background: pitchBg, boxShadow:`0 0 60px rgba(0,0,0,0.5), 0 20px 60px rgba(0,0,0,0.7)`, overflow:"visible", flexShrink:0, cursor: dragging ? "grabbing" : "default" }}
-        onClick={onPitchActivate}
-        onPointerMove={e => dragging && onCirclePointerMove(e, dragging)}
-        onPointerUp={e => dragging && onCirclePointerUp(e, dragging)}
-        onPointerLeave={e => dragging && onCirclePointerUp(e, dragging)}
-        onDragOver={onDragOver} onDrop={onDrop}>
+        style={{ width: pitchSize.w, aspectRatio:"2/3", background: pitchBg, boxShadow:`0 0 60px rgba(0,0,0,0.5), 0 20px 60px rgba(0,0,0,0.7)`, overflow:"visible", flexShrink:0, cursor: dragging ? "grabbing" : "default", touchAction:"none" }}
+        onPointerMove={e => { if (dragging) onCirclePointerMove(e, dragging); }}
+        onPointerUp={e => { if (dragging) onCirclePointerUp(e, dragging); }}
+        onPointerLeave={e => { if (dragging) onCirclePointerUp(e, dragging); }}>
         <div className="absolute inset-0 rounded-2xl overflow-hidden"><PitchLines/></div>
         {players.map((p,i) => (
           <PlayerSpot key={p.id} player={p} subName={subs[i] ?? ""} jerseyColor={jerseyColor}
             moveMode={moveMode}
             onStarterChange={name => setPlayers(prev => prev.map(q => q.id===p.id ? {...q,name} : q))}
             onSubChange={name => setSubs(prev => prev.map((s,si) => si===i ? name : s))}
-            onCirclePointerDown={onCirclePointerDown}
-            onPointerDown={() => {}}/>
+            onCirclePointerDown={onCirclePointerDown}/>
         ))}
         {showOpposition && oppPlayers.map(p => (
           <div key={p.id} className="absolute flex flex-col items-center pointer-events-none"
@@ -825,7 +820,7 @@ function BuilderLayout({
         <svg ref={drawRef} className="absolute inset-0 rounded-2xl" viewBox="0 0 100 100" preserveAspectRatio="none"
           style={{ width:"100%", height:"100%", zIndex: drawMode ? 20 : 0, cursor: drawMode ? (drawMode==="ball" ? "cell" : "crosshair") : "default", touchAction:"none", pointerEvents: drawMode ? "all" : "none" }}>
           <rect x="0" y="0" width="100" height="100" fill="transparent"
-            onMouseDown={onDrawStart} onMouseMove={onDrawMove} onMouseUp={onDrawEnd} onMouseLeave={onDrawEnd}
+            onPointerDown={onDrawStart} onPointerMove={onDrawMove} onPointerUp={onDrawEnd} onPointerLeave={onDrawEnd}
             onTouchStart={onDrawStart} onTouchMove={onDrawMove} onTouchEnd={onDrawEnd}/>
           {strokes.map((s, i) => {
             const color = s.type==="run" ? "#22c55e" : "#facc15";
@@ -870,15 +865,18 @@ function BuilderLayout({
 
   const Toolbar = (
     <div className="flex flex-col gap-3" style={{ width: pitchSize.isDesktop ? 240 : "100%", maxWidth: pitchSize.isDesktop ? 260 : "min(440px, 100%)", flexShrink:0 }}>
-      {/* Playmaker panel — always visible */}
-      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)` }}>
-        {/* Header — no toggle, always open */}
-        <div className="w-full flex items-center gap-2 px-4 py-3"
-          style={{ background:"rgba(245,197,24,0.07)", borderBottom:`1px solid rgba(255,255,255,0.06)`, fontFamily: BRAND.fonts.body }}>
-          <span style={{ fontSize:16 }}>🧠</span>
-          <span className="font-black tracking-wider" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>PLAYMAKER MENU</span>
-        </div>
-        <div className="px-4 pb-4 flex flex-col gap-2">
+      {/* Playmaker panel — collapsible dropdown */}
+      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}30` }}>
+        <button className="w-full flex items-center justify-between gap-2 px-4 py-3"
+          onClick={() => setPlaymakerOpen(v => !v)}
+          style={{ background: playmakersOpen ? "rgba(245,197,24,0.13)" : "rgba(245,197,24,0.07)", fontFamily: BRAND.fonts.body }}>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize:16 }}>🧠</span>
+            <span className="font-black tracking-wider" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>PLAYMAKER MENU 🔥</span>
+          </div>
+          <span style={{ color: BRAND.colors.yellow, fontSize:12, transition:"transform 0.2s", display:"inline-block", transform: playmakersOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        </button>
+        {playmakersOpen && <div className="px-4 pb-4 flex flex-col gap-2" style={{ borderTop:`1px solid rgba(255,255,255,0.08)` }}>
 
             {/* Position Movement toggle */}
             <div className="pt-3 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>Player Movement</div>
@@ -974,13 +972,22 @@ function BuilderLayout({
               </div>
             )}
           </div>
+        }
       </div>
 
       {/* Download */}
       <button onClick={handleExport} disabled={exporting}
-        className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide shadow-lg transition-all hover:opacity-90 active:scale-95 w-full"
-        style={{ background: exporting ? "#374151" : jerseyColor, color: exporting ? "#9ca3af" : accentFg, fontFamily: BRAND.fonts.body, boxShadow: exporting ? "none" : `0 4px 20px ${jerseyColor}55` }}>
-        {exporting ? "⏳ Saving…" : "📥 Download"}
+        className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-black tracking-wide transition-all hover:brightness-110 active:scale-95 w-full"
+        style={{
+          background: exporting ? "#374151" : jerseyColor,
+          color: exporting ? "#9ca3af" : accentFg,
+          fontFamily: BRAND.fonts.body,
+          fontSize: 15,
+          letterSpacing: 1,
+          border: exporting ? "2px solid transparent" : `2px solid ${accentFg === "#111" ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.35)"}`,
+          boxShadow: exporting ? "none" : `0 6px 28px ${jerseyColor}80`,
+        }}>
+        {exporting ? "⏳ Saving…" : "📥 Download PNG"}
       </button>
 
       {/* ── Roster Panel ── */}
@@ -1465,8 +1472,9 @@ function PositionsTab() {
   ];
 
   const posTabs = [
-    { id:"101",      label:"📋  Positions 101" },
-    { id:"movement", label:"🏃  Movement" },
+    { id:"101",        label:"📋  Positions 101" },
+    { id:"movement",   label:"🏃  Movement" },
+    { id:"setpieces",  label:"🚩  Set Pieces" },
   ];
 
   function AbbrBadge({ abbr, color }) {
@@ -1627,6 +1635,101 @@ function PositionsTab() {
           </div>
         </>
       )}
+
+      {posTab === "setpieces" && (
+        <>
+          {/* Hero */}
+          <div className="rounded-2xl p-5 mb-5" style={{ background:"rgba(239,68,68,0.1)", border:`1px solid rgba(239,68,68,0.3)` }}>
+            <div className="font-black mb-2" style={{ fontFamily: BRAND.fonts.display, fontSize:18, color:"#f87171", letterSpacing:1 }}>The "Hidden" Game</div>
+            <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.75)" }}>
+              They say soccer is a game of fluid movement, but the world's most elite tacticians know a secret: <strong style={{ color:"#fff" }}>The game stops so you can win it.</strong>
+            </p>
+          </div>
+
+          {/* Intro paragraph */}
+          <div className="rounded-2xl p-4 mb-4 flex gap-3" style={{ background:"rgba(45,122,58,0.12)", border:`1px solid rgba(45,122,58,0.3)` }}>
+            <span style={{ fontSize:18, flexShrink:0 }}>📊</span>
+            <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>
+              Set pieces — corners, free kicks, and even the humble throw-in — account for <strong style={{ color:"#fff" }}>over 30% of all goals scored</strong> in professional leagues like the Premier League and Champions League. When the clock stops and the whistle blows, the "Beautiful Game" transforms into a high-stakes chess match of orchestrated chaos.
+            </p>
+          </div>
+
+          {/* Strategic Value section */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span style={{ fontSize:17 }}>🎯</span>
+              <div className="font-black tracking-widest flex-1" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color:"#f87171", letterSpacing:1 }}>The Strategic Value of the "Dead Ball"</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {[
+                {
+                  icon:"🚩",
+                  title:"Corner Kicks",
+                  body:"It's not just about lofting a ball into the mixer. It's about near-post flick-ons, zonal obstruction, and creating \"second-ball\" chaos that leaves goalkeepers stranded.",
+                  color:"#f87171",
+                },
+                {
+                  icon:"🎯",
+                  title:"Free Kicks",
+                  body:"From the \"Knuckleball\" strike to the tactical decoy wall, a direct or indirect free kick is the ultimate test of a defense's discipline under fire.",
+                  color:"#facc15",
+                },
+                {
+                  icon:"🤾",
+                  title:"Throw-ins",
+                  body:"Often overlooked, but a specialized long throw or a quick \"release\" throw-in is the most effective way to bypass a high press and maintain territorial dominance.",
+                  color:"#60a5fa",
+                },
+              ].map(({ icon, title, body, color }) => (
+                <div key={title} className="rounded-xl p-4 flex gap-3" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
+                  <div className="rounded-lg flex items-center justify-center shrink-0 font-black"
+                    style={{ width:44, height:44, background:`${color}18`, border:`1px solid ${color}44`, fontSize:20 }}>
+                    {icon}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold mb-1" style={{ color }}>{title}</div>
+                    <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.6)" }}>{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Under Construction banner */}
+          <div className="rounded-2xl p-5 mb-4 text-center" style={{ background:"rgba(99,102,241,0.12)", border:`2px dashed rgba(99,102,241,0.5)` }}>
+            <div className="font-black mb-2" style={{ fontFamily: BRAND.fonts.display, fontSize:16, color:"#a5b4fc", letterSpacing:1.5 }}>
+              🚧 UNDER CONSTRUCTION: THE SET PIECE MASTERCLASS 🚧
+            </div>
+            <p className="text-xs leading-relaxed mb-4" style={{ color:"rgba(255,255,255,0.65)" }}>
+              We are currently in the laboratory, breaking down the world's most lethal "dead ball" routines. From Ancelotti's defensive blocks to Klopp's heavy-metal corners, our next deep dive is going to change the way you look at a stopped clock.
+            </p>
+            <div className="text-left mb-4">
+              <div className="text-[10px] font-black tracking-widest uppercase mb-2 flex items-center gap-2" style={{ color:"#a5b4fc", letterSpacing:2 }}>
+                Our next big blog release will cover
+                <div className="flex-1 h-px" style={{ background:"rgba(165,180,252,0.25)" }}/>
+              </div>
+              <div className="flex flex-col gap-2">
+                {[
+                  { title:"The Science of the Delivery", body:"Inswinging vs. Outswinging trajectories — and when each is lethal." },
+                  { title:"The \"Blocker\" Role", body:"How to legally screen a keeper to create a tap-in opportunity at the near post." },
+                  { title:"Throw-in Tactics", body:"Why the marginal gains of a specialized throw-in coach are winning trophies at the highest level." },
+                ].map(({ title, body }) => (
+                  <div key={title} className="rounded-xl p-3.5 flex gap-3 items-start" style={{ background:"rgba(255,255,255,0.04)", border:`1px solid rgba(165,180,252,0.15)` }}>
+                    <span style={{ color:"#a5b4fc", fontSize:14, flexShrink:0, marginTop:1 }}>›</span>
+                    <div>
+                      <div className="text-xs font-bold mb-0.5" style={{ color:"#c7d2fe" }}>{title}</div>
+                      <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.5)" }}>{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs font-bold italic" style={{ color:"rgba(165,180,252,0.8)" }}>
+              Stay tuned. The whistle is about to blow, and you won't want to be caught standing still.
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1723,10 +1826,6 @@ export default function App() {
     setDragging(null);
   }
 
-  // Unused legacy handlers kept as no-ops so BuilderLayout props still work
-  function handlePitchActivate() {}
-  function handlePitchPointerMove() {}
-  function handlePitchPointerUp() {}
   const [exporting,   setExporting]   = useState(false);
   const pitchRef  = useRef(null);
   const exportRef = useRef(null);
@@ -1867,10 +1966,16 @@ export default function App() {
     };
   }
 
+  const drawingRef  = useRef(false);   // ref mirror so handlers always see current value
+  const drawModeRef = useRef(null);     // ref mirror for drawMode
+
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
+
   function getPitchPoint(e) {
     const el = drawRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
+    // Support both pointer events (desktop) and touch events (mobile)
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
@@ -1880,42 +1985,51 @@ export default function App() {
   }
 
   function onDrawStart(e) {
-    if (!drawMode) return;
-    e.preventDefault();
+    const mode = drawModeRef.current;
+    if (!mode) return;
+    // Only prevent default for touch to stop scroll; pointer events handle themselves
+    if (e.touches) e.preventDefault();
     const pt = getPitchPoint(e);
     if (!pt) return;
-    if (drawMode === "ball") {
-      setBalls(prev => { const next = [...prev, pt]; setHistory(h => [...h, { type:"ball", index: next.length - 1 }]); return next; });
+    if (mode === "ball") {
+      setBalls(prev => { const next = [...prev, pt]; setHistory(h => [...h, { type:"ball" }]); return next; });
       return;
     }
+    drawingRef.current = true;
     setDrawing(true);
     setCurrentPts([pt]);
   }
+
   function onDrawMove(e) {
-    if (!drawing || !drawMode || drawMode === "ball") return;
-    e.preventDefault();
+    if (!drawingRef.current) return;
+    const mode = drawModeRef.current;
+    if (!mode || mode === "ball") return;
+    if (e.touches) e.preventDefault();
     const pt = getPitchPoint(e);
     if (!pt) return;
-    // Only add point if it's moved enough — reduces jaggedness from dense input
     setCurrentPts(prev => {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
         const dx = pt.x - last.x, dy = pt.y - last.y;
-        if (dx*dx + dy*dy < 0.25) return prev; // min ~0.5% pitch units between points
+        if (dx*dx + dy*dy < 0.25) return prev;
       }
       return [...prev, pt];
     });
   }
+
   function onDrawEnd(e) {
-    if (!drawing) return;
-    e.preventDefault();
-    if (currentPts.length > 1) {
-      // Simplify the raw points before storing — removes micro-jitter
-      const simplified = simplifyPts(currentPts, 0.35);
-      setStrokes(prev => { const next = [...prev, { pts: simplified, type: drawMode }]; setHistory(h => [...h, { type:"stroke", index: next.length - 1 }]); return next; });
-    }
+    if (!drawingRef.current) return;
+    if (e.touches) e.preventDefault();
+    drawingRef.current = false;
     setDrawing(false);
-    setCurrentPts([]);
+    setCurrentPts(prev => {
+      if (prev.length > 1) {
+        const simplified = simplifyPts(prev, 0.35);
+        setStrokes(s => [...s, { pts: simplified, type: drawModeRef.current }]);
+        setHistory(h => [...h, { type:"stroke" }]);
+      }
+      return [];
+    });
   }
 
   function undoLast() {
@@ -1930,16 +2044,7 @@ export default function App() {
 
   function clearStrokes() { setStrokes([]); setBalls([]); setCurrentPts([]); setHistory([]); }
 
-  function ptsToPolyline(pts) {
-    return pts.map(p => `${p.x},${p.y}`).join(" ");
-  }
-
-  const [playmakersOn,   setPlaymakersOn]   = useState(false);
   const [showOpposition, setShowOpposition] = useState(false);
-
-  function togglePlaymaker() {
-    setPlaymakersOn(v => { if (v) setDrawMode(null); return !v; });
-  }
 
   const tabs = [
     { id:"builder",   label:"⚽  Builder" },
@@ -2035,21 +2140,15 @@ export default function App() {
             subs={subs} setSubs={setSubs}
             drawMode={drawMode} drawing={drawing} currentPts={currentPts} strokes={strokes} balls={balls}
             showOpposition={showOpposition} oppPlayers={oppPlayers}
-            onPitchPointerMove={handlePitchPointerMove}
-            onPitchPointerUp={handlePitchPointerUp}
-            onPlayerPointerDown={() => {}}
             onCirclePointerDown={handleCirclePointerDown}
             onCirclePointerMove={handleCirclePointerMove}
             onCirclePointerUp={handleCirclePointerUp}
-            onPitchActivate={handlePitchActivate}
             dragging={dragging}
             moveMode={moveMode} setMoveMode={setMoveMode}
             undoPosition={undoPosition} positionHistoryLen={historyLen}
             resetFormation={resetFormation}
-            onDragOver={e => !drawMode && e.preventDefault()} onDrop={e => !drawMode && e.preventDefault()}
             onDrawStart={onDrawStart} onDrawMove={onDrawMove} onDrawEnd={onDrawEnd}
             ptsToSmoothPath={ptsToSmoothPath} getArrowHead={getArrowHead}
-            playmakersOn={playmakersOn} togglePlaymaker={togglePlaymaker}
             setDrawMode={setDrawMode}
             undoLast={undoLast} clearStrokes={clearStrokes}
             oppFormation={oppFormation} handleOppFormation={handleOppFormation}
