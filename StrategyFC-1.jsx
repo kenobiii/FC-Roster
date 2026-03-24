@@ -28,12 +28,21 @@ const FAVICON_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAA
 
 // Inject favicon into document head
 if (typeof document !== "undefined") {
+  // Standard favicon
   const existing = document.querySelector("link[rel~='icon']");
   if (existing) existing.href = FAVICON_SRC;
   else {
     const link = document.createElement("link");
     link.rel = "icon"; link.type = "image/png"; link.href = FAVICON_SRC;
     document.head.appendChild(link);
+  }
+  // Apple touch icon — required for iOS Safari home screen / tab icon
+  const existingApple = document.querySelector("link[rel='apple-touch-icon']");
+  if (existingApple) existingApple.href = LOGO_SRC;
+  else {
+    const apple = document.createElement("link");
+    apple.rel = "apple-touch-icon"; apple.href = LOGO_SRC;
+    document.head.appendChild(apple);
   }
   document.title = "FCRoster.com — Connect. Organize. Compete.";
 }
@@ -627,7 +636,7 @@ function AboutTab() {
 }
 
 // ─── Roster Panel ─────────────────────────────────────────────────────────────
-function RosterPanel({ players, subs, teamName, format, formation, BRAND }) {
+function RosterPanel({ players, subs, teamName, format, formation }) {
   const [copied, setCopied] = useState(false);
 
   // Build the roster rows sorted by y position (defenders → midfield → attack)
@@ -746,11 +755,11 @@ function BuilderLayout({
   ptsToSmoothPath, getArrowHead,
   setDrawMode, undoLast, clearStrokes,
   oppFormation, handleOppFormation, setShowOpposition,
-  exporting, handleExport, BRAND,
+  exporting, handleExport,
 }) {
   const containerRef = useRef(null);
   const [pitchSize, setPitchSize] = useState({ w: 340, isDesktop: false });
-  const [playmakersOpen, setPlaymakerOpen] = useState(false);
+  const [playmakersOpen, setPlaymakerOpen] = useState(false); // mobile only
 
   useEffect(() => {
     const el = containerRef.current;
@@ -760,13 +769,12 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // pitch column is ~60% of container, leave padding
-        const colW = Math.floor(W * 0.58) - 32;
-        // pitch is 2:3 ratio — fit by height if needed
-        const byW = colW;
-        const byH = Math.floor((H - 80) * (2 / 3));
-        const w = Math.min(byW, byH, 600);
-        setPitchSize({ w, isDesktop: true });
+        // 3-col: [220px side] [gap16] [pitch] [gap16] [220px side]
+        const pitchColW = W - 440 - 32; // 2 side panels + 2 gaps
+        // height budget: container minus some padding
+        const byH = Math.floor((H - 48) * (2 / 3));
+        const w = Math.min(pitchColW, byH, 520);
+        setPitchSize({ w: Math.max(w, 280), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
       }
@@ -776,6 +784,17 @@ function BuilderLayout({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Reusable toggle pill
+  function Toggle({ on, color = "#6366f1" }) {
+    return (
+      <span style={{ display:"inline-flex", alignItems:"center", width:36, height:20, borderRadius:10,
+        background: on ? color : "rgba(255,255,255,0.1)", padding:"0 2px",
+        justifyContent: on ? "flex-end" : "flex-start", transition:"background 0.2s", flexShrink:0 }}>
+        <span style={{ width:16, height:16, borderRadius:"50%", background:"#fff", display:"block", boxShadow:"0 1px 3px rgba(0,0,0,0.4)" }}/>
+      </span>
+    );
+  }
 
   const Pitch = (
     <>
@@ -865,21 +884,9 @@ function BuilderLayout({
     </>
   );
 
-  const Toolbar = (
-    <div className="flex flex-col gap-3" style={{ width: pitchSize.isDesktop ? 240 : "100%", maxWidth: pitchSize.isDesktop ? 260 : "min(440px, 100%)", flexShrink:0 }}>
-      {/* Playmaker panel — collapsible dropdown */}
-      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}30` }}>
-        <button className="w-full flex items-center justify-between gap-2 px-4 py-3"
-          onClick={() => setPlaymakerOpen(v => !v)}
-          style={{ background: playmakersOpen ? "rgba(245,197,24,0.13)" : "rgba(245,197,24,0.07)", fontFamily: BRAND.fonts.body }}>
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize:16 }}>🧠</span>
-            <span className="font-black tracking-wider" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>PLAYMAKER MENU 🔥</span>
-          </div>
-          <span style={{ color: BRAND.colors.yellow, fontSize:12, transition:"transform 0.2s", display:"inline-block", transform: playmakersOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-        </button>
-        {playmakersOpen && <div className="px-4 pb-4 flex flex-col gap-2" style={{ borderTop:`1px solid rgba(255,255,255,0.08)` }}>
-
+  // ─── Playmaker content (shared between desktop always-open and mobile dropdown) ─
+  const playmakeContent = (
+    <div className="px-4 pb-4 flex flex-col gap-2" style={{ borderTop:`1px solid rgba(255,255,255,0.08)` }}>
             {/* Position Movement toggle */}
             <div className="pt-3 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>Player Movement</div>
             <button onClick={() => setMoveMode(v => !v)}
@@ -889,12 +896,8 @@ function BuilderLayout({
                 <span style={{ fontSize:16 }}>🕹️</span>
                 <span className="text-xs font-bold" style={{ color: moveMode ? "#a5b4fc" : "#cbd5e1" }}>Move Positions</span>
               </div>
-              <span style={{ display:"inline-flex", alignItems:"center", width:36, height:20, borderRadius:10, background: moveMode ? "#6366f1" : "rgba(255,255,255,0.1)", padding:"0 2px", justifyContent: moveMode ? "flex-end" : "flex-start", transition:"background 0.2s", flexShrink:0 }}>
-                <span style={{ width:16, height:16, borderRadius:"50%", background:"#fff", display:"block", boxShadow:"0 1px 3px rgba(0,0,0,0.4)" }}/>
-              </span>
+              <Toggle on={moveMode} color="#6366f1"/>
             </button>
-
-            {/* Undo position move */}
             {positionHistoryLen > 0 && (
               <div className="flex gap-2">
                 <button onClick={undoPosition}
@@ -909,7 +912,6 @@ function BuilderLayout({
                 </button>
               </div>
             )}
-
             <div className="pt-2 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>Draw on Pitch</div>
             {[
               { mode:"run",  label:"Draw Run",  color:"#22c55e", dash:false },
@@ -928,9 +930,7 @@ function BuilderLayout({
                     </svg>
                     <span className="text-xs font-bold" style={{ color: isOn ? color : "#cbd5e1" }}>{label}</span>
                   </div>
-                  <span style={{ display:"inline-flex", alignItems:"center", width:36, height:20, borderRadius:10, background: isOn ? color : "rgba(255,255,255,0.1)", padding:"0 2px", justifyContent: isOn ? "flex-end" : "flex-start", transition:"background 0.2s", flexShrink:0 }}>
-                    <span style={{ width:16, height:16, borderRadius:"50%", background:"#fff", display:"block", boxShadow:"0 1px 3px rgba(0,0,0,0.4)" }}/>
-                  </span>
+                  <Toggle on={isOn} color={color}/>
                 </button>
               );
             })}
@@ -959,9 +959,7 @@ function BuilderLayout({
                 </svg>
                 <span className="text-xs font-bold" style={{ color: showOpposition ? "#ef4444" : "#cbd5e1" }}>Show Opposition</span>
               </div>
-              <span style={{ display:"inline-flex", alignItems:"center", width:36, height:20, borderRadius:10, background: showOpposition ? "#ef4444" : "rgba(255,255,255,0.1)", padding:"0 2px", justifyContent: showOpposition ? "flex-end" : "flex-start", transition:"background 0.2s", flexShrink:0 }}>
-                <span style={{ width:16, height:16, borderRadius:"50%", background:"#fff", display:"block", boxShadow:"0 1px 3px rgba(0,0,0,0.4)" }}/>
-              </span>
+              <Toggle on={showOpposition} color="#ef4444"/>
             </button>
             {showOpposition && (
               <div className="flex gap-2 items-center mt-1">
@@ -973,44 +971,82 @@ function BuilderLayout({
                 </select>
               </div>
             )}
-          </div>
-        }
-      </div>
+    </div>
+  );
 
-      {/* Download */}
+  // Desktop: always-expanded Playmaker panel with static header
+  const PlaymakerPanel = (
+    <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}30` }}>
+      <div className="flex items-center gap-2 px-4 py-3" style={{ background:"rgba(245,197,24,0.10)" }}>
+        <span style={{ fontSize:16 }}>🧠</span>
+        <span className="font-black tracking-wider" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>PLAYMAKER MENU 🔥</span>
+      </div>
+      {playmakeContent}
+    </div>
+  );
+
+  // Mobile: collapsible dropdown
+  const MobileToolbar = (
+    <div className="flex flex-col gap-3 w-full" style={{ maxWidth:"min(440px,100%)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}30` }}>
+        <button className="w-full flex items-center justify-between gap-2 px-4 py-3"
+          onClick={() => setPlaymakerOpen(v => !v)}
+          style={{ background: playmakersOpen ? "rgba(245,197,24,0.13)" : "rgba(245,197,24,0.07)", fontFamily: BRAND.fonts.body }}>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize:16 }}>🧠</span>
+            <span className="font-black tracking-wider" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>PLAYMAKER MENU 🔥</span>
+          </div>
+          <span style={{ color: BRAND.colors.yellow, fontSize:12, display:"inline-block", transform: playmakersOpen ? "rotate(180deg)" : "rotate(0deg)", transition:"transform 0.2s" }}>▼</span>
+        </button>
+        {playmakersOpen && playmakeContent}
+      </div>
       <button onClick={handleExport} disabled={exporting}
-        className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-black tracking-wide transition-all hover:brightness-110 active:scale-95 w-full"
+        className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black tracking-wide transition-all hover:brightness-110 active:scale-95 w-full"
         style={{
           background: exporting ? "#374151" : jerseyColor,
           color: exporting ? "#9ca3af" : accentFg,
-          fontFamily: BRAND.fonts.body,
-          fontSize: 15,
-          letterSpacing: 1,
+          fontFamily: BRAND.fonts.body, fontSize:15, letterSpacing:1,
           border: exporting ? "2px solid transparent" : `2px solid ${accentFg === "#111" ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.35)"}`,
           boxShadow: exporting ? "none" : `0 6px 28px ${jerseyColor}80`,
         }}>
         {exporting ? "⏳ Saving…" : "📥 Download PNG"}
       </button>
-
-      {/* ── Roster Panel ── */}
-      <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} BRAND={BRAND}/>
-
+      <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation}/>
     </div>
   );
+
+
 
   return (
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
-        /* Desktop: side-by-side */
-        <div className="flex-1 flex gap-4 p-4 items-start overflow-y-auto" style={{ minHeight:0 }}>
-          <div className="flex-1 flex justify-center">{Pitch}</div>
-          <div style={{ width:260, flexShrink:0 }}>{Toolbar}</div>
+        /* Desktop: true 3-column — Playmaker | Pitch (centered) | Roster */
+        <div className="flex-1 flex gap-4 p-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
+          {/* Left column — Playmaker (always open on desktop) */}
+          <div style={{ width:220, flexShrink:0 }}>{PlaymakerPanel}</div>
+          {/* Center column — pitch + nameplate */}
+          <div className="flex-1 flex flex-col items-center">{Pitch}</div>
+          {/* Right column — Download + Roster */}
+          <div style={{ width:220, flexShrink:0 }} className="flex flex-col gap-3">
+            <button onClick={handleExport} disabled={exporting}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black tracking-wide transition-all hover:brightness-110 active:scale-95 w-full"
+              style={{
+                background: exporting ? "#374151" : jerseyColor,
+                color: exporting ? "#9ca3af" : accentFg,
+                fontFamily: BRAND.fonts.body, fontSize:14, letterSpacing:1,
+                border: exporting ? "2px solid transparent" : `2px solid ${accentFg === "#111" ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.35)"}`,
+                boxShadow: exporting ? "none" : `0 6px 28px ${jerseyColor}80`,
+              }}>
+              {exporting ? "⏳ Saving…" : "📥 Download PNG"}
+            </button>
+            <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation}/>
+          </div>
         </div>
       ) : (
         /* Mobile: stacked */
         <div className="flex-1 flex flex-col items-center gap-4 py-4 px-3 overflow-y-auto">
           {Pitch}
-          {Toolbar}
+          {MobileToolbar}
         </div>
       )}
     </div>
@@ -1998,8 +2034,8 @@ export default function App() {
     setFormat(f); setFormation(def);
     setPlayers(initPlayers(f, def));
     setSubs(initSubs(FORMATIONS[f][def].length));
-    setOppFormation(def);
-    setOppPlayers(FORMATIONS[f][def].map(p => ({ ...p })));
+    setOppFormation(FORMAT_DEFAULTS[f]);
+    setOppPlayers(FORMATIONS[f][FORMAT_DEFAULTS[f]].map(p => ({ ...p })));
   }
   function handleFormation(f) {
     setFormation(f);
@@ -2026,32 +2062,101 @@ export default function App() {
   const availForms = Object.keys(FORMATIONS[format]);
 
   // ─── Opposition state ─────────────────────────────────────────────────────────
-  const [oppFormat,    setOppFormat]    = useState(11);
   const [oppFormation, setOppFormation] = useState("4-4-2");
   const [oppPlayers,   setOppPlayers]   = useState(() => FORMATIONS[11]["4-4-2"].map(p => ({ ...p })));
 
-  function handleOppFormat(f) {
-    const def = FORMAT_DEFAULTS[f];
-    setOppFormat(f); setOppFormation(def);
-    setOppPlayers(FORMATIONS[f][def].map(p => ({ ...p })));
-  }
   function handleOppFormation(f) {
     setOppFormation(f);
     setOppPlayers(FORMATIONS[format][f].map(p => ({ ...p })));
   }
 
   // ─── Drawing tool state ──────────────────────────────────────────────────────
-  const [drawMode,   setDrawMode]   = useState(null);
-  const [strokes,    setStrokes]    = useState([]);
-  const [balls,      setBalls]      = useState([]);
-  const [drawing,    setDrawing]    = useState(false);
-  const [currentPts, setCurrentPts] = useState([]);
-  // unified undo stack: each entry is { type:"stroke"|"ball", index }
-  const [history,    setHistory]    = useState([]);
+  const [drawMode,    setDrawMode]    = useState(null);
+  const [strokes,     setStrokes]     = useState([]);
+  const [balls,       setBalls]       = useState([]);
+  const [drawing,     setDrawing]     = useState(false);
+  const [currentPts,  setCurrentPts]  = useState([]);
+  const [history,     setHistory]     = useState([]);
   const drawRef = useRef(null);
 
-  // Convert point array to smooth SVG cubic bezier path
-  // Catmull-Rom spline → SVG cubic bezier — smooth through all points
+  // Refs so handlers never read stale closure values
+  const drawingRef    = useRef(false);
+  const drawModeRef   = useRef(null);
+  const currentPtsRef = useRef([]);       // accumulates points during drag without triggering renders
+  const drawRafRef    = useRef(null);     // rAF handle for throttled live preview
+
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
+
+  function getPitchPoint(e) {
+    const el = drawRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width)  * 100,
+      y: ((clientY - rect.top)  / rect.height) * 100,
+    };
+  }
+
+  function onDrawStart(e) {
+    const mode = drawModeRef.current;
+    if (!mode) return;
+    if (e.touches) e.preventDefault();
+    const pt = getPitchPoint(e);
+    if (!pt) return;
+    if (mode === "ball") {
+      setBalls(prev => [...prev, pt]);
+      setHistory(h => [...h, { type:"ball" }]);
+      return;
+    }
+    // Start stroke — write first point to ref only, no state update
+    drawingRef.current = true;
+    currentPtsRef.current = [pt];
+    setDrawing(true);
+    setCurrentPts([pt]);
+  }
+
+  function onDrawMove(e) {
+    if (!drawingRef.current) return;
+    if (e.touches) e.preventDefault();
+    const pt = getPitchPoint(e);
+    if (!pt) return;
+    // Append to ref (always fast, no re-render)
+    const prev = currentPtsRef.current;
+    if (prev.length > 0) {
+      const last = prev[prev.length - 1];
+      if ((pt.x - last.x) ** 2 + (pt.y - last.y) ** 2 < 0.25) return;
+    }
+    currentPtsRef.current = [...prev, pt];
+    // Throttle live SVG preview to one rAF per frame
+    if (!drawRafRef.current) {
+      drawRafRef.current = requestAnimationFrame(() => {
+        drawRafRef.current = null;
+        setCurrentPts([...currentPtsRef.current]);
+      });
+    }
+  }
+
+  function onDrawEnd(e) {
+    if (!drawingRef.current) return;
+    if (e.touches) e.preventDefault();
+    // Cancel any pending rAF preview
+    if (drawRafRef.current) { cancelAnimationFrame(drawRafRef.current); drawRafRef.current = null; }
+    drawingRef.current = false;
+    setDrawing(false);
+    // Read final points directly from ref — never stale
+    const pts = currentPtsRef.current;
+    currentPtsRef.current = [];
+    setCurrentPts([]);
+    if (pts.length > 1) {
+      const simplified = simplifyPts(pts, 0.35);
+      setStrokes(s => [...s, { pts: simplified, type: drawModeRef.current }]);
+      setHistory(h => [...h, { type:"stroke" }]);
+    }
+  }
+
+  // Convert point array to smooth SVG cubic bezier path (Catmull-Rom spline)
   function ptsToSmoothPath(pts) {
     if (pts.length < 2) return "";
     if (pts.length === 2) {
@@ -2124,72 +2229,6 @@ export default function App() {
         x2: tip.x, y2: tip.y,
       },
     };
-  }
-
-  const drawingRef  = useRef(false);   // ref mirror so handlers always see current value
-  const drawModeRef = useRef(null);     // ref mirror for drawMode
-
-  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
-
-  function getPitchPoint(e) {
-    const el = drawRef.current;
-    if (!el) return null;
-    const rect = el.getBoundingClientRect();
-    // Support both pointer events (desktop) and touch events (mobile)
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-      x: ((clientX - rect.left) / rect.width)  * 100,
-      y: ((clientY - rect.top)  / rect.height) * 100,
-    };
-  }
-
-  function onDrawStart(e) {
-    const mode = drawModeRef.current;
-    if (!mode) return;
-    // Only prevent default for touch to stop scroll; pointer events handle themselves
-    if (e.touches) e.preventDefault();
-    const pt = getPitchPoint(e);
-    if (!pt) return;
-    if (mode === "ball") {
-      setBalls(prev => { const next = [...prev, pt]; setHistory(h => [...h, { type:"ball" }]); return next; });
-      return;
-    }
-    drawingRef.current = true;
-    setDrawing(true);
-    setCurrentPts([pt]);
-  }
-
-  function onDrawMove(e) {
-    if (!drawingRef.current) return;
-    const mode = drawModeRef.current;
-    if (!mode || mode === "ball") return;
-    if (e.touches) e.preventDefault();
-    const pt = getPitchPoint(e);
-    if (!pt) return;
-    setCurrentPts(prev => {
-      if (prev.length > 0) {
-        const last = prev[prev.length - 1];
-        const dx = pt.x - last.x, dy = pt.y - last.y;
-        if (dx*dx + dy*dy < 0.25) return prev;
-      }
-      return [...prev, pt];
-    });
-  }
-
-  function onDrawEnd(e) {
-    if (!drawingRef.current) return;
-    if (e.touches) e.preventDefault();
-    drawingRef.current = false;
-    setDrawing(false);
-    setCurrentPts(prev => {
-      if (prev.length > 1) {
-        const simplified = simplifyPts(prev, 0.35);
-        setStrokes(s => [...s, { pts: simplified, type: drawModeRef.current }]);
-        setHistory(h => [...h, { type:"stroke" }]);
-      }
-      return [];
-    });
   }
 
   function undoLast() {
@@ -2314,7 +2353,6 @@ export default function App() {
             oppFormation={oppFormation} handleOppFormation={handleOppFormation}
             setShowOpposition={setShowOpposition}
             exporting={exporting} handleExport={handleExport}
-            BRAND={BRAND}
           />
         )}
         {activeTab === "about"     && <AboutTab/>}
