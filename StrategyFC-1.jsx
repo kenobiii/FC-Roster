@@ -785,14 +785,14 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // 3-col: [220px] [16px gap] [pitch] [16px gap] [220px] + 16px outer padding each side
-        // Subtract scrollbar allowance (17px) to prevent layout shift
-        const usableW = W - 17;
-        const pitchColW = usableW - 440 - 64; // 2 panels + 4 gaps (16px × 4)
-        // Height budget: container height minus top/bottom padding (32px)
-        const byH = Math.floor((H - 32) * (2 / 3));
+        // 3-col: [220px] [16px gap] [pitch] [16px gap] [220px] + 16px padding each side
+        const sideColW = 220;
+        const gaps     = 16 * 4; // left-pad + gap + gap + right-pad
+        const pitchColW = Math.max(200, W - (sideColW * 2) - gaps);
+        // Also constrain by viewport height (leave 80px for header padding)
+        const byH = Math.floor((H - 80) * (2 / 3));
         const w = Math.min(pitchColW, byH, 520);
-        setPitchSize({ w: Math.max(w, 260), isDesktop: true });
+        setPitchSize({ w: Math.max(w, 200), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
       }
@@ -859,7 +859,7 @@ function BuilderLayout({
           style={{ width:"100%", height:"100%", zIndex: drawMode ? 20 : 0, cursor: drawMode ? (drawMode==="ball" ? "cell" : "crosshair") : "default", touchAction:"none", pointerEvents: drawMode ? "all" : "none" }}>
           <rect x="0" y="0" width="100" height="100" fill="transparent"
             onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} onDrawStart(e); }}
-            onPointerMove={onDrawMove} onPointerUp={onDrawEnd} onPointerLeave={onDrawEnd}
+            onPointerMove={onDrawMove} onPointerUp={onDrawEnd}
             onTouchStart={onDrawStart} onTouchMove={onDrawMove} onTouchEnd={onDrawEnd}/>
           {strokes.map((s, i) => {
             const color = s.type==="run" ? "#22c55e" : "#facc15";
@@ -1040,14 +1040,13 @@ function BuilderLayout({
   return (
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
-        /* Desktop: true 3-column — Playmaker | Pitch (centered) | Roster */
+        /* Desktop: Playmaker LEFT | Pitch CENTER (Download below) | Roster RIGHT */
         <div className="flex-1 flex justify-center gap-4 px-4 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
-          {/* Left column — Playmaker (always open on desktop) */}
+          {/* Left — Playmaker always expanded */}
           <div style={{ width:220, flexShrink:0 }}>{PlaymakerPanel}</div>
-          {/* Center column — pitch + nameplate, explicitly sized to match measure() */}
-          <div style={{ width:pitchSize.w, flexShrink:0 }} className="flex flex-col items-center">{Pitch}</div>
-          {/* Right column — Download + Roster */}
-          <div style={{ width:220, flexShrink:0 }} className="flex flex-col gap-3">
+          {/* Center — pitch + Download below */}
+          <div style={{ width:pitchSize.w, flexShrink:0 }} className="flex flex-col items-center gap-3">
+            {Pitch}
             <button onClick={handleExport} disabled={exporting}
               className="rounded-2xl w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
               style={{
@@ -1057,17 +1056,20 @@ function BuilderLayout({
               }}>
               <div className="flex items-center gap-2">
                 <span style={{ fontSize:15 }}>📥</span>
-                <span className="font-black tracking-wider" style={{ color: "#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:13 }}>
+                <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:13 }}>
                   {exporting ? "SAVING…" : "DOWNLOAD"}
                 </span>
               </div>
-              <span style={{ fontSize:13, color: "#fff" }}>↓</span>
+              <span style={{ fontSize:13, color:"#fff" }}>↓</span>
             </button>
+          </div>
+          {/* Right — Roster */}
+          <div style={{ width:220, flexShrink:0 }}>
             <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} defaultExpanded={true}/>
           </div>
         </div>
       ) : (
-        /* Mobile: stacked */
+        /* Mobile: stacked — untouched */
         <div className="flex-1 flex flex-col items-center gap-4 py-4 px-3 overflow-y-auto">
           {Pitch}
           {MobileToolbar}
