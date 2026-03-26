@@ -1291,11 +1291,11 @@ function AuthModal({ onClose, onAuth }) {
 
         {/* Form */}
         <div className="p-5 flex flex-col gap-3">
-          <input type="email" placeholder="Email address"
+          <input type="email" id="auth-email" name="email" autoComplete="email" placeholder="Email address"
             className="w-full rounded-xl px-3 py-2.5 focus:outline-none"
             style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.12)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
             value={email} onChange={e => setEmail(e.target.value)}/>
-          <input type="password" placeholder="Password (min 8 characters)" minLength={8}
+          <input type="password" id="auth-password" name="password" autoComplete="current-password" placeholder="Password (min 8 characters)" minLength={8}
             className="w-full rounded-xl px-3 py-2.5 focus:outline-none"
             style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.12)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
             value={password} onChange={e => setPassword(e.target.value)}
@@ -1406,11 +1406,15 @@ function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
       </div>
       <textarea
         ref={ref}
+        id="comment-input"
+        name="comment"
         rows={3}
         placeholder="Share your thoughts…"
+        autoComplete="off"
         className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
         style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
         onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
+        onBlur={e => { console.log("TEXTAREA BLUR — focus went to:", document.activeElement?.tagName, document.activeElement?.className?.slice(0,60)); }}
       />
       {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
       <button onClick={go} disabled={loading}
@@ -1729,10 +1733,12 @@ function CommunityTab() {
                     </button>
                   ))}
                 </div>
-                <input className="w-full rounded-xl px-3 py-2 font-bold focus:outline-none"
+                <input id="post-title" name="post-title" autoComplete="off"
+                  className="w-full rounded-xl px-3 py-2 font-bold focus:outline-none"
                   style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
                   placeholder="Discussion title…" value={draft.title} onChange={e => setDraft(d => ({ ...d, title:e.target.value }))}/>
-                <textarea rows={4} className="w-full rounded-xl px-3 py-2 focus:outline-none resize-none"
+                <textarea rows={4} id="post-body" name="post-body" autoComplete="off"
+                  className="w-full rounded-xl px-3 py-2 focus:outline-none resize-none"
                   style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
                   placeholder="Share your question, tactic, or insight…" value={draft.body} onChange={e => setDraft(d => ({ ...d, body:e.target.value }))}/>
                 {error && <p className="text-xs" style={{ color:"#f87171" }}>{error}</p>}
