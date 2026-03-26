@@ -2360,8 +2360,10 @@ export default function App() {
             exporting={exporting} handleExport={handleExport}
           />
         )}
-        {activeTab === "about"     && <AboutTab/>}
-        {activeTab === "community" && <CommunityTab/>}
+        {activeTab === "about" && <AboutTab/>}
+        <div style={{ display: activeTab === "community" ? "block" : "none" }}>
+          <CommunityTab/>
+        </div>
       </main>
 
       {/* ── Footer ── */}
