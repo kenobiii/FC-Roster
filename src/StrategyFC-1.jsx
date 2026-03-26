@@ -1420,7 +1420,7 @@ function CommunityTab() {
       await loadPosts();
     } catch(e) {
       console.error("submitPost error:", e);
-      setError("Failed to post — please try again.");
+      setError(`Failed to post: ${e.message || e}`);
     }
     finally { setSubmitting(false); }
   }
