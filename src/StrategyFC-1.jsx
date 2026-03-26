@@ -129,6 +129,24 @@ const FORMATIONS = {
       { id:"lcm", x:38, y:44, pos:"CM" }, { id:"lm",  x:20, y:44, pos:"LM" },
       { id:"st",  x:50, y:20, pos:"ST" },
     ],
+    "4-5-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:74, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:74, pos:"LB" },
+      { id:"rm",  x:82, y:50, pos:"RM" }, { id:"rcm", x:64, y:50, pos:"CM" },
+      { id:"cm",  x:50, y:50, pos:"CM" }, { id:"lcm", x:36, y:50, pos:"CM" },
+      { id:"lm",  x:18, y:50, pos:"LM" },
+      { id:"st",  x:50, y:20, pos:"ST" },
+    ],
+    "3-4-2-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:68, y:74, pos:"CB" }, { id:"cb",  x:50, y:74, pos:"CB" },
+      { id:"lcb", x:32, y:74, pos:"CB" },
+      { id:"rm",  x:78, y:54, pos:"RM" }, { id:"rcm", x:60, y:54, pos:"CM" },
+      { id:"lcm", x:40, y:54, pos:"CM" }, { id:"lm",  x:22, y:54, pos:"LM" },
+      { id:"rss", x:62, y:32, pos:"SS" }, { id:"lss", x:38, y:32, pos:"SS" },
+      { id:"st",  x:50, y:16, pos:"ST" },
+    ],
   },
   7: {
     "3-2-1": [
@@ -165,13 +183,20 @@ const FORMATIONS = {
       { id:"lm",  x:25, y:52, pos:"LM" },
       { id:"rs",  x:65, y:22, pos:"ST" }, { id:"ls",  x:35, y:22, pos:"ST" },
     ],
+    "2-3-2": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
+      { id:"rm",  x:75, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lm",  x:25, y:50, pos:"LM" },
+      { id:"rs",  x:67, y:22, pos:"ST" }, { id:"ls",  x:33, y:22, pos:"ST" },
+    ],
   },
   5: {
     "1-2-1": [
-      { id:"gk",  x:50, y:88, pos:"GK" },
-      { id:"rcb", x:65, y:68, pos:"CB" }, { id:"lcb", x:35, y:68, pos:"CB" },
-      { id:"cm",  x:50, y:46, pos:"CM" },
-      { id:"st",  x:50, y:22, pos:"ST" },
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"cb", x:50, y:68, pos:"CB" },
+      { id:"rm", x:72, y:46, pos:"CM" }, { id:"lm", x:28, y:46, pos:"CM" },
+      { id:"st", x:50, y:22, pos:"ST" },
     ],
     "2-1-1": [
       { id:"gk", x:50, y:88, pos:"GK" },
@@ -395,11 +420,34 @@ function AboutTab() {
 
   const [feedback, setFeedback] = useState({ name:"", type:"suggestion", message:"" });
   const [submitted, setSubmitted] = useState(false);
+  const [sending,   setSending]   = useState(false);
+  const [sendError, setSendError] = useState("");
   const [showLegal, setShowLegal] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!feedback.message.trim()) return;
-    setSubmitted(true);
+    setSending(true);
+    setSendError("");
+    try {
+      const res = await fetch("https://formspree.io/f/xlgoezry", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name:    feedback.name || "Anonymous",
+          type:    feedback.type,
+          message: feedback.message,
+        }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setSendError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setSendError("No connection. Please try again.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -527,16 +575,19 @@ function AboutTab() {
                 onFocus={e => e.target.style.borderColor = BRAND.colors.yellow}
                 onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}/>
 
-              <button onClick={handleSubmit} disabled={!feedback.message.trim()}
+              <button onClick={handleSubmit} disabled={!feedback.message.trim() || sending}
                 className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
                 style={{
-                  background: feedback.message.trim() ? BRAND.colors.yellow : "rgba(255,255,255,0.06)",
-                  color: feedback.message.trim() ? "#111" : "#4b5563",
+                  background: feedback.message.trim() && !sending ? BRAND.colors.yellow : "rgba(255,255,255,0.06)",
+                  color: feedback.message.trim() && !sending ? "#111" : "#4b5563",
                   fontFamily: BRAND.fonts.body,
-                  cursor: feedback.message.trim() ? "pointer" : "not-allowed",
+                  cursor: feedback.message.trim() && !sending ? "pointer" : "not-allowed",
                 }}>
-                Send Feedback ✦
+                {sending ? "Sending…" : "Send Feedback ✦"}
               </button>
+              {sendError && (
+                <p className="text-xs text-center mt-1" style={{ color:"#f87171" }}>{sendError}</p>
+              )}
             </div>
           )}
         </div>
@@ -695,12 +746,12 @@ function RosterPanel({ players, subs, teamName, format, formation, defaultExpand
   const hasAnyName = rows.some(r => r.starter || r.sub);
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid rgba(255,255,255,0.12)`, boxShadow:"0 0 18px rgba(255,255,255,0.04)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid rgba(255,255,255,0.18)`, boxShadow:"0 0 18px rgba(255,255,255,0.06)" }}>
       {/* Header row — icon+label left, copy-btn+chevron right — matches Playmaker layout */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3" style={{ background:"rgba(255,255,255,0.04)" }}>
+      <div className="flex items-center justify-between gap-2 px-4 py-3" style={{ background:"rgba(255,255,255,0.07)" }}>
         <div className="flex items-center gap-2">
-          <span style={{ fontSize:15 }}>📋</span>
-          <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#e2e8f0", letterSpacing:1.5 }}>ROSTER</span>
+          <span style={{ fontSize:16 }}>📋</span>
+          <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color:"#e2e8f0", letterSpacing:2 }}>ROSTER</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -786,14 +837,16 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // 3-col: [220px] [16px gap] [pitch] [16px gap] [220px] + 16px padding each side
-        const sideColW = 220;
-        const gaps     = 16 * 4; // left-pad + gap + gap + right-pad
-        const pitchColW = Math.max(200, W - (sideColW * 2) - gaps);
-        // Also constrain by viewport height (leave 80px for header padding)
-        const byH = Math.floor((H - 80) * (2 / 3));
-        const w = Math.min(pitchColW, byH, 520);
-        setPitchSize({ w: Math.max(w, 200), isDesktop: true });
+        // 3-col: [200px] [24px gap] [pitch] [24px gap] [200px] + 16px outer pad each side
+        const sideColW  = 200;
+        const outerPad  = 16 * 2;   // px-4 on the row = 16px each side
+        const innerGaps = 24 * 2;   // gap between each col
+        const available = W - (sideColW * 2) - outerPad - innerGaps;
+        // Height budget: leave 100px for header rows
+        const byH = Math.floor((H - 100) * (2 / 3));
+        // Hard cap at 420px so pitch never crowds side panels
+        const w = Math.min(available, byH, 420);
+        setPitchSize({ w: Math.max(w, 180), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
       }
@@ -1022,21 +1075,19 @@ function BuilderLayout({
         </button>
         {playmakersOpen && playmakeContent}
       </div>
-      <button onClick={handleExport} disabled={exporting}
-        className="rounded-2xl w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
-        style={{
-          background: exporting ? "#7f1d1d" : "#dc2626",
-          border: `2px solid ${exporting ? "#7f1d1d" : "#ef4444"}`,
-          boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)",
-        }}>
-        <div className="flex items-center gap-2">
-          <span style={{ fontSize:15 }}>📥</span>
-          <span className="font-black tracking-wider" style={{ color: "#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:13 }}>
-            {exporting ? "SAVING…" : "DOWNLOAD"}
-          </span>
-        </div>
-        <span style={{ fontSize:13, color: "#fff" }}>↓</span>
-      </button>
+      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid #ef4444`, boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)" }}>
+        <button onClick={handleExport} disabled={exporting}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
+          style={{ background: exporting ? "rgba(127,29,29,0.5)" : "#dc2626" }}>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize:15 }}>📥</span>
+            <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>
+              {exporting ? "SAVING…" : "DOWNLOAD"}
+            </span>
+          </div>
+          <span style={{ fontSize:13, color:"#fff", fontWeight:900 }}>↓</span>
+        </button>
+      </div>
       <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation}/>
     </div>
   );
@@ -1045,30 +1096,28 @@ function BuilderLayout({
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
         /* Desktop: Playmaker LEFT | Pitch CENTER (Download below) | Roster RIGHT */
-        <div className="flex-1 flex justify-center gap-4 px-4 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
+        <div className="flex-1 flex justify-center gap-6 px-4 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
           {/* Left — Playmaker always expanded */}
-          <div style={{ width:220, flexShrink:0 }}>{PlaymakerPanel}</div>
+          <div style={{ width:200, flexShrink:0 }}>{PlaymakerPanel}</div>
           {/* Center — pitch + Download below */}
           <div style={{ width:pitchSize.w, flexShrink:0 }} className="flex flex-col items-center gap-3">
             {Pitch}
-            <button onClick={handleExport} disabled={exporting}
-              className="rounded-2xl w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
-              style={{
-                background: exporting ? "#7f1d1d" : "#dc2626",
-                border: `2px solid ${exporting ? "#7f1d1d" : "#ef4444"}`,
-                boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)",
-              }}>
-              <div className="flex items-center gap-2">
-                <span style={{ fontSize:15 }}>📥</span>
-                <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:13 }}>
-                  {exporting ? "SAVING…" : "DOWNLOAD"}
-                </span>
-              </div>
-              <span style={{ fontSize:13, color:"#fff" }}>↓</span>
-            </button>
+            <div className="rounded-2xl overflow-hidden w-full" style={{ background:"#0f1b2d", border:`2px solid #ef4444`, boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)" }}>
+              <button onClick={handleExport} disabled={exporting}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
+                style={{ background: exporting ? "rgba(127,29,29,0.5)" : "#dc2626" }}>
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize:15 }}>📥</span>
+                  <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>
+                    {exporting ? "SAVING…" : "DOWNLOAD"}
+                  </span>
+                </div>
+                <span style={{ fontSize:13, color:"#fff", fontWeight:900 }}>↓</span>
+              </button>
+            </div>
           </div>
           {/* Right — Roster */}
-          <div style={{ width:220, flexShrink:0 }}>
+          <div style={{ width:200, flexShrink:0 }}>
             <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} defaultExpanded={true}/>
           </div>
         </div>
@@ -1115,851 +1164,581 @@ function FormationDiagram({ formation, format = 11 }) {
   );
 }
 
-// ─── Blog Tab ─────────────────────────────────────────────────────────────────
+
 const BLOG_POSTS = [
-  {
-    id:"442", tag:"11v11", formation:"4-4-2",
-    title:"4-4-2: The Classic Balanced Attack",
-    intro:"11v11 is the pinnacle of the game — the full-field chess match where tactics, fitness, and individual brilliance collide. Every formation tells a story about how a team wants to play.",
-    why:"A foundational tactic and defensive juggernaut. It excels at controlling the center and protecting the goalkeeper with two organized lines. It's balanced and easy for players to learn and execute on game day.",
-    fundamentals:"Requires solid team chemistry and a disciplined work rate from all players. Midfielders must understand they are the engine room, providing key links between defensive blocks and the attacking front two, making it perfect for high-pressing strategies.",
-  },
-  {
-    id:"433", tag:"11v11", formation:"4-3-3",
-    title:"4-3-3: Total Football & High Press",
-    why:"The heartbeat of modern, attacking soccer (pioneered by Cruyff's Ajax and Barcelona). It creates dangerous 1v1 situations for wingers, stretches opponent defenses, and enables devastating counter-attacks and an unstoppable high press.",
-    fundamentals:"Success relies on the creative playmaker and defensive discipline. The holding midfielder is essential to breaking up opponent attacks, while outside backs must possess the engine for key overlaps and defensive recovery. It's about spacing and quick ball movement.",
-  },
-  {
-    id:"4231", tag:"11v11", formation:"4-2-3-1",
-    title:"4-2-3-1: Modern Pragmatism & Central Overload",
-    why:"The current professional standard. A masterclass in strategic flexibility, it utilizes defensive depth (two \"Pivots\") to secure the box while allowing the front four creative freedom to create scoring chances and overload key positions.",
-    fundamentals:"Critical role for the specialized number 10 playmaker — the game intelligence to thread decisive passes. The two defensive midfielders must coordinate perfectly, one breaking up play, the other orchestrating possession and protecting the defensive line.",
-  },
-  {
-    id:"352", tag:"11v11", formation:"3-5-2",
-    title:"3-5-2: Midfield Dominance & Defensive Flexibility",
-    why:"A dynamic strategy to control the center circle with an overload of five midfielders. It offers strong defensive stability with three center-backs and creates instant width through tireless wing-backs who cover the entire flank for crosses.",
-    fundamentals:"The engine of the team rests on the wing-backs; they are essentially full-backs and wingers combined. Midfielders must be comfortable playing under pressure and adept at winning second balls and switching the point of attack to exploit mismatches.",
-  },
-  {
-    id:"343", tag:"11v11", formation:"3-4-3",
-    title:"3-4-3: The Risk & Reward Attacking Overload",
-    why:"An aggressive, all-out attack formation designed to swarm the final third and suffocate opponents in possession. Ideal for teams with dominant players and confident central defenders. It creates chaos for backlines.",
-    fundamentals:"Demands incredible physical conditioning from the two central midfielders who cover vast amounts of ground. The narrow attacking trio must have elite understanding and inter-changeability, while defenders must excel in 1v1 duels against strikers.",
-  },
-  {
-    id:"532", tag:"11v11", formation:"5-3-2",
-    title:"5-3-2: The Counter-Attacking Stronghold",
-    why:"The defensive \"park the bus\" masterpiece, often used when protecting a lead or facing a stronger opponent. A tactical fortress designed to clog the penalty box and lure the opponent in before launching lethal, vertical counter-attacks.",
-    fundamentals:"Requires absolute mental focus and defensive organization. Striker chemistry must be precise; they have few chances and must be ruthlessly clinical. The midfield trio must have the vision to instantly transition defense into attack with precise, penetrating passes.",
-  },
-  {
-    id:"541", tag:"11v11", formation:"5-4-1",
-    title:"5-4-1: The Low Block Fortress",
-    why:"The most extreme defensive setup. It's about limiting space, making it nearly impossible for the opposition to break through the lines. Ideal for grinding out a result or managing a narrow lead late in the match.",
-    fundamentals:"Discipline is paramount; players must stay narrow and communicate constantly. This formation rarely aims to dominate possession. It focuses on forcing opponent mistakes near the box and relies on set-pieces or rare breaks for scoring opportunities.",
-  },
-  {
-    id:"4141", tag:"11v11", formation:"4-1-4-1",
-    title:"4-1-4-1: Possession Control & Positional Play",
-    why:"The ultimate midfield chess match formation. It provides maximum passing options and positional flexibility. Ideal for teams that value slow, rhythmic build-up play and suffocating opponent passing lanes through intelligent positioning.",
-    fundamentals:"Everything pivots on the lone defensive midfielder — the quarterback who must break up play and orchestrate possession. Outside midfielders operate as dynamic attacking threats, connecting play in the central attacking channel while full-backs provide necessary width.",
-  },
-  {
-    id:"332-9v9", tag:"9v9", formation:"3-3-2",
-    title:"3-3-2: The Balanced Classic",
-    intro:"9v9 is the critical bridge between youth development and the full-field game. It's where spatial awareness and positional discipline become the difference-makers.",
-    why:"The direct predecessor to the 4-4-2. It provides a stable spine with three defenders and a clear attacking partnership up front. It's the gold standard for teaching fundamental roles and zonal marking.",
-    fundamentals:"Success hinges on the \"Midfield 3\" acting as a unit. The wide midfielders must provide the width that the back three lacks, essentially acting as wing-backs to prevent being flanked.",
-  },
-  {
-    id:"323-9v9", tag:"9v9", formation:"3-2-3",
-    title:"3-2-3: The Attacking Overload",
-    why:"Favored by coaches who want to dominate the final third. By putting three players high up the pitch, you force the opposition deep and create constant goal-scoring opportunities through a high press.",
-    fundamentals:"The two central midfielders (the \"Double Pivot\") must be highly disciplined. They are the insurance policy; if they push too high, the team is exposed to a vertical counter-attack.",
-  },
-  {
-    id:"233-9v9", tag:"9v9", formation:"2-3-3",
-    title:"2-3-3: Total Offense",
-    why:"An aggressive, high-risk setup designed for ball-dominant teams. It stretches the field horizontally and vertically, making it perfect for possession-based soccer and \"Total Football\" philosophies.",
-    fundamentals:"Requires two elite, fast center-backs capable of winning 1v1 duels in space. The midfield three must retreat instantly on transitions to support a vulnerable backline.",
-  },
-  {
-    id:"422-9v9", tag:"9v9", formation:"4-2-2",
-    title:"4-2-2: Defensive Solidity",
-    why:"Transitioning players into a traditional four-man backline early. It's a \"hard to beat\" formation that emphasizes clean sheets and organized defensive blocks, making it difficult for opponents to find gaps.",
-    fundamentals:"Focuses on the full-back's development. They must learn when to overlap into the attack and when to tuck in to support the center-backs. It's a masterclass in \"depth and cover.\"",
-  },
-  {
-    id:"242-9v9", tag:"9v9", formation:"2-4-2",
-    title:"2-4-2: The Midfield Engine",
-    why:"Designed to win the battle for the center circle. With four midfielders, you create a \"diamond\" or \"square\" that allows for superior passing triangles and keeps the ball away from the opponent.",
-    fundamentals:"Movement off the ball is key. Players must constantly rotate to create passing lanes. If the midfield remains static, the two strikers become isolated and the two defenders become overwhelmed.",
-  },
-  {
-    id:"341-9v9", tag:"9v9", formation:"3-4-1",
-    title:"3-4-1: The Creative Hub",
-    why:"Built entirely around a Number 10 (trequartista). This formation provides a massive safety net of seven players behind one creative playmaker who pulls the strings for a lone, clinical striker.",
-    fundamentals:"The lone striker must be a \"target man,\" capable of holding up play while the four midfielders join the attack. It teaches players how to service a playmaker and exploit half-spaces.",
-  },
-  {
-    id:"321-7v7", tag:"7v7", formation:"3-2-1",
-    title:"3-2-1: The Christmas Tree (Defensive Base)",
-    intro:"7v7 is the laboratory of soccer. It's where technical proficiency meets the first real taste of tactical responsibility. In this format, there is nowhere to hide; every player must be a \"two-way\" player.",
-    why:"The most secure 7v7 setup. It provides a solid three-man backline to prevent easy goals while maintaining a central \"spine\" that is difficult for opponents to play through.",
-    fundamentals:"Success depends on the two midfielders' transition speed. They must support the lone striker to avoid isolation and quickly drop back to form a defensive block.",
-  },
-  {
-    id:"231-7v7", tag:"7v7", formation:"2-3-1",
-    title:"2-3-1: The Total Football Prototype",
-    why:"The gold standard for youth development. It creates natural passing triangles across the whole pitch. It encourages defenders to step up and wingers to track back, teaching the fluidity of the modern game.",
-    fundamentals:"The \"Wingers\" are the key. They must provide the width to stretch the defense. If they stay too central, the pitch becomes small and the attack stalls.",
-  },
-  {
-    id:"222-7v7", tag:"7v7", formation:"2-2-2",
-    title:"2-2-2: The Box Balanced",
-    why:"Simplicity and symmetry. It pairs players up in every third (defense, midfield, attack). This makes player rotations and substitution patterns easy for coaches and intuitive for players.",
-    fundamentals:"Requires elite communication between pairs. If one striker drops deep, the other must push high. It's a masterclass in \"staggered\" positioning to avoid standing on the same vertical line.",
-  },
-  {
-    id:"312-7v7", tag:"7v7", formation:"3-1-2",
-    title:"3-1-2: The Counter-Attack Specialist",
-    why:"It prioritizes a clean sheet with three dedicated defenders while keeping two strikers high to exploit long-ball transitions. It's perfect for teams with fast attackers and strong kickers in the back.",
-    fundamentals:"The lone \"Holding Midfielder\" is the pivot. They must have a high interception rate and the vision to launch immediate vertical passes to the two strikers the moment possession is won.",
-  },
-  {
-    id:"132-7v7", tag:"7v7", formation:"1-3-2",
-    title:"1-3-2: The High Press Gamble",
-    why:"An aggressive formation used to \"suffocate\" the opponent in their own half. By loading the midfield and attack, you force turnovers near the opponent's goal for quick-strike scoring.",
-    fundamentals:"The lone defender must be a \"Sweeper-Keeper\" hybrid. They need the pace to cover the entire back half of the field and the composure to win 1v1s when the high press is bypassed.",
-  },
-  {
-    id:"121-5v5", tag:"5v5", formation:"1-2-1",
-    title:"1-2-1: The Diamond",
-    intro:"5v5 is pure lightning-fast transition. It's the \"Futsal\" style of soccer where first touch, ball mastery, and 1v1 dominance are the only ways to survive.",
-    why:"The most balanced and widely used 5v5 setup. It provides depth, width, and a clear \"point\" in the attack. It's designed to create passing triangles naturally, making it the king of ball retention.",
-    fundamentals:"The \"Anchor\" (defender) and \"Pivot\" (striker) must stay connected. The two wingers are the lungs of the team, providing constant rotation to pull defenders out of position.",
-  },
-  {
-    id:"211-5v5", tag:"5v5", formation:"2-1-1",
-    title:"2-1-1: The Pyramid (Defensive Base)",
-    why:"A \"safety-first\" approach. It prioritizes a solid foundation with two defenders, making it extremely difficult for opponents to find a direct path to the goal. It's perfect for counter-attacking teams.",
-    fundamentals:"The lone midfielder is the \"Engine.\" They must have the high-intensity work rate to support the striker while tracking back to ensure the two defenders aren't overloaded during a break.",
-  },
-  {
-    id:"112-5v5", tag:"5v5", formation:"1-1-2",
-    title:"1-1-2: The Heavy Press",
-    why:"An aggressive, front-loaded strategy. By keeping two strikers high, you force the opponent's keeper into risky throws and look for high-turnover goals. It's high-risk, high-reward soccer.",
-    fundamentals:"Requires a \"Last Man\" defender with elite anticipation. Because the front two are hunting the ball, the lone defender and midfielder must stay compact to prevent \"the long ball\" from beating the entire team.",
-  },
-  {
-    id:"22-5v5", tag:"5v5", formation:"2-2",
-    title:"2-2: The Square (The Box)",
-    why:"Total symmetry and simplicity. It's the easiest formation for zonal defending. It's great for beginners to learn \"covering\" and for pros to execute highly disciplined, \"man-to-man\" defensive shifts.",
-    fundamentals:"Fluidity is mandatory. If the \"Box\" stays static, the team becomes easy to defend. Players must practice interchanging roles — when a defender carries the ball forward, a forward must rotate back to cover the gap.",
-  },
+  { id:"442", tag:"11v11", formation:"4-4-2", title:"4-4-2: The Classic Balanced Attack", why:"A foundational tactic and defensive juggernaut. It excels at controlling the center and protecting the goalkeeper with two organized lines. It's balanced and easy for players to learn and execute on game day.", fundamentals:"Requires solid team chemistry and a disciplined work rate from all players. Midfielders must understand they are the engine room, providing key links between defensive blocks and the attacking front two, making it perfect for high-pressing strategies." },
+  { id:"433", tag:"11v11", formation:"4-3-3", title:"4-3-3: Total Football & High Press", why:"The heartbeat of modern, attacking soccer (pioneered by Cruyff's Ajax and Barcelona). It creates dangerous 1v1 situations for wingers, stretches opponent defenses, and enables devastating counter-attacks and an unstoppable high press.", fundamentals:"Success relies on the creative playmaker and defensive discipline. The holding midfielder is essential to breaking up opponent attacks, while outside backs must possess the engine for key overlaps and defensive recovery." },
+  { id:"4231", tag:"11v11", formation:"4-2-3-1", title:"4-2-3-1: Modern Pragmatism & Central Overload", why:"The current professional standard. A masterclass in strategic flexibility, it utilizes defensive depth (two Pivots) to secure the box while allowing the front four creative freedom to create scoring chances.", fundamentals:"Critical role for the specialized number 10 playmaker. The two defensive midfielders must coordinate perfectly, one breaking up play, the other orchestrating possession and protecting the defensive line." },
+  { id:"352", tag:"11v11", formation:"3-5-2", title:"3-5-2: Midfield Dominance", why:"A dynamic strategy to control the center circle with an overload of five midfielders. It offers strong defensive stability with three center-backs and creates instant width through tireless wing-backs.", fundamentals:"The engine of the team rests on the wing-backs; they are essentially full-backs and wingers combined. Midfielders must be comfortable playing under pressure and adept at winning second balls." },
+  { id:"343", tag:"11v11", formation:"3-4-3", title:"3-4-3: The Risk & Reward Attacking Overload", why:"An aggressive, all-out attack formation designed to swarm the final third and suffocate opponents in possession. Ideal for teams with dominant players and confident central defenders.", fundamentals:"Demands incredible physical conditioning from the two central midfielders. The narrow attacking trio must have elite understanding and inter-changeability." },
+  { id:"532", tag:"11v11", formation:"5-3-2", title:"5-3-2: The Counter-Attacking Stronghold", why:"The defensive park-the-bus masterpiece, often used when protecting a lead or facing a stronger opponent. A tactical fortress designed to clog the penalty box and lure the opponent in before launching lethal counter-attacks.", fundamentals:"Requires absolute mental focus and defensive organization. Striker chemistry must be precise; they have few chances and must be ruthlessly clinical." },
+  { id:"541", tag:"11v11", formation:"5-4-1", title:"5-4-1: The Low Block Fortress", why:"The most extreme defensive setup. It's about limiting space, making it nearly impossible for the opposition to break through the lines. Ideal for grinding out a result or managing a narrow lead.", fundamentals:"Discipline is paramount; players must stay narrow and communicate constantly. It focuses on forcing opponent mistakes near the box and relies on set-pieces or rare breaks for scoring opportunities." },
+  { id:"4141", tag:"11v11", formation:"4-1-4-1", title:"4-1-4-1: Possession Control & Positional Play", why:"The ultimate midfield chess match formation. It provides maximum passing options and positional flexibility. Ideal for teams that value slow, rhythmic build-up play.", fundamentals:"Everything pivots on the lone defensive midfielder. Outside midfielders operate as dynamic attacking threats, connecting play in the central attacking channel while full-backs provide necessary width." },
+  { id:"451", tag:"11v11", formation:"4-5-1", title:"4-5-1: The Midfield Wall", why:"One of the most common professional formations. Controls the middle of the park with five midfielders while remaining defensively solid with a compact four-man backline.", fundamentals:"The lone striker must be physically imposing and capable of holding up play. The wide midfielders are key — they must contribute both defensively and provide width in attack." },
+  { id:"3421", tag:"11v11", formation:"3-4-2-1", title:"3-4-2-1: The Christmas Tree (Wide)", why:"Provides a three-man defensive base with two creative shadow strikers supporting one centre forward. Creates overloads in the final third and is difficult to defend against.", fundamentals:"The two shadow strikers (SS) must have excellent movement and timing to avoid being offside. Wing midfielders must track back to protect the exposed flanks." },
+  { id:"332-9v9", tag:"9v9", formation:"3-3-2", title:"3-3-2: The Balanced Classic", why:"The direct predecessor to the 4-4-2. It provides a stable spine with three defenders and a clear attacking partnership up front. The gold standard for teaching fundamental roles and zonal marking.", fundamentals:"Success hinges on the Midfield 3 acting as a unit. The wide midfielders must provide the width that the back three lacks, essentially acting as wing-backs to prevent being flanked." },
+  { id:"323-9v9", tag:"9v9", formation:"3-2-3", title:"3-2-3: The Attacking Overload", why:"Favored by coaches who want to dominate the final third. By putting three players high up the pitch, you force the opposition deep and create constant goal-scoring opportunities.", fundamentals:"The two central midfielders must be highly disciplined. They are the insurance policy; if they push too high, the team is exposed to a vertical counter-attack." },
+  { id:"233-9v9", tag:"9v9", formation:"2-3-3", title:"2-3-3: Total Offense", why:"An aggressive, high-risk setup designed for ball-dominant teams. It stretches the field horizontally and vertically, making it perfect for possession-based soccer.", fundamentals:"Requires two elite, fast center-backs capable of winning 1v1 duels in space. The midfield three must retreat instantly on transitions to support a vulnerable backline." },
+  { id:"422-9v9", tag:"9v9", formation:"4-2-2", title:"4-2-2: Defensive Solidity", why:"Transitioning players into a traditional four-man backline early. A hard to beat formation that emphasizes clean sheets and organized defensive blocks.", fundamentals:"Focuses on the full-back's development. They must learn when to overlap into the attack and when to tuck in to support the center-backs." },
+  { id:"242-9v9", tag:"9v9", formation:"2-4-2", title:"2-4-2: The Midfield Engine", why:"Designed to win the battle for the center circle. With four midfielders, you create a diamond that allows for superior passing triangles and keeps the ball away from the opponent.", fundamentals:"Movement off the ball is key. Players must constantly rotate to create passing lanes. If the midfield remains static, the two strikers become isolated." },
+  { id:"341-9v9", tag:"9v9", formation:"3-4-1", title:"3-4-1: The Creative Hub", why:"Built entirely around a Number 10. This formation provides a massive safety net of seven players behind one creative playmaker who pulls the strings for a lone, clinical striker.", fundamentals:"The lone striker must be a target man, capable of holding up play while the four midfielders join the attack." },
+  { id:"321-7v7", tag:"7v7", formation:"3-2-1", title:"3-2-1: The Christmas Tree (Defensive Base)", why:"The most secure 7v7 setup. It provides a solid three-man backline to prevent easy goals while maintaining a central spine that is difficult for opponents to play through.", fundamentals:"Success depends on the two midfielders transition speed. They must support the lone striker to avoid isolation and quickly drop back to form a defensive block." },
+  { id:"231-7v7", tag:"7v7", formation:"2-3-1", title:"2-3-1: The Total Football Prototype", why:"The gold standard for youth development. It creates natural passing triangles across the whole pitch. It encourages defenders to step up and wingers to track back.", fundamentals:"The Wingers are the key. They must provide the width to stretch the defense. If they stay too central, the pitch becomes small and the attack stalls." },
+  { id:"222-7v7", tag:"7v7", formation:"2-2-2", title:"2-2-2: The Box Balanced", why:"Simplicity and symmetry. It pairs players up in every third. This makes player rotations and substitution patterns easy for coaches and intuitive for players.", fundamentals:"Requires elite communication between pairs. It's a masterclass in staggered positioning to avoid standing on the same vertical line." },
+  { id:"312-7v7", tag:"7v7", formation:"3-1-2", title:"3-1-2: The Counter-Attack Specialist", why:"It prioritizes a clean sheet with three dedicated defenders while keeping two strikers high to exploit long-ball transitions.", fundamentals:"The lone Holding Midfielder is the pivot. They must have a high interception rate and the vision to launch immediate vertical passes to the two strikers." },
+  { id:"132-7v7", tag:"7v7", formation:"1-3-2", title:"1-3-2: The High Press Gamble", why:"An aggressive formation used to suffocate the opponent in their own half. By loading the midfield and attack, you force turnovers near the opponent's goal for quick-strike scoring.", fundamentals:"The lone defender must be a Sweeper-Keeper hybrid. They need the pace to cover the entire back half of the field." },
+  { id:"232-7v7", tag:"7v7", formation:"2-3-2", title:"2-3-2: The Midfield Overload", why:"Extremely common in youth 7-a-side. Provides a balanced defensive base with two CBs while overloading the midfield and maintaining a two-striker threat.", fundamentals:"The three midfielders must constantly shift as a unit. Wide midfielders push forward when the team has the ball, tracking back when defending." },
+  { id:"121-5v5", tag:"5v5", formation:"1-2-1", title:"1-2-1: The Diamond", why:"The most balanced and widely used 5v5 setup. It provides depth, width, and a clear point in the attack. Designed to create passing triangles naturally, making it the king of ball retention.", fundamentals:"The Anchor (defender) and Pivot (striker) must stay connected. The two wide midfielders are the lungs of the team, providing constant rotation to pull defenders out of position." },
+  { id:"211-5v5", tag:"5v5", formation:"2-1-1", title:"2-1-1: The Pyramid (Defensive Base)", why:"A safety-first approach. It prioritizes a solid foundation with two defenders, making it extremely difficult for opponents to find a direct path to the goal. Perfect for counter-attacking teams.", fundamentals:"The lone midfielder is the Engine. They must have the high-intensity work rate to support the striker while tracking back to ensure the two defenders aren't overloaded." },
+  { id:"112-5v5", tag:"5v5", formation:"1-1-2", title:"1-1-2: The Heavy Press", why:"An aggressive, front-loaded strategy. By keeping two strikers high, you force the opponent's keeper into risky throws and look for high-turnover goals. High-risk, high-reward soccer.", fundamentals:"Requires a Last Man defender with elite anticipation. The lone defender and midfielder must stay compact to prevent the long ball from beating the entire team." },
+  { id:"22-5v5", tag:"5v5", formation:"2-2", title:"2-2: The Square (The Box)", why:"Total symmetry and simplicity. The easiest formation for zonal defending. Great for beginners to learn covering and for pros to execute highly disciplined man-to-man defensive shifts.", fundamentals:"Fluidity is mandatory. If the Box stays static, the team becomes easy to defend. Players must practice interchanging roles — when a defender carries the ball forward, a forward must rotate back." },
 ];
 
-function BlogTab() {
-  const [selected, setSelected] = useState(null);
-  const [filter,   setFilter]   = useState("all");
-  const tags = ["all","11v11","9v9","7v7","5v5"];
-  const filtered = filter === "all" ? BLOG_POSTS : BLOG_POSTS.filter(p => p.tag === filter);
+// ─── Supabase Client ──────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://myorudjfmsmixgjygsuk.supabase.co";
+const SUPABASE_ANON = "sb_publishable_S6D0x0ZdM9PSqL4UFpv8Zg_kgbKbCjm";
 
-  if (selected) {
-    const fmt = selected.tag === "11v11" ? 11 : selected.tag === "9v9" ? 9 : selected.tag === "7v7" ? 7 : 5;
+// Lightweight Supabase REST helper — no SDK needed
+const sb = {
+  headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` },
+
+  async select(table, query="") {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, { headers: { ...sb.headers, "Accept":"application/json" } });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+
+  async signUp(email, password) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method:"POST", headers: sb.headers,
+      body: JSON.stringify({ email, password }),
+    });
+    return r.json();
+  },
+
+  async signIn(email, password) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:"POST", headers: sb.headers,
+      body: JSON.stringify({ email, password }),
+    });
+    return r.json();
+  },
+
+  async signOut(token) {
+    await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+      method:"POST", headers: { ...sb.headers, "Authorization": `Bearer ${token}` },
+    });
+  },
+
+  async authedInsert(table, data, token) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method:"POST",
+      headers: { ...sb.headers, "Authorization": `Bearer ${token}`, "Prefer":"return=representation" },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+
+};
+
+// ─── Community constants (module-scope to avoid recreation) ──────────────────
+const COMMUNITY_TAGS      = ["all","11v11","9v9","7v7","5v5","General"];
+const COMMUNITY_TAG_COLORS = { "11v11":"#2d7a3a","9v9":"#6366f1","7v7":"#f5c518","5v5":"#ef4444","General":"#64748b" };
+
+// ─── Auth Modal ───────────────────────────────────────────────────────────────
+function AuthModal({ onClose, onAuth }) {
+  const [mode,     setMode]     = useState("signin"); // "signin" | "signup"
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
+
+  async function handleSubmit() {
+    if (!email.trim() || !password.trim()) return;
+    setLoading(true); setError("");
+    try {
+      const res = mode === "signup" ? await sb.signUp(email, password) : await sb.signIn(email, password);
+      if (res.error || res.error_description) {
+        setError(res.error_description || res.error?.message || "Something went wrong.");
+      } else {
+        const token = res.access_token;
+        const user  = res.user || res;
+        onAuth({ token, user, email });
+        onClose();
+      }
+    } catch(e) { setError("Network error — please try again."); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background:"rgba(0,0,0,0.7)" }} onClick={onClose}>
+      <div className="rounded-2xl w-full max-w-sm" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 40px ${BRAND.colors.yellow}30` }}
+        onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4" style={{ background:"rgba(245,197,24,0.08)", borderBottom:`1px solid rgba(255,255,255,0.08)` }}>
+          <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:16, color: BRAND.colors.yellow, letterSpacing:2 }}>
+            {mode === "signup" ? "CREATE ACCOUNT" : "SIGN IN"}
+          </span>
+          <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b", fontSize:18 }}>✕</button>
+        </div>
+
+        {/* Form */}
+        <div className="p-5 flex flex-col gap-3">
+          <input type="email" placeholder="Email address"
+            className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+            style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.12)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body }}
+            value={email} onChange={e => setEmail(e.target.value)}/>
+          <input type="password" placeholder="Password (min 8 characters)" minLength={8}
+            className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+            style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.12)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body }}
+            value={password} onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSubmit()}/>
+
+          {error && <p className="text-xs" style={{ color:"#f87171" }}>{error}</p>}
+
+          <button onClick={handleSubmit} disabled={loading || !email.trim() || !password.trim()}
+            className="w-full py-2.5 rounded-xl font-black text-sm tracking-wide transition-all hover:brightness-110 active:scale-95"
+            style={{ background: email.trim() && password.trim() ? BRAND.colors.yellow : "rgba(255,255,255,0.06)",
+              color: email.trim() && password.trim() ? "#111" : "#475569",
+              fontFamily: BRAND.fonts.body, border:"none", cursor: email.trim() && password.trim() ? "pointer" : "default" }}>
+            {loading ? "Please wait…" : mode === "signup" ? "Create Account" : "Sign In"}
+          </button>
+
+          <button onClick={() => { setMode(m => m==="signin"?"signup":"signin"); setError(""); }}
+            className="text-xs text-center transition-opacity hover:opacity-70"
+            style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b", fontFamily: BRAND.fonts.body }}>
+            {mode === "signin" ? "No account? Sign up →" : "Already have an account? Sign in →"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Community Tab ─────────────────────────────────────────────────────────────
+function SectionHeader({ icon, title, count }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span style={{ fontSize:16 }}>{icon}</span>
+      <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:14, color:"#e2e8f0", letterSpacing:1.5 }}>{title}</span>
+      {count !== undefined && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background:"rgba(255,255,255,0.08)", color:"#64748b" }}>{count}</span>}
+    </div>
+  );
+}
+
+function CommunityTab() {
+  // ── Auth state ────────────────────────────────────────────────────────────
+  const [session,     setSession]     = useState(null); // { token, user, email }
+  const [showAuth,    setShowAuth]    = useState(false);
+
+  // ── View state ────────────────────────────────────────────────────────────
+  const [view,        setView]        = useState("home"); // "home" | "post"
+  const [activePost,  setActivePost]  = useState(null);
+  const [filter,      setFilter]      = useState("all");
+
+  // ── Data state ────────────────────────────────────────────────────────────
+  const [userPosts,   setUserPosts]   = useState([]);
+  const [comments,    setComments]    = useState({}); // keyed by post_id
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingCmts,  setLoadingCmts]  = useState(false);
+
+  // ── Composer state ────────────────────────────────────────────────────────
+  const [showNewPost, setShowNewPost] = useState(false);
+  const [draft,       setDraft]       = useState({ title:"", tag:"General", body:"" });
+  const [commentDraft, setCommentDraft] = useState("");
+  const [submitting,  setSubmitting]  = useState(false);
+  const [error,       setError]       = useState("");
+
+  // ── Load user posts from Supabase ─────────────────────────────────────────
+  async function loadPosts() {
+    setLoadingPosts(true);
+    try {
+      const data = await sb.select("posts", "?select=*&order=created_at.desc");
+      setUserPosts(Array.isArray(data) ? data : []);
+    } catch(e) { console.error("Load posts error:", e); }
+    finally { setLoadingPosts(false); }
+  }
+
+  // ── Load comments for a post ───────────────────────────────────────────────
+  async function loadComments(postId) {
+    setLoadingCmts(true);
+    try {
+      const data = await sb.select("comments", `?post_id=eq.${postId}&order=created_at.asc`);
+      setComments(prev => ({ ...prev, [postId]: Array.isArray(data) ? data : [] }));
+    } catch(e) { console.error("Load comments error:", e); }
+    finally { setLoadingCmts(false); }
+  }
+
+  useEffect(() => { loadPosts(); }, []);
+
+  // ── Formation posts derived from BLOG_POSTS ───────────────────────────────
+  const formationPosts = BLOG_POSTS.map(p => ({
+    ...p, source:"formation",
+    commentCount: 0,
+    lastActivity: "Formation guide",
+    created_at: "2025-01-01",
+  }));
+
+  // ── Merged + filtered ─────────────────────────────────────────────────────
+  const allUserPostsMapped = userPosts.map(p => ({
+    ...p, source:"user", commentCount: p.comment_count || 0,
+    title: p.title, body: p.body, tag: p.tag || "General",
+    lastActivity: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+  }));
+
+  const filteredFormations = filter === "all" ? formationPosts
+    : filter === "General" ? []
+    : formationPosts.filter(p => p.tag === filter);
+
+  const filteredUserPosts = filter === "all" ? allUserPostsMapped
+    : allUserPostsMapped.filter(p => p.tag === filter);
+
+  // ── Submit new user post ──────────────────────────────────────────────────
+  async function submitPost() {
+    if (!draft.title.trim() || !draft.body.trim() || !session) return;
+    setSubmitting(true); setError("");
+    try {
+      await sb.authedInsert("posts", {
+        title: draft.title.trim(),
+        body:  draft.body.trim(),
+        tag:   draft.tag,
+        author_name: session.email.split("@")[0],
+      }, session.token);
+      setDraft({ title:"", tag:"General", body:"" });
+      setShowNewPost(false);
+      await loadPosts();
+    } catch(e) { setError("Failed to post — please try again."); }
+    finally { setSubmitting(false); }
+  }
+
+  // ── Submit comment ────────────────────────────────────────────────────────
+  async function submitComment(postId) {
+    if (!commentDraft.trim() || !session) return;
+    setSubmitting(true); setError("");
+    try {
+      await sb.authedInsert("comments", {
+        post_id: postId,
+        body: commentDraft.trim(),
+        author_name: session.email.split("@")[0],
+      }, session.token);
+      setCommentDraft("");
+      await loadComments(postId);
+    } catch(e) { setError("Failed to post comment — please try again."); }
+    finally { setSubmitting(false); }
+  }
+
+  // ── Open post ─────────────────────────────────────────────────────────────
+  function openPost(post) {
+    setActivePost(post);
+    setView("post");
+    setCommentDraft("");
+    setError("");
+    if (post.source === "user") loadComments(post.id);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  }
+
+  // ── Sign out ──────────────────────────────────────────────────────────────
+  async function handleSignOut() {
+    if (session) await sb.signOut(session.token).catch(() => {});
+    setSession(null);
+  }
+
+  // ── Components ────────────────────────────────────────────────────────────
+  function TagPill({ tag, small }) {
+    const color = COMMUNITY_TAG_COLORS[tag] || "#64748b";
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:py-8" style={{ fontFamily: BRAND.fonts.body }}>
-        <button onClick={() => setSelected(null)}
-          className="flex items-center gap-2 text-xs font-bold mb-5 transition-all hover:opacity-80"
-          style={{ color: BRAND.colors.green }}>
-          ← Back to The Playbook
+      <span style={{ background:`${color}22`, color, border:`1px solid ${color}44`,
+        borderRadius:20, padding: small ? "1px 8px" : "3px 10px",
+        fontSize: small ? 9 : 10, fontWeight:700, letterSpacing:1, whiteSpace:"nowrap" }}>
+        {tag}
+      </span>
+    );
+  }
+
+  function PostCard({ post }) {
+    return (
+      <button onClick={() => openPost(post)} className="w-full text-left rounded-2xl transition-all hover:brightness-110 active:scale-[0.99]"
+        style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)`, padding:"14px 16px" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <TagPill tag={post.tag || "General"}/>
+              {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
+            </div>
+            <div className="font-bold text-sm leading-snug" style={{ color:"#f1f5f9", fontFamily: BRAND.fonts.body }}>{post.title}</div>
+            <div className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.4)", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+              {post.why || post.body || ""}
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <div className="flex items-center gap-1" style={{ color: post.commentCount > 0 ? BRAND.colors.yellow : "#475569" }}>
+              <span style={{ fontSize:11 }}>💬</span>
+              <span style={{ fontSize:11, fontWeight:700 }}>{post.commentCount || 0}</span>
+            </div>
+            <span style={{ fontSize:9, color:"#475569", whiteSpace:"nowrap" }}>{post.lastActivity || ""}</span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  // ── Post view ─────────────────────────────────────────────────────────────
+  function PostView() {
+    const post = activePost;
+    const postComments = post.source === "user" ? (comments[post.id] || []) : [];
+
+    return (
+      <div className="flex flex-col gap-4">
+        <button onClick={() => setView("home")} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
+          style={{ color:"#64748b", background:"none", border:"none", cursor:"pointer", padding:0, fontFamily: BRAND.fonts.body }}>
+          ← Back to Community
         </button>
 
-        {/* Tag + title */}
-        <span className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full mb-3 inline-block"
-          style={{ background:`${BRAND.colors.green}22`, color: BRAND.colors.green }}>
-          {selected.tag}
-        </span>
-        <h1 className="font-black leading-tight mb-5"
-          style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(20px,5vw,28px)", color:"#fff", letterSpacing:1 }}>
-          {selected.title}
-        </h1>
-
-        {/* Full-width formation diagram — responsive max width */}
-        <div className="mb-6 rounded-2xl overflow-hidden" style={{ border:`1px solid ${BRAND.colors.green}44` }}>
-          <div style={{ maxWidth:"min(280px, 65vw)", margin:"0 auto", padding:"20px 24px 16px" }}>
-            <FormationDiagram formation={selected.formation} format={fmt}/>
+        {/* Post body */}
+        <div className="rounded-2xl p-5" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.1)` }}>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <TagPill tag={post.tag || "General"}/>
+            {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
           </div>
-          <div className="text-center pb-4 text-xs font-bold tracking-widest uppercase"
-            style={{ color:"rgba(255,255,255,0.3)", fontFamily: BRAND.fonts.display, letterSpacing:3 }}>
-            {selected.formation} · {selected.tag}
+          <div className="font-black mb-1" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(18px,5vw,26px)", color:"#fff", letterSpacing:0.5 }}>
+            {post.title}
           </div>
-        </div>
+          <div className="text-xs mb-4" style={{ color:"#475569" }}>
+            {post.author_name && <>Posted by <span style={{ color:"#94a3b8" }}>{post.author_name}</span> · </>}
+            {post.created_at ? new Date(post.created_at).toLocaleDateString() : ""}
+          </div>
 
-        {/* Format intro */}
-        {(() => {
-          const formatBlurbs = {
-            "11v11": "11v11 is the pinnacle of the game — the full-field chess match where tactics, fitness, and individual brilliance collide. Every formation tells a story about how a team wants to play.",
-            "9v9":   "9v9 is the critical bridge between youth development and the full-field game. It's where spatial awareness and positional discipline become the difference-makers.",
-            "7v7":   "7v7 is the laboratory of soccer. It's where technical proficiency meets the first real taste of tactical responsibility. In this format, there is nowhere to hide; every player must be a \"two-way\" player.",
-            "5v5":   "5v5 is pure lightning-fast transition. It's the \"Futsal\" style of soccer where first touch, ball mastery, and 1v1 dominance are the only ways to survive.",
-          };
-          const text = selected.intro || formatBlurbs[selected.tag];
-          if (!text) return null;
-          const colors = {
-            "11v11": { bg:"rgba(45,122,58,0.12)", border:"rgba(45,122,58,0.3)" },
-            "9v9":   { bg:"rgba(99,102,241,0.12)", border:"rgba(99,102,241,0.3)" },
-            "7v7":   { bg:"rgba(245,197,24,0.08)", border:"rgba(245,197,24,0.25)" },
-            "5v5":   { bg:"rgba(239,68,68,0.08)",  border:"rgba(239,68,68,0.25)" },
-          };
-          const c = colors[selected.tag] || { bg:"rgba(255,255,255,0.04)", border:"rgba(255,255,255,0.1)" };
-          return (
-            <div className="rounded-2xl p-4 mb-5 flex gap-3" style={{ background: c.bg, border:`1px solid ${c.border}` }}>
-              <span style={{ fontSize:18, flexShrink:0 }}>📋</span>
-              <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.7)" }}>{text}</p>
+          {post.source === "formation" && post.formation && (
+            <div style={{ width:90, marginBottom:16 }}>
+              <FormationDiagram formation={post.formation} format={post.tag==="11v11"?11:post.tag==="9v9"?9:post.tag==="7v7"?7:5}/>
             </div>
-          );
-        })()}
+          )}
 
-        {/* Why it's popular */}
-        <div className="rounded-2xl p-4 sm:p-5 mb-4" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span style={{ fontSize:16 }}>🌟</span>
-            <span className="text-xs font-black tracking-widest uppercase" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:2 }}>Why It's Popular</span>
-          </div>
-          <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.78)" }}>{selected.why}</p>
+          {post.intro && <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.6)", fontStyle:"italic" }}>{post.intro}</p>}
+          {post.why && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.yellow }}>Why It Works</div>
+            <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.75)" }}>{post.why}</p></>}
+          {post.fundamentals && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.green }}>Coaching Fundamentals</div>
+            <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.fundamentals}</p></>}
+          {post.body && !post.why && <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.body}</p>}
         </div>
 
-        {/* Veteran fundamentals */}
-        <div className="rounded-2xl p-4 sm:p-5" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span style={{ fontSize:16 }}>🧠</span>
-            <span className="text-xs font-black tracking-widest uppercase" style={{ color:"#a5b4fc", fontFamily: BRAND.fonts.display, letterSpacing:2 }}>Veteran Fundamentals</span>
+        {/* Comments */}
+        <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)` }}>
+          <div className="px-5 py-3 flex items-center gap-2" style={{ background:"rgba(255,255,255,0.04)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+            <span style={{ fontSize:14 }}>💬</span>
+            <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#e2e8f0", letterSpacing:1.5 }}>
+              DISCUSSION {post.source==="user" ? `(${postComments.length})` : ""}
+            </span>
           </div>
-          <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.78)" }}>{selected.fundamentals}</p>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8" style={{ fontFamily: BRAND.fonts.body }}>
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="font-black tracking-widest mb-1" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(22px,6vw,30px)", color: BRAND.colors.yellow, letterSpacing:2 }}>
-          THE PLAYBOOK
-        </h1>
-        <p className="text-xs" style={{ color: BRAND.colors.muted }}>Formations, tactics, and tips for every format.</p>
-      </div>
-
-      {/* Filter pills — scrollable on mobile */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling:"touch" }}>
-        {tags.map(t => (
-          <button key={t} onClick={() => setFilter(t)}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shrink-0"
-            style={{
-              background: filter===t ? BRAND.colors.green : "rgba(255,255,255,0.06)",
-              color: filter===t ? "#fff" : BRAND.colors.muted,
-              border:`1px solid ${filter===t ? BRAND.colors.green : "rgba(255,255,255,0.1)"}`,
-            }}>
-            {t === "all" ? "All" : t}
-          </button>
-        ))}
-      </div>
-
-      {/* Format intro blurbs */}
-      {(() => {
-        const blurbs = {
-          "all":   { text:"From 5v5 Futsal to the full 11v11 game, every format demands its own tactical identity. Browse every formation across all formats — tap any card to read the full tactical breakdown, key roles, and coaching fundamentals.", color:"rgba(255,255,255,0.05)", border:"rgba(255,255,255,0.1)" },
-          "11v11": { text:"11v11 is the pinnacle of the game — the full-field chess match where tactics, fitness, and individual brilliance collide. Every formation tells a story about how a team wants to play.", color:"rgba(45,122,58,0.15)", border:"rgba(45,122,58,0.35)" },
-          "9v9":   { text:"9v9 is the critical bridge between youth development and the full-field game. It's where spatial awareness and positional discipline become the difference-makers.", color:"rgba(99,102,241,0.15)", border:"rgba(99,102,241,0.3)" },
-          "7v7":   { text:"7v7 is the laboratory of soccer. It's where technical proficiency meets the first real taste of tactical responsibility. In this format, there is nowhere to hide; every player must be a \"two-way\" player.", color:"rgba(245,197,24,0.08)", border:"rgba(245,197,24,0.25)" },
-          "5v5":   { text:"5v5 is pure lightning-fast transition. It's the \"Futsal\" style of soccer where first touch, ball mastery, and 1v1 dominance are the only ways to survive.", color:"rgba(239,68,68,0.08)", border:"rgba(239,68,68,0.25)" },
-        };
-        const b = blurbs[filter];
-        if (!b) return null;
-        return (
-          <div className="rounded-2xl p-4 mb-5 flex gap-3" style={{ background: b.color, border:`1px solid ${b.border}` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>📖</span>
-            <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{b.text}</p>
-          </div>
-        );
-      })()}
-
-      {/* Posts — single col mobile, two-col desktop when filter active */}
-      <div className={filter !== "all" ? "grid gap-3 sm:grid-cols-2" : "flex flex-col gap-3"}>
-        {(() => {
-          const items = [];
-          let lastTag = null;
-          const tagLabels = { "11v11":"11v11 — Full Game", "9v9":"9v9 — The Bridge", "7v7":"7v7 — The Lab", "5v5":"5v5 — Pure Instinct" };
-          filtered.forEach(post => {
-            if (filter === "all" && post.tag !== lastTag) {
-              lastTag = post.tag;
-              items.push(
-                <div key={`heading-${post.tag}`} className="flex items-center gap-3 pt-3 pb-1 col-span-full">
-                  <span className="font-black tracking-widest uppercase" style={{ fontFamily: BRAND.fonts.display, color: BRAND.colors.yellow, letterSpacing:2, fontSize:13 }}>
-                    {tagLabels[post.tag] || post.tag}
-                  </span>
-                  <div className="flex-1 h-px" style={{ background:"rgba(255,255,255,0.08)" }}/>
-                </div>
-              );
-            }
-            const fmt = post.tag === "11v11" ? 11 : post.tag === "9v9" ? 9 : post.tag === "7v7" ? 7 : 5;
-            items.push(
-              <button key={post.id} onClick={() => setSelected(post)}
-                className="w-full text-left rounded-2xl overflow-hidden transition-all hover:opacity-90 active:scale-[0.99]"
-                style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}`, minHeight:80 }}>
-                <div className="flex h-full">
-                  {/* Mini formation thumbnail */}
-                  <div style={{ width:80, flexShrink:0, padding:"8px 0 8px 8px" }}>
-                    <FormationDiagram formation={post.formation} format={fmt}/>
-                  </div>
-                  {/* Text */}
-                  <div className="flex-1 px-3 py-2.5 flex flex-col justify-center min-w-0">
-                    <span className="text-[9px] font-bold tracking-widest uppercase mb-1 inline-block"
-                      style={{ color: BRAND.colors.green }}>
-                      {post.tag}
-                    </span>
-                    <div className="font-black leading-tight mb-1" style={{ fontFamily: BRAND.fonts.display, fontSize:14, color:"#fff", letterSpacing:0.5, wordBreak:"break-word" }}>
-                      {post.title}
-                    </div>
-                    <p className="text-[11px] leading-snug" style={{ color:"rgba(255,255,255,0.45)", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
-                      {post.why.slice(0, 80)}…
-                    </p>
-                  </div>
-                  <div className="flex items-center px-2" style={{ color: BRAND.colors.muted, flexShrink:0 }}>›</div>
-                </div>
-              </button>
-            );
-          });
-          return items;
-        })()}
-      </div>
-    </div>
-  );
-}
-// ─── Positions Tab ────────────────────────────────────────────────────────────
-function PositionsTab() {
-  const [posTab, setPosTab] = useState("numbers");
-
-  const sections = [
-    {
-      heading:"The Defensive Unit", sub:"The Foundation", icon:"🛡️", color:"#3b82f6",
-      positions:[
-        { abbr:"GK", name:"Goalkeeper / Sweeper-Keeper", body:"The last line of defense and the first point of attack. Modern GKs must be comfortable with their feet to initiate build-up play." },
-        { abbr:"CB", name:"Center-Back", body:"The \"General\" of the defense. Responsible for zonal marking, winning aerial duels, and organizing the backline to trap opponents offside." },
-        { abbr:["LB","RB"], name:"Full-Back", body:"Wide defenders who neutralize wingers. In modern tactics, they are \"engines\" that provide overlapping runs to create attacking width." },
-        { abbr:["LWB","RWB"], name:"Wing-Back", body:"Exclusive to 3- or 5-man backlines. They cover the entire flank, acting as both a defender and a wide midfielder." },
-      ],
-    },
-    {
-      heading:"The Midfield Engine", sub:"The Transition", icon:"⚙️", color:"#f5c518",
-      positions:[
-        { abbr:"CDM", name:"Defensive Midfielder / The Pivot", body:"The \"Shield.\" They sit in front of the defense to intercept passes and dictate the tempo of the game through short, safe distribution." },
-        { abbr:"CM", name:"Central Midfielder / Box-to-Box", body:"The most physically demanding role. They must have the stamina to defend their own box and then sprint to join the attack in the opponent's third." },
-        { abbr:"CAM", name:"Attacking Midfielder / Number 10", body:"The \"Playmaker.\" Operating in the half-spaces, their job is to provide \"killer passes\" and create scoring chances through vision and elite technical skill." },
-        { abbr:["LM","RM","LW","RW"], name:"Winger", body:"The \"Speedsters.\" Their goal is to beat defenders 1v1, stretch the opposition wide, and deliver accurate crosses into the box." },
-      ],
-    },
-    {
-      heading:"The Attacking Front", sub:"The Finishers", icon:"🎯", color:"#ef4444",
-      positions:[
-        { abbr:"ST", name:"Striker / Number 9", body:"The primary goal-scorer. They must excel at positional awareness, finishing with both feet, and \"holding up\" the ball to bring teammates into the play." },
-        { abbr:"CF", name:"Second Striker / Shadow Striker", body:"A hybrid role that plays just behind the main #9. They exploit the gaps between the opponent's midfield and defense to find pockets of space." },
-        { abbr:"🎯", name:"Target Man", body:"A physical striker used to win long balls and \"flick-on\" headers to faster teammates. Crucial for vertical soccer and set-piece dominance." },
-      ],
-    },
-  ];
-
-  const tableRows = [
-    { format:"5v5",   focus:"Technical Skill",       role:"Every player is a \"Two-Way\" player; rotation is constant." },
-    { format:"7v7",   focus:"Spatial Awareness",     role:"The \"Diamond\" midfield teaches passing triangles and support." },
-    { format:"9v9",   focus:"Positional Discipline", role:"Introduces the \"Wing-Back\" and the \"Holding Mid\" roles." },
-    { format:"11v11", focus:"Strategic Depth",       role:"Full tactical specialisation — every position has a defined role." },
-  ];
-
-  const movementSections = [
-    {
-      heading:"1. The Living Breath: How Lines Move Together", icon:"🫁", color:"#22c55e",
-      intro:"In soccer, your team is composed of three primary units: the Defensive Line, the Midfield Block, and the Attacking Front.",
-      points:[
-        { title:"Compactness", body:"The most elite teams move like an accordion. When defending, the lines \"squeeze\" together to eliminate the vertical gap between the defense and midfield. This prevents playmakers from finding room to turn." },
-        { title:"The Pendulum Swing", body:"As the ball moves from the left touchline to the right, the entire team must shift in unison. If one player \"disconnects\" from the line, they create a passing lane for the opponent to exploit." },
-      ],
-    },
-    {
-      heading:"2. Defining Space: The Invisible Teammate", icon:"🔭", color:"#a855f7",
-      intro:"Space isn't just where players aren't standing; it's the area of opportunity.",
-      points:[
-        { title:"Finding Space (Passive)", body:"Scanning the pitch (checking your shoulder) to identify where the opponent has left a gap — often in the \"pockets\" between the defensive and midfield lines." },
-        { title:"Creating Space (Active)", body:"Moving away from where you actually want the ball. By making a decoy run, you \"drag\" a defender with you, vacating a zone for a teammate to enter." },
-      ],
-    },
-    {
-      heading:"3. Breaking the Lines: The Tactical Dagger", icon:"⚔️", color:"#ef4444",
-      intro:"\"Breaking the lines\" means passing the ball through an opponent's defensive or midfield bank.",
-      points:[
-        { title:"The Split Pass", body:"A precise ball played between two defenders." },
-        { title:"The Overload", body:"Bringing an extra player into a specific zone (e.g., a 3v2 on the wing) to force a defender to commit, leaving their \"line\" and creating a hole." },
-      ],
-    },
-    {
-      heading:"4. Communication: The Pulse of the Pitch", icon:"📢", color:"#f5c518",
-      intro:"Great teams are loud. But veteran communication isn't just shouting; it's instructional and predictive.",
-      points:[
-        { title:"Tactical Triggers", body:"\"Step!\" (move the line up), \"Drop!\" (retreat quickly), or \"Squeeze!\" (close the horizontal gaps)." },
-        { title:"Informational Cues", body:"\"Man on!\" (immediate pressure), \"Turn!\" (you have space), or \"Time!\" (no immediate threat)." },
-        { title:"Non-Verbal", body:"Body language and pointing to the specific foot where you want the ball delivered." },
-      ],
-    },
-    {
-      heading:"5. Types of Runs & Passes: The Toolkit", icon:"🧰", color:"#3b82f6",
-      intro:"",
-      subsections:[
-        {
-          title:"Key Attacking Runs",
-          items:[
-            { title:"The Overlap", body:"A full-back sprinting past a winger on the outside to provide width." },
-            { title:"The Underlap", body:"A run made inside the winger, through the \"half-space\" channel." },
-            { title:"The Diagonal Run", body:"Cutting across the face of the defense to confuse center-back marking." },
-            { title:"The Blind-Side Run", body:"Moving behind a defender where they cannot see both you and the ball simultaneously." },
-          ],
-        },
-        {
-          title:"Essential Passing Variations",
-          items:[
-            { title:"The Wall Pass (1-2)", body:"A rapid one-touch combination to bypass a defender in tight quarters." },
-            { title:"The Through Ball", body:"A weighted pass into space behind the defense for a teammate to run onto." },
-            { title:"The Switch", body:"A long, diagonal ball to the opposite flank to exploit the \"weak side\" of a shifted defense." },
-            { title:"The Direct Line-Breaker", body:"A vertical pass that bypasses the entire midfield to reach the strikers." },
-          ],
-        },
-      ],
-    },
-  ];
-
-  const posTabs = [
-    { id:"numbers",    label:"🔢  Numbers" },
-    { id:"101",        label:"📋  Positions 101" },
-    { id:"movement",   label:"🏃  Movement" },
-    { id:"setpieces",  label:"🚩  Set Pieces" },
-  ];
-
-  function AbbrBadge({ abbr, color }) {
-    return (
-      <div className="rounded-lg flex items-center justify-center font-black shrink-0"
-        style={{ width:44, height:44, background:`${color}18`, border:`1px solid ${color}44`, color, fontFamily: BRAND.fonts.display, textAlign:"center", letterSpacing:0.3, lineHeight:1.1, padding:"3px" }}>
-        {Array.isArray(abbr) ? (
-          abbr.length === 4 ? (
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1px", width:"100%" }}>
-              {abbr.map((a, i) => <span key={i} style={{ fontSize:8, display:"block", textAlign:"center" }}>{a}</span>)}
+          {post.source === "formation" ? (
+            <div className="px-5 py-6 text-center">
+              <p className="text-xs italic" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
+                Formation guides are reference material. Start a Discussion post to chat about this formation!
+              </p>
             </div>
           ) : (
-            <div style={{ display:"flex", flexDirection:"column", gap:"1px", alignItems:"center" }}>
-              {abbr.map((a, i) => <span key={i} style={{ fontSize:9, display:"block" }}>{a}</span>)}
-            </div>
-          )
-        ) : (abbr.length <= 2 && abbr.charCodeAt(0) > 127) ? (
-          <span style={{ fontSize:22, lineHeight:1 }}>{abbr}</span>
-        ) : (
-          <span style={{ fontSize: abbr.length > 5 ? 8 : 10 }}>{abbr}</span>
-        )}
+            <>
+              <div className="flex flex-col" style={{ borderColor:"rgba(255,255,255,0.05)" }}>
+                {loadingCmts && <p className="text-xs text-center py-4" style={{ color:"#475569" }}>Loading comments…</p>}
+                {!loadingCmts && postComments.length === 0 && (
+                  <p className="text-xs text-center py-6 italic px-5" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
+                    No replies yet — be the first!
+                  </p>
+                )}
+                {postComments.map((c, i) => (
+                  <div key={c.id} className="px-5 py-4" style={{ borderTop: i > 0 ? `1px solid rgba(255,255,255,0.05)` : "none" }}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="rounded-full flex items-center justify-center font-black"
+                        style={{ width:26, height:26, background: BRAND.colors.green, color:"#fff", fontSize:10 }}>
+                        {(c.author_name || "A")[0].toUpperCase()}
+                      </div>
+                      <span className="text-xs font-bold" style={{ color:"#94a3b8" }}>{c.author_name || "Anonymous"}</span>
+                      <span style={{ fontSize:10, color:"#475569" }}>· {new Date(c.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.78)", fontFamily: BRAND.fonts.body }}>{c.body}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Comment composer */}
+              <div className="px-5 py-4" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
+                {session ? (
+                  <>
+                    <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
+                      Replying as <span style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
+                    </div>
+                    <textarea rows={3} placeholder="Share your thoughts…"
+                      className="w-full rounded-xl px-3 py-2 text-xs mb-2 focus:outline-none resize-none"
+                      style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body }}
+                      value={commentDraft} onChange={e => setCommentDraft(e.target.value)}/>
+                    {error && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{error}</p>}
+                    <button onClick={() => submitComment(post.id)} disabled={submitting || !commentDraft.trim()}
+                      className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
+                      style={{ background: commentDraft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)",
+                        color: commentDraft.trim() ? "#fff" : "#475569",
+                        fontFamily: BRAND.fonts.body, border:"none",
+                        cursor: commentDraft.trim() ? "pointer" : "default" }}>
+                      {submitting ? "Posting…" : "Post Reply"}
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-2">
+                    <p className="text-xs mb-3" style={{ color:"#64748b", fontFamily: BRAND.fonts.body }}>Sign in to join the discussion</p>
+                    <button onClick={() => setShowAuth(true)}
+                      className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+                      style={{ background: BRAND.colors.yellow, color:"#111", fontFamily: BRAND.fonts.body, border:"none", cursor:"pointer" }}>
+                      Sign In / Create Account
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
+  // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-2xl mx-auto px-3 sm:px-6 py-6 sm:py-8" style={{ fontFamily: BRAND.fonts.body }}>
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:28, color: BRAND.colors.yellow, letterSpacing:2 }}>POSITIONS</h1>
-        <p className="text-xs mt-1" style={{ color: BRAND.colors.muted }}>The tactical DNA of every role on the pitch.</p>
+    <div className="w-full max-w-2xl mx-auto px-3 sm:px-5 py-5" style={{ fontFamily: BRAND.fonts.body }}>
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onAuth={setSession}/>}
+
+      {/* Privacy notice */}
+      <div className="rounded-xl px-4 py-3 mb-5 flex gap-3 items-start"
+        style={{ background:"rgba(99,102,241,0.08)", border:`1px solid rgba(99,102,241,0.2)` }}>
+        <span style={{ fontSize:14, flexShrink:0 }}>🔒</span>
+        <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.55)" }}>
+          <strong style={{ color:"rgba(255,255,255,0.8)" }}>Data & Privacy.</strong> Posts and comments are stored securely in our database. Your email is never shown publicly — only your username (email prefix) appears. Accounts are protected by Supabase Auth. By posting you agree to keep discussions respectful and on-topic.
+        </p>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling:"touch" }}>
-        {posTabs.map(({ id, label }) => (
-          <button key={id} onClick={() => setPosTab(id)}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0"
-            style={posTab === id
-              ? { background: BRAND.colors.green, color:"#fff" }
-              : { background:"rgba(255,255,255,0.06)", color: BRAND.colors.muted, border:`1px solid rgba(255,255,255,0.1)` }}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Numbers Tab ── */}
-      {posTab === "numbers" && (
+      {view === "post" && activePost ? <PostView/> : (
         <>
-          {/* Intro */}
-          <div className="rounded-2xl p-4 mb-5 flex gap-3" style={{ background:"rgba(245,197,24,0.08)", border:`1px solid rgba(245,197,24,0.25)` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>🔢</span>
-            <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.75)" }}>
-              Every shirt number tells a story. From the #1 between the posts to the #9 in the box, numbers aren't random — they define a player's role, tactical responsibility, and position on the pitch across every format.
-            </p>
-          </div>
-
-          {/* Jersey number reference table */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span style={{ fontSize:17 }}>👕</span>
-              <div className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color: BRAND.colors.yellow, letterSpacing:1.5 }}>The Jersey Numbers Decoded</div>
-              <div className="flex-1 h-px ml-2" style={{ background:`${BRAND.colors.yellow}30` }}/>
+          {/* Header + auth + new post */}
+          <div className="flex items-start justify-between mb-5 gap-3">
+            <div>
+              <div className="font-black" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(22px,6vw,30px)", color:"#fff", letterSpacing:1 }}>COMMUNITY</div>
+              <div className="text-xs" style={{ color:"#475569" }}>Tactics · Formations · Coaching</div>
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ border:`1px solid ${BRAND.colors.border}` }}>
-              {/* Header */}
-              <div className="grid px-3 py-2" style={{ gridTemplateColumns:"40px 1fr 2fr", background:"rgba(255,255,255,0.07)", gap:"8px" }}>
-                <div className="text-[9px] font-black tracking-widest uppercase" style={{ color: BRAND.colors.muted }}>#</div>
-                <div className="text-[9px] font-black tracking-widest uppercase" style={{ color: BRAND.colors.muted }}>Position</div>
-                <div className="text-[9px] font-black tracking-widest uppercase" style={{ color: BRAND.colors.muted }}>Tactical Role</div>
-              </div>
-              {[
-                { num:"1",  pos:"Goalkeeper",        role:"The shot-stopper. Responsible for aerial dominance and modern \"sweeper-keeper\" distribution.", color:"#60a5fa" },
-                { num:"2",  pos:"Right-Back",         role:"Traditionally defensive, now a high-energy engine providing width and crosses from the right.", color:"#34d399" },
-                { num:"3",  pos:"Left-Back",          role:"The mirror of the #2. Essential for 1v1 defending and overlapping runs on the left flank.", color:"#34d399" },
-                { num:"4",  pos:"Center-Back",        role:"The \"Stopper.\" Typically the more aggressive defender who attacks the ball and wins headers.", color:"#60a5fa" },
-                { num:"5",  pos:"Center-Back",        role:"The \"Cover.\" Often the defensive leader who reads the game, cleans up loose balls, and organizes the line.", color:"#60a5fa" },
-                { num:"6",  pos:"Holding Midfielder", role:"The \"Anchor.\" Sits in front of the defense to intercept passes and dictate the tempo from deep.", color:"#f5c518" },
-                { num:"8",  pos:"Box-to-Box Mid",     role:"The \"Workhorse.\" Links defense to attack with elite stamina, late runs into the box, and tireless tackling.", color:"#f5c518" },
-                { num:"10", pos:"Attacking Mid",      role:"The \"Playmaker.\" The creative hub. Operates in the half-spaces to deliver the killer pass or a goal.", color:"#f5c518" },
-                { num:"7",  pos:"Right Winger",       role:"Traditionally the touchline hugger who crosses. Modern #7s are often inverted wingers who cut inside to shoot.", color:"#f87171" },
-                { num:"11", pos:"Left Winger",        role:"The primary outlet for speed and 1v1 trickery. Responsible for stretching the defense and providing service.", color:"#f87171" },
-                { num:"9",  pos:"Center Forward",     role:"The \"Target Man\" or \"Poacher.\" The primary goal-scorer. Focuses on positional awareness in the 18-yard box.", color:"#f87171" },
-              ].map(({ num, pos, role, color }, i) => (
-                <div key={num} className="grid px-3 py-2.5 items-start" style={{ gridTemplateColumns:"40px 1fr 2fr", gap:"8px", background: i%2===0 ? "rgba(255,255,255,0.02)" : "transparent", borderTop:`1px solid ${BRAND.colors.border}` }}>
-                  <div className="rounded-full flex items-center justify-center font-black shrink-0" style={{ width:28, height:28, background:`${color}20`, border:`1px solid ${color}50`, color, fontSize:12, fontFamily: BRAND.fonts.display }}>{num}</div>
-                  <div className="text-xs font-bold pt-0.5" style={{ color:"rgba(255,255,255,0.9)" }}>{pos}</div>
-                  <div className="text-xs leading-snug" style={{ color:"rgba(255,255,255,0.55)" }}>{role}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Format breakdown copy */}
-          <div className="mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span style={{ fontSize:17 }}>📐</span>
-              <div className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color:"#a5b4fc", letterSpacing:1.5 }}>Numbers by Format</div>
-              <div className="flex-1 h-px ml-2" style={{ background:"rgba(165,180,252,0.25)" }}/>
-            </div>
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  format:"11v11", icon:"🏟️", color:"#34d399",
-                  headline:"The Full Tactical Spectrum",
-                  body:"In the full game, numbers 1–11 cover every blade of grass.",
-                  points:[
-                    { label:"The Logic", text:"You have a specialized player for every zone: Defense (2, 3, 4, 5), Midfield (6, 8, 10), and Attack (7, 9, 11)." },
-                    { label:"The Shifting Numbers", text:"In a 4-3-3, you keep the wide 7 and 11. In a 4-4-2 Diamond, the 7 and 11 tuck inside to become \"Shuttling Midfielders,\" supporting the 6 and 10." },
-                  ],
-                },
-                {
-                  format:"9v9", icon:"⚡", color:"#a5b4fc",
-                  headline:"The \"Bridge\" Format",
-                  body:"When moving to 9v9, we usually sacrifice the \"Extremes\" to keep the Central Spine strong.",
-                  points:[
-                    { label:"Commonly Dropped", text:"Usually the #7 and #11 (Pure Wingers) or one #4/#5 (Center-Back)." },
-                    { label:"The Scenario", text:"In a 3-3-2, you keep the #2 and #3 (Full-backs) but expect them to provide the width of a #7 and #11. The #10 becomes the primary creator for the #9 and a secondary striker." },
-                  ],
-                },
-                {
-                  format:"7v7", icon:"🔺", color:"#f5c518",
-                  headline:"The Development Core",
-                  body:"This is where players learn the \"Triangles.\" We strip the game down to its most essential roles.",
-                  points:[
-                    { label:"The Core Numbers", text:"1, 4, 5, 6, 8, 10, 9." },
-                    { label:"The Scenario", text:"In a 2-3-1, you have a #4 and #5 (Defense), a #6 (Holding Mid), a #8 and #10 (Attacking Mids/Wingers), and a #9 (Striker)." },
-                    { label:"Tactical Tip", text:"At 7v7, the #6 is the most important player — they are the \"Pivot\" that connects the two defenders to the three attackers." },
-                  ],
-                },
-                {
-                  format:"5v5", icon:"💎", color:"#f87171",
-                  headline:"The \"Diamond\" Essentials",
-                  body:"In 5v5 (Futsal style), players don't just have numbers; they have Universal Roles.",
-                  points:[
-                    { label:"The Numbers Used", text:"1, 5, 6, 10, 9." },
-                    { label:"#1 (GK)", text:"The shot-stopper." },
-                    { label:"#5 (The Fixer)", text:"The lone defender who organizes the shape." },
-                    { label:"#6 & #10 (The Wings)", text:"Constant engines that rotate between defense and attack." },
-                    { label:"#9 (The Pivot)", text:"The target player who stays high to hold up the ball." },
-                  ],
-                },
-              ].map(({ format, icon, color, headline, body, points }) => (
-                <div key={format} className="rounded-xl p-4" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span style={{ fontSize:16 }}>{icon}</span>
-                    <span className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:14, color, letterSpacing:1 }}>{format}</span>
-                    <span className="text-xs font-bold" style={{ color:"rgba(255,255,255,0.5)" }}>— {headline}</span>
-                  </div>
-                  <p className="text-xs leading-relaxed mb-2 italic" style={{ color:"rgba(255,255,255,0.55)" }}>{body}</p>
-                  <div className="flex flex-col gap-1">
-                    {points.map(({ label, text }) => (
-                      <div key={label} className="flex gap-2 text-xs leading-snug">
-                        <span className="font-bold shrink-0" style={{ color }}>{label}:</span>
-                        <span style={{ color:"rgba(255,255,255,0.65)" }}>{text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Conversion table */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span style={{ fontSize:17 }}>🔄</span>
-              <div className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color: BRAND.colors.yellow, letterSpacing:1.5 }}>The Number Conversion Table</div>
-              <div className="flex-1 h-px ml-2" style={{ background:`${BRAND.colors.yellow}30` }}/>
-            </div>
-            <p className="text-xs mb-3 italic" style={{ color:"rgba(255,255,255,0.5)" }}>Which 11v11 roles are "merged" as the format gets smaller:</p>
-            <div className="rounded-xl overflow-hidden" style={{ border:`1px solid ${BRAND.colors.border}` }}>
-              <div className="grid px-3 py-2" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr", gap:"6px", background:"rgba(255,255,255,0.07)" }}>
-                {["Role Type","11v11","9v9","7v7","5v5"].map(h => (
-                  <div key={h} className="text-[9px] font-black tracking-widest uppercase" style={{ color: BRAND.colors.muted }}>{h}</div>
-                ))}
-              </div>
-              {[
-                { role:"The Spine",      c11:"1, 4, 6, 9",    c9:"1, 4, 6, 9",       c7:"1, 5, 6, 9",       c5:"1, 5, 6, 9",      color:"#60a5fa" },
-                { role:"The Width",      c11:"2, 3, 7, 11",   c9:"2, 3 (Hybrid)",    c7:"8, 10 (Hybrid)",   c5:"6, 10 (Rotation)",color:"#34d399" },
-                { role:"The Creativity", c11:"8, 10",         c9:"8, 10",            c7:"10",               c5:"—",               color:"#f5c518" },
-              ].map(({ role, c11, c9, c7, c5, color }, i) => (
-                <div key={role} className="grid px-3 py-2.5 items-center" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr", gap:"6px", background: i%2===0 ? "rgba(255,255,255,0.02)" : "transparent", borderTop:`1px solid ${BRAND.colors.border}` }}>
-                  <div className="text-xs font-bold" style={{ color }}>{role}</div>
-                  <div className="text-xs" style={{ color:"rgba(255,255,255,0.75)" }}>{c11}</div>
-                  <div className="text-xs" style={{ color:"rgba(255,255,255,0.75)" }}>{c9}</div>
-                  <div className="text-xs" style={{ color:"rgba(255,255,255,0.75)" }}>{c7}</div>
-                  <div className="text-xs" style={{ color:"rgba(255,255,255,0.75)" }}>{c5}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Tip */}
-          <div className="rounded-2xl p-4 flex gap-3" style={{ background:`${BRAND.colors.yellow}10`, border:`1px solid ${BRAND.colors.yellow}33` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>💡</span>
-            <p className="text-xs leading-relaxed" style={{ color: BRAND.colors.yellow }}>
-              <strong>Veteran Pro Tip:</strong> The number on the shirt is a starting point, not a cage. The best teams understand that numbers "merge" as the format shrinks — a #2 in 5v5 is really a #6 in disguise.
-            </p>
-          </div>
-        </>
-      )}
-
-      {/* ── 101 Tab ── */}
-      {posTab === "101" && (
-        <>
-          <div className="rounded-2xl p-4 mb-5 flex gap-3" style={{ background:"rgba(45,122,58,0.12)", border:`1px solid rgba(45,122,58,0.3)` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>📋</span>
-            <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.7)" }}>
-              To master the pitch, you must master the roles. From the youth developmental stage to the professional 11v11 grid, every position has a tactical "DNA" that dictates the flow of the match. Here is the ultimate breakdown of key soccer positions and their strategic roles across all formats.
-            </p>
-          </div>
-          {sections.map(({ heading, sub, icon, color, positions }) => (
-            <div key={heading} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span style={{ fontSize:18 }}>{icon}</span>
-                <div>
-                  <div className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:16, color, letterSpacing:1.5 }}>{heading}</div>
-                  <div className="text-[9px] tracking-widest uppercase" style={{ color: BRAND.colors.muted }}>{sub}</div>
-                </div>
-                <div className="flex-1 h-px ml-2" style={{ background:`${color}30` }}/>
-              </div>
-              <div className="flex flex-col gap-2">
-                {positions.map(({ abbr, name, body }) => (
-                  <div key={name} className="rounded-xl p-4 flex gap-3" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-                    <AbbrBadge abbr={abbr} color={color}/>
-                    <div>
-                      <div className="text-xs font-bold mb-1" style={{ color:"#fff" }}>{name}</div>
-                      <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.58)" }}>{body}</p>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              {session ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full flex items-center justify-center font-black text-xs"
+                      style={{ width:28, height:28, background: BRAND.colors.green, color:"#fff", fontSize:11 }}>
+                      {session.email[0].toUpperCase()}
                     </div>
+                    <span className="text-xs font-bold" style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
+                    <button onClick={handleSignOut} className="text-xs transition-opacity hover:opacity-70"
+                      style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b" }}>Sign out</button>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span style={{ fontSize:18 }}>📊</span>
-              <div className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:16, color: BRAND.colors.yellow, letterSpacing:1.5 }}>Tactical Role Evolution by Format</div>
-              <div className="flex-1 h-px ml-2" style={{ background:`${BRAND.colors.yellow}30` }}/>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ border:`1px solid ${BRAND.colors.border}` }}>
-              <div className="grid grid-cols-3 gap-0 px-3 py-2" style={{ background:"rgba(255,255,255,0.06)" }}>
-                {["Format","Key Tactical Focus","Primary Position Role"].map(h => (
-                  <div key={h} className="text-[9px] font-black tracking-widest uppercase" style={{ color: BRAND.colors.muted, letterSpacing:1 }}>{h}</div>
-                ))}
-              </div>
-              {tableRows.map(({ format, focus, role }, i) => (
-                <div key={format} className="grid grid-cols-3 gap-0 px-3 py-2.5 items-start"
-                  style={{ background: i%2===0 ? "rgba(255,255,255,0.02)" : "transparent", borderTop:`1px solid ${BRAND.colors.border}` }}>
-                  <div className="text-xs font-black" style={{ color: BRAND.colors.yellow, fontFamily: BRAND.fonts.display, letterSpacing:1 }}>{format}</div>
-                  <div className="text-xs font-bold" style={{ color:"rgba(255,255,255,0.8)" }}>{focus}</div>
-                  <div className="text-xs leading-snug" style={{ color:"rgba(255,255,255,0.5)" }}>{role}</div>
-                </div>
-              ))}
+                  <button onClick={() => setShowNewPost(v => !v)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl font-black text-xs tracking-wide transition-all hover:brightness-110 active:scale-95"
+                    style={{ background: showNewPost ? "rgba(245,197,24,0.15)" : BRAND.colors.yellow,
+                      color: showNewPost ? BRAND.colors.yellow : "#111",
+                      border:`2px solid ${BRAND.colors.yellow}`, fontFamily: BRAND.fonts.body }}>
+                    {showNewPost ? "✕ Cancel" : "+ New Post"}
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => setShowAuth(true)}
+                  className="px-4 py-2 rounded-xl font-black text-xs tracking-wide transition-all hover:brightness-110"
+                  style={{ background: BRAND.colors.yellow, color:"#111", border:`2px solid ${BRAND.colors.yellow}`, fontFamily: BRAND.fonts.body }}>
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
-          <div className="rounded-2xl p-4 flex gap-3" style={{ background:`${BRAND.colors.yellow}10`, border:`1px solid ${BRAND.colors.yellow}33` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>💡</span>
-            <p className="text-xs leading-relaxed" style={{ color: BRAND.colors.yellow }}>
-              <strong>Veteran Pro Tip:</strong> A position is just a starting point on the map. The best players understand "Total Football" — the ability to fill a teammate's role the moment they vacate it to maintain the team's shape.
-            </p>
-          </div>
-        </>
-      )}
 
-      {/* ── Movement Tab ── */}
-      {posTab === "movement" && (
-        <>
-          <div className="rounded-2xl p-5 mb-5" style={{ background:"rgba(168,85,247,0.1)", border:`1px solid rgba(168,85,247,0.3)` }}>
-            <div className="font-black mb-2" style={{ fontFamily: BRAND.fonts.display, fontSize:18, color:"#c084fc", letterSpacing:1 }}>The Art of the Pitch</div>
-            <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.7)" }}>
-              Soccer is often called "The Beautiful Game," but to a veteran coach, it's a game of geometric chess. Understanding how to manipulate the 115 yards of grass beneath your feet is the difference between a stagnant side and a championship-caliber squad.
-            </p>
-          </div>
-          {movementSections.map(({ heading, icon, color, intro, points, subsections }) => (
-            <div key={heading} className="mb-5">
-              <div className="flex items-center gap-2 mb-2">
-                <span style={{ fontSize:17 }}>{icon}</span>
-                <div className="font-black flex-1" style={{ fontFamily: BRAND.fonts.display, fontSize:14, color, letterSpacing:0.5 }}>{heading}</div>
+          {/* New post composer */}
+          {showNewPost && session && (
+            <div className="rounded-2xl overflow-hidden mb-4" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}20` }}>
+              <div className="flex items-center gap-2 px-5 py-3" style={{ background:"rgba(245,197,24,0.08)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+                <span style={{ fontSize:15 }}>✏️</span>
+                <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color: BRAND.colors.yellow, letterSpacing:2 }}>NEW DISCUSSION</span>
               </div>
-              {intro ? <p className="text-xs leading-relaxed mb-3 italic" style={{ color:"rgba(255,255,255,0.52)" }}>{intro}</p> : null}
-              {points && (
-                <div className="flex flex-col gap-2">
-                  {points.map(({ title, body }) => (
-                    <div key={title} className="rounded-xl p-4" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-                      <div className="text-xs font-bold mb-1" style={{ color }}>{title}</div>
-                      <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.6)" }}>{body}</p>
-                    </div>
+              <div className="p-5 flex flex-col gap-3">
+                <div className="flex gap-2 flex-wrap">
+                  {["General","11v11","9v9","7v7","5v5"].map(t => (
+                    <button key={t} onClick={() => setDraft(d => ({ ...d, tag:t }))}
+                      className="px-3 py-1 rounded-full text-xs font-bold transition-all"
+                      style={{ background: draft.tag===t ? COMMUNITY_TAG_COLORS[t] : "rgba(255,255,255,0.06)",
+                        color: draft.tag===t ? "#fff" : "#64748b",
+                        border:`1px solid ${draft.tag===t ? COMMUNITY_TAG_COLORS[t] : "rgba(255,255,255,0.1)"}`,
+                        fontFamily: BRAND.fonts.body }}>
+                      {t}
+                    </button>
                   ))}
                 </div>
-              )}
-              {subsections && subsections.map(({ title: subTitle, items }) => (
-                <div key={subTitle} className="mb-3 mt-3">
-                  <div className="text-[10px] font-black tracking-widest uppercase mb-2 flex items-center gap-2" style={{ color: BRAND.colors.muted, letterSpacing:2 }}>
-                    {subTitle}<div className="flex-1 h-px" style={{ background:"rgba(255,255,255,0.08)" }}/>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {items.map(({ title, body }) => (
-                      <div key={title} className="rounded-xl p-3.5" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-                        <div className="text-xs font-bold mb-1" style={{ color:"#93c5fd" }}>{title}</div>
-                        <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.6)" }}>{body}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-          <div className="rounded-2xl p-4 flex gap-3 mt-2" style={{ background:`${BRAND.colors.yellow}10`, border:`1px solid ${BRAND.colors.yellow}33` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>⚖️</span>
-            <p className="text-xs leading-relaxed" style={{ color: BRAND.colors.yellow }}>
-              <strong>The Veteran Verdict:</strong> Movement on the pitch is a language. If your lines move together and your runs are purposeful, you don't just play soccer — you dictate it.
-            </p>
-          </div>
-        </>
-      )}
-
-      {posTab === "setpieces" && (
-        <>
-          {/* Hero */}
-          <div className="rounded-2xl p-5 mb-5" style={{ background:"rgba(239,68,68,0.1)", border:`1px solid rgba(239,68,68,0.3)` }}>
-            <div className="font-black mb-2" style={{ fontFamily: BRAND.fonts.display, fontSize:18, color:"#f87171", letterSpacing:1 }}>The "Hidden" Game</div>
-            <p className="text-xs leading-relaxed italic" style={{ color:"rgba(255,255,255,0.75)" }}>
-              They say soccer is a game of fluid movement, but the world's most elite tacticians know a secret: <strong style={{ color:"#fff" }}>The game stops so you can win it.</strong>
-            </p>
-          </div>
-
-          {/* Intro paragraph */}
-          <div className="rounded-2xl p-4 mb-4 flex gap-3" style={{ background:"rgba(45,122,58,0.12)", border:`1px solid rgba(45,122,58,0.3)` }}>
-            <span style={{ fontSize:18, flexShrink:0 }}>📊</span>
-            <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>
-              Set pieces — corners, free kicks, and even the humble throw-in — account for <strong style={{ color:"#fff" }}>over 30% of all goals scored</strong> in professional leagues like the Premier League and Champions League. When the clock stops and the whistle blows, the "Beautiful Game" transforms into a high-stakes chess match of orchestrated chaos.
-            </p>
-          </div>
-
-          {/* Strategic Value section */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span style={{ fontSize:17 }}>🎯</span>
-              <div className="font-black tracking-widest flex-1" style={{ fontFamily: BRAND.fonts.display, fontSize:15, color:"#f87171", letterSpacing:1 }}>The Strategic Value of the "Dead Ball"</div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {[
-                {
-                  icon:"🚩",
-                  title:"Corner Kicks",
-                  body:"It's not just about lofting a ball into the mixer. It's about near-post flick-ons, zonal obstruction, and creating \"second-ball\" chaos that leaves goalkeepers stranded.",
-                  color:"#f87171",
-                },
-                {
-                  icon:"🎯",
-                  title:"Free Kicks",
-                  body:"From the \"Knuckleball\" strike to the tactical decoy wall, a direct or indirect free kick is the ultimate test of a defense's discipline under fire.",
-                  color:"#facc15",
-                },
-                {
-                  icon:"🤾",
-                  title:"Throw-ins",
-                  body:"Often overlooked, but a specialized long throw or a quick \"release\" throw-in is the most effective way to bypass a high press and maintain territorial dominance.",
-                  color:"#60a5fa",
-                },
-              ].map(({ icon, title, body, color }) => (
-                <div key={title} className="rounded-xl p-4 flex gap-3" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
-                  <div className="rounded-lg flex items-center justify-center shrink-0 font-black"
-                    style={{ width:44, height:44, background:`${color}18`, border:`1px solid ${color}44`, fontSize:20 }}>
-                    {icon}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold mb-1" style={{ color }}>{title}</div>
-                    <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.6)" }}>{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Under Construction banner */}
-          <div className="rounded-2xl p-5 mb-4 text-center" style={{ background:"rgba(99,102,241,0.12)", border:`2px dashed rgba(99,102,241,0.5)` }}>
-            <div className="font-black mb-2" style={{ fontFamily: BRAND.fonts.display, fontSize:16, color:"#a5b4fc", letterSpacing:1.5 }}>
-              🚧 UNDER CONSTRUCTION: THE SET PIECE MASTERCLASS 🚧
-            </div>
-            <p className="text-xs leading-relaxed mb-4" style={{ color:"rgba(255,255,255,0.65)" }}>
-              We are currently in the laboratory, breaking down the world's most lethal "dead ball" routines. From Ancelotti's defensive blocks to Klopp's heavy-metal corners, our next deep dive is going to change the way you look at a stopped clock.
-            </p>
-            <div className="text-left mb-4">
-              <div className="text-[10px] font-black tracking-widest uppercase mb-2 flex items-center gap-2" style={{ color:"#a5b4fc", letterSpacing:2 }}>
-                Our next big blog release will cover
-                <div className="flex-1 h-px" style={{ background:"rgba(165,180,252,0.25)" }}/>
+                <input className="w-full rounded-xl px-3 py-2 text-sm font-bold focus:outline-none"
+                  style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body }}
+                  placeholder="Discussion title…" value={draft.title} onChange={e => setDraft(d => ({ ...d, title:e.target.value }))}/>
+                <textarea rows={4} className="w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
+                  style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body }}
+                  placeholder="Share your question, tactic, or insight…" value={draft.body} onChange={e => setDraft(d => ({ ...d, body:e.target.value }))}/>
+                {error && <p className="text-xs" style={{ color:"#f87171" }}>{error}</p>}
+                <button onClick={submitPost} disabled={submitting || !draft.title.trim() || !draft.body.trim()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-black tracking-wide transition-all hover:brightness-110 active:scale-95 self-start"
+                  style={{ background: draft.title.trim() && draft.body.trim() ? BRAND.colors.yellow : "rgba(255,255,255,0.06)",
+                    color: draft.title.trim() && draft.body.trim() ? "#111" : "#475569",
+                    fontFamily: BRAND.fonts.body, border:"none",
+                    cursor: draft.title.trim() && draft.body.trim() ? "pointer" : "default" }}>
+                  {submitting ? "Posting…" : "Post Discussion"}
+                </button>
               </div>
+            </div>
+          )}
+
+          {/* Filter pills */}
+          <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling:"touch" }}>
+            {COMMUNITY_TAGS.map(t => (
+              <button key={t} onClick={() => setFilter(t)}
+                className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all"
+                style={{ background: filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : "rgba(255,255,255,0.06)",
+                  color: filter===t ? "#fff" : "#64748b",
+                  border:`1px solid ${filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : "rgba(255,255,255,0.1)"}`,
+                  fontFamily: BRAND.fonts.body }}>
+                {t === "all" ? "All Topics" : t}
+              </button>
+            ))}
+          </div>
+
+          {/* User discussions */}
+          {loadingPosts ? (
+            <p className="text-xs text-center py-6" style={{ color:"#475569" }}>Loading discussions…</p>
+          ) : filteredUserPosts.length > 0 && (
+            <div className="mb-6">
+              <SectionHeader icon="💬" title="DISCUSSIONS" count={filteredUserPosts.length}/>
               <div className="flex flex-col gap-2">
-                {[
-                  { title:"The Science of the Delivery", body:"Inswinging vs. Outswinging trajectories — and when each is lethal." },
-                  { title:"The \"Blocker\" Role", body:"How to legally screen a keeper to create a tap-in opportunity at the near post." },
-                  { title:"Throw-in Tactics", body:"Why the marginal gains of a specialized throw-in coach are winning trophies at the highest level." },
-                ].map(({ title, body }) => (
-                  <div key={title} className="rounded-xl p-3.5 flex gap-3 items-start" style={{ background:"rgba(255,255,255,0.04)", border:`1px solid rgba(165,180,252,0.15)` }}>
-                    <span style={{ color:"#a5b4fc", fontSize:14, flexShrink:0, marginTop:1 }}>›</span>
-                    <div>
-                      <div className="text-xs font-bold mb-0.5" style={{ color:"#c7d2fe" }}>{title}</div>
-                      <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.5)" }}>{body}</p>
-                    </div>
-                  </div>
-                ))}
+                {filteredUserPosts.map(p => <PostCard key={p.id} post={p}/>)}
               </div>
             </div>
-            <p className="text-xs font-bold italic" style={{ color:"rgba(165,180,252,0.8)" }}>
-              Stay tuned. The whistle is about to blow, and you won't want to be caught standing still.
-            </p>
-          </div>
+          )}
+
+          {/* Formation guides */}
+          {filteredFormations.length > 0 && (
+            <div className="mb-6">
+              <SectionHeader icon="📖" title="FORMATION GUIDES" count={filteredFormations.length}/>
+              <div className="flex flex-col gap-2">
+                {filteredFormations.map(p => <PostCard key={p.id} post={p}/>)}
+              </div>
+            </div>
+          )}
+
+          {!loadingPosts && filteredFormations.length === 0 && filteredUserPosts.length === 0 && (
+            <p className="text-xs text-center py-8 italic" style={{ color:"#475569" }}>No posts in this category yet — be the first!</p>
+          )}
         </>
       )}
     </div>
   );
+
 }
+
 
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
@@ -2426,8 +2205,7 @@ export default function App() {
 
   const tabs = [
     { id:"builder",   label:"⚽  Builder" },
-    { id:"blog",      label:"📖  Formations" },
-    { id:"positions", label:"🎯  Positions" },
+    { id:"community", label:"🏟️  Community" },
     { id:"about",     label:"🌍  About" },
   ];
 
@@ -2536,8 +2314,7 @@ export default function App() {
           />
         )}
         {activeTab === "about"     && <AboutTab/>}
-        {activeTab === "blog"      && <BlogTab/>}
-        {activeTab === "positions" && <PositionsTab/>}
+        {activeTab === "community" && <CommunityTab/>}
       </main>
 
       {/* ── Footer ── */}
