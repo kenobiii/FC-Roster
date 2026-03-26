@@ -304,8 +304,9 @@ function PlayerSpot({ player, subName, jerseyColor, onStarterChange, onSubChange
       {/* Circle — the ONLY drag handle. Only responds in moveMode */}
       <div
         className="rounded-full flex items-center justify-center font-black shadow-xl border-2 border-white/60"
-        style={{ width:44, height:44, flexShrink:0, background:jerseyColor, color:fg, letterSpacing:0.3,
-          fontSize: player.pos.length >= 3 ? 12 : player.pos.length === 2 ? 15 : 18,
+        style={{ width:44, height:44, flexShrink:0, background:jerseyColor, color:fg, letterSpacing:0,
+          fontSize: player.pos.length >= 3 ? 11 : player.pos.length === 2 ? 15 : 18,
+          lineHeight:1, textAlign:"center",
           cursor: moveMode ? "grab" : "default",
           touchAction:"none",
         }}
@@ -816,7 +817,7 @@ function BuilderLayout({
 
   const Pitch = (
     <>
-    <div ref={exportRef} className="flex flex-col items-center gap-3 px-3 pt-4 pb-10 rounded-2xl" style={{ background:"#030712" }}>
+    <div ref={exportRef} className="flex flex-col items-center gap-3 px-6 pt-4 pb-6 rounded-2xl" style={{ background:"#030712" }}>
       <div className="flex flex-col gap-1 items-center text-center" style={{ width:"100%" }}>
         <div className="tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize: pitchSize.isDesktop ? 36 : 28, textShadow:`0 2px 20px ${jerseyColor}99` }}>
           {teamName || "MY TEAM FC"}
@@ -828,6 +829,8 @@ function BuilderLayout({
           {formation}
         </div>
       </div>
+      {/* Pitch wrapper — extra padding on all sides so player labels never clip in export */}
+      <div style={{ padding:"30px 20px 60px 20px", width:"100%", display:"flex", justifyContent:"center" }}>
       <div ref={pitchRef} className="relative rounded-2xl shadow-2xl"
         style={{ width: pitchSize.w, aspectRatio:"2/3", background: pitchBg, boxShadow:`0 0 60px rgba(0,0,0,0.5), 0 20px 60px rgba(0,0,0,0.7)`, overflow:"visible", flexShrink:0, cursor: dragging ? "grabbing" : "default", touchAction: moveMode ? "none" : "pan-y" }}
         onPointerMove={e => { if (dragging) onCirclePointerMove(e, dragging); }}
@@ -885,8 +888,9 @@ function BuilderLayout({
           })()}
         </svg>
       </div>
+      </div>{/* end pitch wrapper */}
       {/* FCROSTER.COM branding — captured in export */}
-      <div className="w-full text-center pt-2 pb-1">
+      <div className="w-full text-center pt-1 pb-2">
         <span className="font-black tracking-widest" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#a855f7", letterSpacing:3 }}>
           FCROSTER.COM
         </span>
@@ -2075,8 +2079,20 @@ export default function App() {
     if (!exportRef.current) return;
     setExporting(true);
     try {
+      const el = exportRef.current;
       const html2canvas = (await import("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.esm.js")).default;
-      const canvas = await html2canvas(exportRef.current, { backgroundColor:"#030712", scale:2, useCORS:true, logging:false });
+      const canvas = await html2canvas(el, {
+        backgroundColor: "#030712",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth:  el.scrollWidth,
+        windowHeight: el.scrollHeight,
+        width:  el.offsetWidth,
+        height: el.offsetHeight,
+      });
       const link = document.createElement("a");
       link.download = `${(teamName||"FCRoster").replace(/\s+/g,"_")}_${formation}.png`;
       link.href = canvas.toDataURL("image/png");
