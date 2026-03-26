@@ -1325,8 +1325,26 @@ function AuthModal({ onClose, onAuth }) {
 }
 
 // ─── Comment Composer — module-scope so it never remounts on parent re-render ──
-function CommentComposer({ session, postId, submitting, error, onSubmit, onShowAuth }) {
-  const [draft, setDraft] = useState("");
+function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
+  const [draft,      setDraft]      = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error,      setError]      = useState("");
+  const ref = useRef(null);
+
+  async function handleSubmit() {
+    if (!draft.trim() || submitting) return;
+    setSubmitting(true); setError("");
+    try {
+      await onSubmit(postId, draft.trim());
+      setDraft("");
+      if (ref.current) ref.current.focus();
+    } catch(e) {
+      setError("Failed to post comment — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="px-5 py-4" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
       {session ? (
@@ -1334,21 +1352,27 @@ function CommentComposer({ session, postId, submitting, error, onSubmit, onShowA
           <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
             Replying as <span style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
           </div>
-          <textarea rows={3} placeholder="Share your thoughts…"
+          <textarea
+            ref={ref}
+            rows={3}
+            placeholder="Share your thoughts…"
             className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
             style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            onFocus={e => setTimeout(() => e.target.scrollIntoView({ behavior:"smooth", block:"center" }), 300)}/>
+            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleSubmit(); }}
+          />
           {error && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{error}</p>}
           <button
-            onClick={() => { if (draft.trim()) { onSubmit(postId, draft); setDraft(""); } }}
+            onClick={handleSubmit}
             disabled={submitting || !draft.trim()}
             className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
-            style={{ background: draft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)",
+            style={{
+              background: draft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)",
               color: draft.trim() ? "#fff" : "#475569",
               fontFamily: BRAND.fonts.body, border:"none",
-              cursor: draft.trim() ? "pointer" : "default" }}>
+              cursor: draft.trim() ? "pointer" : "default",
+            }}>
             {submitting ? "Posting…" : "Post Reply"}
           </button>
         </>
@@ -1641,8 +1665,6 @@ function CommunityTab() {
               <CommentComposer
                 session={session}
                 postId={post.id}
-                submitting={submitting}
-                error={error}
                 onSubmit={submitComment}
                 onShowAuth={() => setShowAuth(true)}
               />
