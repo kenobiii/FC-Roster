@@ -1322,6 +1322,46 @@ function AuthModal({ onClose, onAuth }) {
   );
 }
 
+// ─── TagPill ──────────────────────────────────────────────────────────────────
+function TagPill({ tag, small }) {
+  const color = COMMUNITY_TAG_COLORS[tag] || "#64748b";
+  return (
+    <span style={{ background:`${color}22`, color, border:`1px solid ${color}44`,
+      borderRadius:20, padding: small ? "1px 8px" : "3px 10px",
+      fontSize: small ? 9 : 10, fontWeight:700, letterSpacing:1, whiteSpace:"nowrap" }}>
+      {tag}
+    </span>
+  );
+}
+
+// ─── PostCard ─────────────────────────────────────────────────────────────────
+function PostCard({ post, onOpen }) {
+  return (
+    <button onClick={() => onOpen(post)} className="w-full text-left rounded-2xl transition-all hover:brightness-110 active:scale-[0.99]"
+      style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)`, padding:"14px 16px" }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <TagPill tag={post.tag || "General"}/>
+            {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
+          </div>
+          <div className="font-bold text-sm leading-snug" style={{ color:"#f1f5f9", fontFamily: BRAND.fonts.body }}>{post.title}</div>
+          <div className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.4)", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+            {post.why || post.body || ""}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex items-center gap-1" style={{ color: post.commentCount > 0 ? BRAND.colors.yellow : "#475569" }}>
+            <span style={{ fontSize:11 }}>💬</span>
+            <span style={{ fontSize:11, fontWeight:700 }}>{post.commentCount || 0}</span>
+          </div>
+          <span style={{ fontSize:9, color:"#475569", whiteSpace:"nowrap" }}>{post.lastActivity || ""}</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 // ─── CommentComposer ─────────────────────────────────────────────────────────────
 // Module-scope: owns all state so typing never causes parent re-render / focus loss
 function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
@@ -1378,6 +1418,84 @@ function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── PostView ─────────────────────────────────────────────────────────────────
+function PostView({ post, postComments, loadingCmts, session, onSubmit, onShowAuth, onBack }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <button onClick={onBack} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
+        style={{ color:"#64748b", background:"none", border:"none", cursor:"pointer", padding:0, fontFamily: BRAND.fonts.body }}>
+        ← Back to Community
+      </button>
+      {/* Post body */}
+      <div className="rounded-2xl p-5" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.1)` }}>
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <TagPill tag={post.tag || "General"}/>
+          {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
+        </div>
+        <div className="font-black mb-1" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(18px,5vw,26px)", color:"#fff", letterSpacing:0.5 }}>
+          {post.title}
+        </div>
+        <div className="text-xs mb-4" style={{ color:"#475569" }}>
+          {post.author_name && <>Posted by <span style={{ color:"#94a3b8" }}>{post.author_name}</span> · </>}
+          {post.created_at ? new Date(post.created_at).toLocaleDateString() : ""}
+        </div>
+        {post.source === "formation" && post.formation && (
+          <div style={{ width:90, marginBottom:16 }}>
+            <FormationDiagram formation={post.formation} format={post.tag==="11v11"?11:post.tag==="9v9"?9:post.tag==="7v7"?7:5}/>
+          </div>
+        )}
+        {post.intro && <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.6)", fontStyle:"italic" }}>{post.intro}</p>}
+        {post.why && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.yellow }}>Why It Works</div>
+          <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.75)" }}>{post.why}</p></>}
+        {post.fundamentals && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.green }}>Coaching Fundamentals</div>
+          <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.fundamentals}</p></>}
+        {post.body && !post.why && <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.body}</p>}
+      </div>
+      {/* Comments */}
+      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)` }}>
+        <div className="px-5 py-3 flex items-center gap-2" style={{ background:"rgba(255,255,255,0.04)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+          <span style={{ fontSize:14 }}>💬</span>
+          <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#e2e8f0", letterSpacing:1.5 }}>
+            DISCUSSION {post.source==="user" ? `(${postComments.length})` : ""}
+          </span>
+        </div>
+        {post.source === "formation" ? (
+          <div className="px-5 py-6 text-center">
+            <p className="text-xs italic" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
+              Formation guides are reference material. Start a Discussion post to chat about this formation!
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col">
+              {loadingCmts && <p className="text-xs text-center py-4" style={{ color:"#475569" }}>Loading comments…</p>}
+              {!loadingCmts && postComments.length === 0 && (
+                <p className="text-xs text-center py-6 italic px-5" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
+                  No replies yet — be the first!
+                </p>
+              )}
+              {postComments.map((c, i) => (
+                <div key={c.id} className="px-5 py-4" style={{ borderTop: i > 0 ? `1px solid rgba(255,255,255,0.05)` : "none" }}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="rounded-full flex items-center justify-center font-black"
+                      style={{ width:26, height:26, background: BRAND.colors.green, color:"#fff", fontSize:10 }}>
+                      {(c.author_name || "A")[0].toUpperCase()}
+                    </div>
+                    <span className="text-xs font-bold" style={{ color:"#94a3b8" }}>{c.author_name || "Anonymous"}</span>
+                    <span style={{ fontSize:10, color:"#475569" }}>· {new Date(c.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.78)", fontFamily: BRAND.fonts.body }}>{c.body}</p>
+                </div>
+              ))}
+            </div>
+            <CommentComposer session={session} postId={post.id} onSubmit={onSubmit} onShowAuth={onShowAuth}/>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -1518,130 +1636,6 @@ function CommunityTab() {
   async function handleSignOut() {
     if (session) await sb.signOut(session.token).catch(() => {});
     setSession(null);
-  }
-
-  // ── Components ────────────────────────────────────────────────────────────
-  function TagPill({ tag, small }) {
-    const color = COMMUNITY_TAG_COLORS[tag] || "#64748b";
-    return (
-      <span style={{ background:`${color}22`, color, border:`1px solid ${color}44`,
-        borderRadius:20, padding: small ? "1px 8px" : "3px 10px",
-        fontSize: small ? 9 : 10, fontWeight:700, letterSpacing:1, whiteSpace:"nowrap" }}>
-        {tag}
-      </span>
-    );
-  }
-
-  function PostCard({ post, onOpen }) {
-    return (
-      <button onClick={() => onOpen(post)} className="w-full text-left rounded-2xl transition-all hover:brightness-110 active:scale-[0.99]"
-        style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)`, padding:"14px 16px" }}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <TagPill tag={post.tag || "General"}/>
-              {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
-            </div>
-            <div className="font-bold text-sm leading-snug" style={{ color:"#f1f5f9", fontFamily: BRAND.fonts.body }}>{post.title}</div>
-            <div className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.4)", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
-              {post.why || post.body || ""}
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <div className="flex items-center gap-1" style={{ color: post.commentCount > 0 ? BRAND.colors.yellow : "#475569" }}>
-              <span style={{ fontSize:11 }}>💬</span>
-              <span style={{ fontSize:11, fontWeight:700 }}>{post.commentCount || 0}</span>
-            </div>
-            <span style={{ fontSize:9, color:"#475569", whiteSpace:"nowrap" }}>{post.lastActivity || ""}</span>
-          </div>
-        </div>
-      </button>
-    );
-  }
-
-  // ── Post view ─────────────────────────────────────────────────────────────
-  function PostView({ post, postComments, loadingCmts, session, onSubmit, onShowAuth, onBack }) {
-
-    return (
-      <div className="flex flex-col gap-4">
-        <button onClick={onBack} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
-          style={{ color:"#64748b", background:"none", border:"none", cursor:"pointer", padding:0, fontFamily: BRAND.fonts.body }}>
-          ← Back to Community
-        </button>
-
-        {/* Post body */}
-        <div className="rounded-2xl p-5" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.1)` }}>
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <TagPill tag={post.tag || "General"}/>
-            {post.source === "formation" && <span style={{ fontSize:9, color:"#475569", fontWeight:600, letterSpacing:1 }}>FORMATION GUIDE</span>}
-          </div>
-          <div className="font-black mb-1" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(18px,5vw,26px)", color:"#fff", letterSpacing:0.5 }}>
-            {post.title}
-          </div>
-          <div className="text-xs mb-4" style={{ color:"#475569" }}>
-            {post.author_name && <>Posted by <span style={{ color:"#94a3b8" }}>{post.author_name}</span> · </>}
-            {post.created_at ? new Date(post.created_at).toLocaleDateString() : ""}
-          </div>
-
-          {post.source === "formation" && post.formation && (
-            <div style={{ width:90, marginBottom:16 }}>
-              <FormationDiagram formation={post.formation} format={post.tag==="11v11"?11:post.tag==="9v9"?9:post.tag==="7v7"?7:5}/>
-            </div>
-          )}
-
-          {post.intro && <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.6)", fontStyle:"italic" }}>{post.intro}</p>}
-          {post.why && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.yellow }}>Why It Works</div>
-            <p className="text-sm leading-relaxed mb-3" style={{ color:"rgba(255,255,255,0.75)" }}>{post.why}</p></>}
-          {post.fundamentals && <><div className="text-xs font-black tracking-widest uppercase mb-1" style={{ color: BRAND.colors.green }}>Coaching Fundamentals</div>
-            <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.fundamentals}</p></>}
-          {post.body && !post.why && <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.75)" }}>{post.body}</p>}
-        </div>
-
-        {/* Comments */}
-        <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`1px solid rgba(255,255,255,0.08)` }}>
-          <div className="px-5 py-3 flex items-center gap-2" style={{ background:"rgba(255,255,255,0.04)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
-            <span style={{ fontSize:14 }}>💬</span>
-            <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#e2e8f0", letterSpacing:1.5 }}>
-              DISCUSSION {post.source==="user" ? `(${postComments.length})` : ""}
-            </span>
-          </div>
-
-          {post.source === "formation" ? (
-            <div className="px-5 py-6 text-center">
-              <p className="text-xs italic" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
-                Formation guides are reference material. Start a Discussion post to chat about this formation!
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-col" style={{ borderColor:"rgba(255,255,255,0.05)" }}>
-                {loadingCmts && <p className="text-xs text-center py-4" style={{ color:"#475569" }}>Loading comments…</p>}
-                {!loadingCmts && postComments.length === 0 && (
-                  <p className="text-xs text-center py-6 italic px-5" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
-                    No replies yet — be the first!
-                  </p>
-                )}
-                {postComments.map((c, i) => (
-                  <div key={c.id} className="px-5 py-4" style={{ borderTop: i > 0 ? `1px solid rgba(255,255,255,0.05)` : "none" }}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="rounded-full flex items-center justify-center font-black"
-                        style={{ width:26, height:26, background: BRAND.colors.green, color:"#fff", fontSize:10 }}>
-                        {(c.author_name || "A")[0].toUpperCase()}
-                      </div>
-                      <span className="text-xs font-bold" style={{ color:"#94a3b8" }}>{c.author_name || "Anonymous"}</span>
-                      <span style={{ fontSize:10, color:"#475569" }}>· {new Date(c.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color:"rgba(255,255,255,0.78)", fontFamily: BRAND.fonts.body }}>{c.body}</p>
-                  </div>
-                ))}
-              </div>
-
-              <CommentComposer session={session} postId={post.id} onSubmit={onSubmit} onShowAuth={onShowAuth}/>
-            </>
-          )}
-        </div>
-      </div>
-    );
   }
 
   // ── Main render ───────────────────────────────────────────────────────────
