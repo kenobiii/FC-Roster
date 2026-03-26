@@ -1409,15 +1409,19 @@ function CommunityTab() {
     setSubmitting(true); setError("");
     try {
       await sb.authedInsert("posts", {
-        title: draft.title.trim(),
-        body:  draft.body.trim(),
-        tag:   draft.tag,
+        title:       draft.title.trim(),
+        body:        draft.body.trim(),
+        tag:         draft.tag,
         author_name: session.email.split("@")[0],
+        user_id:     session.user.id,
       }, session.token);
       setDraft({ title:"", tag:"General", body:"" });
       setShowNewPost(false);
       await loadPosts();
-    } catch(e) { setError("Failed to post — please try again."); }
+    } catch(e) {
+      console.error("submitPost error:", e);
+      setError("Failed to post — please try again.");
+    }
     finally { setSubmitting(false); }
   }
 
@@ -1427,13 +1431,17 @@ function CommunityTab() {
     setSubmitting(true); setError("");
     try {
       await sb.authedInsert("comments", {
-        post_id: postId,
-        body: commentDraft.trim(),
+        post_id:     postId,
+        body:        commentDraft.trim(),
         author_name: session.email.split("@")[0],
+        user_id:     session.user.id,
       }, session.token);
       setCommentDraft("");
       await loadComments(postId);
-    } catch(e) { setError("Failed to post comment — please try again."); }
+    } catch(e) {
+      console.error("submitComment error:", e);
+      setError("Failed to post comment — please try again.");
+    }
     finally { setSubmitting(false); }
   }
 
