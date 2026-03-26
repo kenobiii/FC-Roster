@@ -1365,22 +1365,24 @@ function PostCard({ post, onOpen }) {
 // ─── CommentComposer ─────────────────────────────────────────────────────────────
 // Module-scope: owns all state so typing never causes parent re-render / focus loss
 function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
-  const [draft, setDraft] = useState("");
-  const [busy,  setBusy]  = useState(false);
-  const [err,   setErr]   = useState("");
-  const ref = useRef(null);
+  const ref  = useRef(null);
+  const busy = useRef(false);
+  const [err,    setErr]    = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function go() {
-    if (!draft.trim() || busy) return;
-    setBusy(true); setErr("");
+    const text = ref.current?.value?.trim();
+    if (!text || busy.current) return;
+    busy.current = true;
+    setLoading(true); setErr("");
     try {
-      await onSubmit(postId, draft.trim());
-      setDraft("");
-      if (ref.current) ref.current.focus();
+      await onSubmit(postId, text);
+      if (ref.current) { ref.current.value = ""; ref.current.focus(); }
     } catch(e) {
       setErr("Failed to post — please try again.");
     } finally {
-      setBusy(false);
+      busy.current = false;
+      setLoading(false);
     }
   }
 
@@ -1397,15 +1399,13 @@ function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
             placeholder="Share your thoughts…"
             className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
             style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
           />
           {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
-          <button onClick={go} disabled={busy || !draft.trim()}
+          <button onClick={go} disabled={loading}
             className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
-            style={{ background:draft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)", color:draft.trim() ? "#fff" : "#475569", fontFamily:BRAND.fonts.body, border:"none", cursor:draft.trim() ? "pointer" : "default" }}>
-            {busy ? "Posting…" : "Post Reply"}
+            style={{ background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.body, border:"none", cursor:"pointer" }}>
+            {loading ? "Posting…" : "Post Reply"}
           </button>
         </>
       ) : (
