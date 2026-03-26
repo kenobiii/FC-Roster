@@ -1204,8 +1204,8 @@ const BLOG_POSTS = [
 ];
 
 // ─── Supabase Client ──────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://myorudjfmsmixgjygsuk.supabase.co";
-const SUPABASE_ANON = "sb_publishable_S6D0x0ZdM9PSqL4UFpv8Zg_kgbKbCjm";
+const SUPABASE_URL  = "https://myorudjfmsmixgjygsuk.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15b3J1ZGpmbXNtaXhnanlnc3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MjYxNDIsImV4cCI6MjA5MDEwMjE0Mn0.nENeexKGlEWkUhp-Z7tDmMVcng9KD7_tAFDJqf5rzfQ";
 
 // Lightweight Supabase REST helper — no SDK needed
 const sb = {
