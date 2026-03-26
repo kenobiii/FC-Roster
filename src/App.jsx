@@ -1324,6 +1324,48 @@ function AuthModal({ onClose, onAuth }) {
   );
 }
 
+// ─── Comment Composer — module-scope so it never remounts on parent re-render ──
+function CommentComposer({ session, postId, submitting, error, onSubmit, onShowAuth }) {
+  const [draft, setDraft] = useState("");
+  return (
+    <div className="px-5 py-4" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
+      {session ? (
+        <>
+          <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
+            Replying as <span style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
+          </div>
+          <textarea rows={3} placeholder="Share your thoughts…"
+            className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
+            style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onFocus={e => setTimeout(() => e.target.scrollIntoView({ behavior:"smooth", block:"center" }), 300)}/>
+          {error && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{error}</p>}
+          <button
+            onClick={() => { if (draft.trim()) { onSubmit(postId, draft); setDraft(""); } }}
+            disabled={submitting || !draft.trim()}
+            className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
+            style={{ background: draft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)",
+              color: draft.trim() ? "#fff" : "#475569",
+              fontFamily: BRAND.fonts.body, border:"none",
+              cursor: draft.trim() ? "pointer" : "default" }}>
+            {submitting ? "Posting…" : "Post Reply"}
+          </button>
+        </>
+      ) : (
+        <div className="text-center py-2">
+          <p className="text-xs mb-3" style={{ color:"#64748b", fontFamily: BRAND.fonts.body }}>Sign in to join the discussion</p>
+          <button onClick={onShowAuth}
+            className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+            style={{ background: BRAND.colors.yellow, color:"#111", fontFamily: BRAND.fonts.body, border:"none", cursor:"pointer" }}>
+            Sign In / Create Account
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Community Tab ─────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, count }) {
   return (
@@ -1375,7 +1417,6 @@ function CommunityTab() {
   // ── Composer state ────────────────────────────────────────────────────────
   const [showNewPost, setShowNewPost] = useState(false);
   const [draft,       setDraft]       = useState({ title:"", tag:"General", body:"" });
-  const [commentDraft, setCommentDraft] = useState("");
   const [submitting,  setSubmitting]  = useState(false);
   const [error,       setError]       = useState("");
 
@@ -1445,17 +1486,16 @@ function CommunityTab() {
   }
 
   // ── Submit comment ────────────────────────────────────────────────────────
-  async function submitComment(postId) {
-    if (!commentDraft.trim() || !session) return;
+  async function submitComment(postId, body) {
+    if (!body.trim() || !session) return;
     setSubmitting(true); setError("");
     try {
       await sb.authedInsert("comments", {
         post_id:     postId,
-        body:        commentDraft.trim(),
+        body:        body.trim(),
         author_name: session.email.split("@")[0],
         user_id:     session.user.id,
       }, session.token);
-      setCommentDraft("");
       await loadComments(postId);
     } catch(e) {
       setError("Failed to post comment — please try again.");
@@ -1598,38 +1638,14 @@ function CommunityTab() {
               </div>
 
               {/* Comment composer */}
-              <div className="px-5 py-4" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
-                {session ? (
-                  <>
-                    <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
-                      Replying as <span style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
-                    </div>
-                    <textarea rows={3} placeholder="Share your thoughts…"
-                      className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
-                      style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
-                      value={commentDraft} onChange={e => setCommentDraft(e.target.value)}
-                      onFocus={e => setTimeout(() => e.target.scrollIntoView({ behavior:"smooth", block:"center" }), 300)}/>
-                    {error && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{error}</p>}
-                    <button onClick={() => submitComment(post.id)} disabled={submitting || !commentDraft.trim()}
-                      className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
-                      style={{ background: commentDraft.trim() ? BRAND.colors.green : "rgba(255,255,255,0.06)",
-                        color: commentDraft.trim() ? "#fff" : "#475569",
-                        fontFamily: BRAND.fonts.body, border:"none",
-                        cursor: commentDraft.trim() ? "pointer" : "default" }}>
-                      {submitting ? "Posting…" : "Post Reply"}
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-center py-2">
-                    <p className="text-xs mb-3" style={{ color:"#64748b", fontFamily: BRAND.fonts.body }}>Sign in to join the discussion</p>
-                    <button onClick={() => setShowAuth(true)}
-                      className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
-                      style={{ background: BRAND.colors.yellow, color:"#111", fontFamily: BRAND.fonts.body, border:"none", cursor:"pointer" }}>
-                      Sign In / Create Account
-                    </button>
-                  </div>
-                )}
-              </div>
+              <CommentComposer
+                session={session}
+                postId={post.id}
+                submitting={submitting}
+                error={error}
+                onSubmit={submitComment}
+                onShowAuth={() => setShowAuth(true)}
+              />
             </>
           )}
         </div>
