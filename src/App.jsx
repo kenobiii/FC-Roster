@@ -1364,10 +1364,10 @@ function PostCard({ post, onOpen }) {
 
 // ─── CommentComposer ─────────────────────────────────────────────────────────────
 // Module-scope: owns all state so typing never causes parent re-render / focus loss
-function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
+function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
   const ref  = useRef(null);
   const busy = useRef(false);
-  const [err,    setErr]    = useState("");
+  const [err,     setErr]     = useState("");
   const [loading, setLoading] = useState(false);
 
   async function go() {
@@ -1386,44 +1386,44 @@ function CommentComposer({ session, postId, onSubmit, onShowAuth }) {
     }
   }
 
+  if (!signedIn) {
+    return (
+      <div className="px-5 py-4 text-center" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
+        <p className="text-xs mb-3" style={{ color:"#64748b", fontFamily:BRAND.fonts.body }}>Sign in to join the discussion</p>
+        <button onClick={onShowAuth}
+          className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+          style={{ background:BRAND.colors.yellow, color:"#111", fontFamily:BRAND.fonts.body, border:"none", cursor:"pointer" }}>
+          Sign In / Create Account
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="px-5 py-4" style={{ borderTop:`1px solid rgba(255,255,255,0.08)`, background:"rgba(255,255,255,0.02)" }}>
-      {session ? (
-        <>
-          <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
-            Replying as <span style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
-          </div>
-          <textarea
-            ref={ref}
-            rows={3}
-            placeholder="Share your thoughts…"
-            className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
-            style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
-            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
-          />
-          {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
-          <button onClick={go} disabled={loading}
-            className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
-            style={{ background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.body, border:"none", cursor:"pointer" }}>
-            {loading ? "Posting…" : "Post Reply"}
-          </button>
-        </>
-      ) : (
-        <div className="text-center py-2">
-          <p className="text-xs mb-3" style={{ color:"#64748b", fontFamily:BRAND.fonts.body }}>Sign in to join the discussion</p>
-          <button onClick={onShowAuth}
-            className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
-            style={{ background:BRAND.colors.yellow, color:"#111", fontFamily:BRAND.fonts.body, border:"none", cursor:"pointer" }}>
-            Sign In / Create Account
-          </button>
-        </div>
-      )}
+      <div className="text-xs font-bold mb-2" style={{ color:"#64748b" }}>
+        Replying as <span style={{ color:"#94a3b8" }}>{username}</span>
+      </div>
+      <textarea
+        ref={ref}
+        rows={3}
+        placeholder="Share your thoughts…"
+        className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
+        style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
+        onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
+      />
+      {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
+      <button onClick={go} disabled={loading}
+        className="px-5 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95"
+        style={{ background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.body, border:"none", cursor:"pointer" }}>
+        {loading ? "Posting…" : "Post Reply"}
+      </button>
     </div>
   );
 }
 
 // ─── PostView ─────────────────────────────────────────────────────────────────
-function PostView({ post, postComments, loadingCmts, session, onSubmit, onShowAuth, onBack }) {
+function PostView({ post, postComments, loadingCmts, signedIn, username, onSubmit, onShowAuth, onBack }) {
   return (
     <div className="flex flex-col gap-4">
       <button onClick={onBack} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
@@ -1492,7 +1492,13 @@ function PostView({ post, postComments, loadingCmts, session, onSubmit, onShowAu
                 </div>
               ))}
             </div>
-            <CommentComposer session={session} postId={post.id} onSubmit={onSubmit} onShowAuth={onShowAuth}/>
+            <CommentComposer
+              signedIn={signedIn}
+              username={username}
+              postId={post.id}
+              onSubmit={onSubmit}
+              onShowAuth={onShowAuth}
+            />
           </>
         )}
       </div>
@@ -1655,10 +1661,12 @@ function CommunityTab() {
 
       {view === "post" && activePost ? (
         <PostView
+          key={activePost.id}
           post={activePost}
           postComments={activePost?.source === "user" ? (comments[activePost.id] || []) : []}
           loadingCmts={loadingCmts}
-          session={session}
+          signedIn={!!session}
+          username={session?.email?.split("@")[0] || ""}
           onSubmit={submitComment}
           onShowAuth={() => setShowAuth(true)}
           onBack={() => setView("home")}
