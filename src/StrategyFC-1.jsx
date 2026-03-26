@@ -2080,134 +2080,155 @@ export default function App() {
     try {
       // ── Canvas dimensions ──────────────────────────────────────────────────
       const SCALE   = 2;
-      const W       = 400 * SCALE;   // fixed export width
-      const ASPECT  = 3 / 2;        // pitch is 2:3 (w:h)
-      const PADDING = 56 * SCALE;   // space around pitch for labels
-      const HEADER  = 120 * SCALE;  // space above pitch for team name / format
-      const FOOTER  = 56 * SCALE;   // space below for branding
-      const PW      = W - PADDING * 2;           // pitch width on canvas
-      const PH      = PW * ASPECT;               // pitch height
+      const W       = 400 * SCALE;
+      const PADDING = 40 * SCALE;
+      const HEADER  = 120 * SCALE;
+      const FOOTER  = 64 * SCALE;
+      const PW      = W - PADDING * 2;
+      const PH      = Math.round(PW * 1.5);   // 2:3 ratio
       const H       = HEADER + PH + FOOTER;
 
-      const canvas = document.createElement("canvas");
+      const canvas  = document.createElement("canvas");
       canvas.width  = W;
       canvas.height = H;
-      const ctx = canvas.getContext("2d");
+      const ctx     = canvas.getContext("2d");
+
+      // Rounded-rect helper (replaces ctx.roundRect for broad browser compat)
+      function rRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+        ctx.closePath();
+      }
 
       // ── Background ────────────────────────────────────────────────────────
       ctx.fillStyle = "#030712";
       ctx.fillRect(0, 0, W, H);
 
       // ── Header text ───────────────────────────────────────────────────────
-      const cx = W / 2;
+      const midX = W / 2;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = `900 ${36 * SCALE}px 'Bebas Neue', Impact, sans-serif`;
-      ctx.fillText((teamName || "MY TEAM FC").toUpperCase(), cx, 28 * SCALE);
+      ctx.font = `900 ${34 * SCALE}px Impact, sans-serif`;
+      ctx.fillText((teamName || "MY TEAM FC").toUpperCase(), midX, 26 * SCALE);
 
       ctx.fillStyle = "#f5c518";
-      ctx.font = `900 ${28 * SCALE}px 'Bebas Neue', Impact, sans-serif`;
-      ctx.fillText(`${format}V${format}`, cx, 62 * SCALE);
+      ctx.font = `900 ${26 * SCALE}px Impact, sans-serif`;
+      ctx.fillText(`${format}V${format}`, midX, 60 * SCALE);
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = `900 ${20 * SCALE}px 'Bebas Neue', Impact, sans-serif`;
-      ctx.fillText(formation, cx, 92 * SCALE);
+      ctx.font = `900 ${18 * SCALE}px Impact, sans-serif`;
+      ctx.fillText(formation, midX, 90 * SCALE);
 
-      // ── Pitch background (gradient approximation) ─────────────────────────
+      // ── Pitch background ──────────────────────────────────────────────────
       const PX = PADDING;
       const PY = HEADER;
-      const grad = ctx.createRadialGradient(PX + PW/2, PY + PH*0.35, 0, PX + PW/2, PY + PH*0.35, PH * 0.8);
-      grad.addColorStop(0, pitchColor + "f2");
+      const grad = ctx.createRadialGradient(
+        PX + PW / 2, PY + PH * 0.35, 0,
+        PX + PW / 2, PY + PH * 0.35, PH * 0.8
+      );
+      grad.addColorStop(0,    pitchColor + "f2");
       grad.addColorStop(0.65, pitchColor + "bb");
-      grad.addColorStop(1, "#122018");
+      grad.addColorStop(1,    "#122018");
+
+      rRect(PX, PY, PW, PH, 14 * SCALE);
       ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.roundRect(PX, PY, PW, PH, 16 * SCALE);
       ctx.fill();
 
       // ── Pitch lines ───────────────────────────────────────────────────────
+      // Clip subsequent strokes to the pitch rounded rect so lines don't spill
+      ctx.save();
+      rRect(PX, PY, PW, PH, 14 * SCALE);
+      ctx.clip();
+
       ctx.strokeStyle = "rgba(255,255,255,0.42)";
-      ctx.lineWidth = 1.5 * SCALE;
+      ctx.lineWidth   = 1.5 * SCALE;
 
-      // Helper: pitch % coords → canvas px
-      const px = x => PX + (x / 100) * PW;
-      const py = y => PY + (y / 160) * PH; // viewBox is 0 0 100 160
+      // px/py: convert 0-100 x, 0-100 y player coords → canvas px
+      const toPx = x => PX + (x / 100) * PW;
+      const toPy = y => PY + (y / 100) * PH;
 
-      // Border
-      ctx.beginPath(); ctx.roundRect(PX + 3*SCALE, PY + 3*SCALE, PW - 6*SCALE, PH - 6*SCALE, 2*SCALE); ctx.stroke();
+      // Border (inset 3%)
+      rRect(PX + (3/100)*PW, PY + (2/100)*PH, PW - (6/100)*PW, PH - (4/100)*PH, 6 * SCALE);
+      ctx.stroke();
       // Halfway line
-      ctx.beginPath(); ctx.moveTo(px(3), py(80)); ctx.lineTo(px(97), py(80)); ctx.stroke();
-      // Centre circle
-      ctx.beginPath(); ctx.arc(px(50), py(80), (14/160)*PH, 0, Math.PI*2); ctx.stroke();
-      // Top penalty box
-      ctx.strokeRect(px(23), py(3), (54/100)*PW, (22/160)*PH);
+      ctx.beginPath(); ctx.moveTo(toPx(3), toPy(50)); ctx.lineTo(toPx(97), toPy(50)); ctx.stroke();
+      // Centre circle (radius ~9% of height)
+      ctx.beginPath(); ctx.arc(toPx(50), toPy(50), PH * 0.09, 0, Math.PI * 2); ctx.stroke();
+      // Top penalty box (upper third)
+      ctx.strokeRect(toPx(23), toPy(2), (54/100)*PW, (14/100)*PH);
       // Top 6-yard box
-      ctx.strokeRect(px(35), py(3), (30/100)*PW, (9/160)*PH);
+      ctx.strokeRect(toPx(35), toPy(2), (30/100)*PW, (6/100)*PH);
       // Bottom penalty box
-      ctx.strokeRect(px(23), py(135), (54/100)*PW, (22/160)*PH);
+      ctx.strokeRect(toPx(23), toPy(84), (54/100)*PW, (14/100)*PH);
       // Bottom 6-yard box
-      ctx.strokeRect(px(35), py(148), (30/100)*PW, (9/160)*PH);
+      ctx.strokeRect(toPx(35), toPy(92), (30/100)*PW, (6/100)*PH);
+
+      ctx.restore(); // end clip
 
       // ── Players ───────────────────────────────────────────────────────────
-      players.forEach(p => {
-        // p.x and p.y are % of pitch. PitchLines viewBox is 100×160.
-        const cx2 = px(p.x);
-        const cy2 = py(p.y * 1.6); // scale y from 0-100 to 0-160
-
-        const R = 18 * SCALE;
+      players.forEach((p, i) => {
+        const cx2 = toPx(p.x);
+        const cy2 = toPy(p.y);
+        const R   = 17 * SCALE;
 
         // Jersey circle
         ctx.beginPath();
-        ctx.arc(cx2, cy2, R, 0, Math.PI*2);
+        ctx.arc(cx2, cy2, R, 0, Math.PI * 2);
         ctx.fillStyle = jerseyColor;
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.6)";
-        ctx.lineWidth = 2 * SCALE;
+        ctx.strokeStyle = "rgba(255,255,255,0.65)";
+        ctx.lineWidth = 1.5 * SCALE;
         ctx.stroke();
 
-        // Position abbreviation — centred in circle
-        const fg2 = contrastColor(jerseyColor);
-        ctx.fillStyle = fg2;
-        ctx.textAlign = "center";
+        // Position text — centred in circle
+        const fg2  = contrastColor(jerseyColor);
+        const posFs = p.pos.length >= 3 ? 9 : p.pos.length === 2 ? 13 : 16;
+        ctx.fillStyle   = fg2;
+        ctx.textAlign   = "center";
         ctx.textBaseline = "middle";
-        const posFs = p.pos.length >= 3 ? 10 : p.pos.length === 2 ? 13 : 16;
-        ctx.font = `900 ${posFs * SCALE}px 'Bebas Neue', Impact, sans-serif`;
+        ctx.font = `900 ${posFs * SCALE}px Impact, sans-serif`;
         ctx.fillText(p.pos, cx2, cy2);
 
-        // Starter name below circle
-        const starter = p.name || "STARTER";
-        ctx.fillStyle = "rgba(255,255,255,0.92)";
-        ctx.font = `700 ${9 * SCALE}px 'DM Sans', system-ui, sans-serif`;
-        ctx.textAlign = "center";
+        // Starter name
+        const starter = (p.name || "Starter").toUpperCase();
+        ctx.fillStyle    = "rgba(255,255,255,0.92)";
+        ctx.font         = `700 ${8 * SCALE}px Arial, sans-serif`;
+        ctx.textAlign    = "center";
         ctx.textBaseline = "top";
-        ctx.fillText(starter.toUpperCase(), cx2, cy2 + R + 4 * SCALE);
+        ctx.fillText(starter, cx2, cy2 + R + 3 * SCALE);
 
-        // Sub name below starter
-        const subIdx = players.indexOf(p);
-        const sub = subs[subIdx] || "+ SUB";
+        // Sub name
+        const sub = (subs[i] || "+ Sub").toUpperCase();
         ctx.fillStyle = "rgba(245,197,24,0.9)";
-        ctx.font = `italic 600 ${8 * SCALE}px 'DM Sans', system-ui, sans-serif`;
-        ctx.fillText(sub.toUpperCase(), cx2, cy2 + R + 17 * SCALE);
+        ctx.font      = `italic 600 ${7 * SCALE}px Arial, sans-serif`;
+        ctx.fillText(sub, cx2, cy2 + R + 14 * SCALE);
       });
 
       // ── Footer branding ───────────────────────────────────────────────────
-      ctx.fillStyle = "#a855f7";
-      ctx.font = `900 ${11 * SCALE}px 'Bebas Neue', Impact, sans-serif`;
-      ctx.textAlign = "center";
+      ctx.fillStyle    = "#a855f7";
+      ctx.textAlign    = "center";
       ctx.textBaseline = "middle";
-      ctx.letterSpacing = `${3 * SCALE}px`;
-      ctx.fillText("FCROSTER.COM", cx, PY + PH + FOOTER / 2);
+      ctx.font         = `900 ${10 * SCALE}px Impact, sans-serif`;
+      ctx.fillText("FCROSTER.COM", midX, PY + PH + FOOTER / 2);
 
       // ── Download ──────────────────────────────────────────────────────────
       const link = document.createElement("a");
-      link.download = `${(teamName||"FCRoster").replace(/\s+/g,"_")}_${formation}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.download = `${(teamName || "FCRoster").replace(/\s+/g, "_")}_${formation}.png`;
+      link.href     = canvas.toDataURL("image/png");
       link.click();
 
-    } catch(err) {
-      console.error(err);
+    } catch (err) {
+      console.error("Export error:", err);
       alert("Export failed — try a screenshot instead.");
     } finally {
       setExporting(false);
