@@ -837,14 +837,12 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // Layout: px-6 (24px) each side + [200px side] + gap-6 (24px) + [pitch] + gap-6 (24px) + [200px side] + px-6 (24px)
-        // Total non-pitch: 48 + 200 + 24 + 24 + 200 = 496px
-        const nonPitch = 496;
-        const maxByW   = W - nonPitch;
-        // Height budget minus download button (~60px) and py-4 padding (~32px)
-        const maxByH   = Math.floor((H - 92) * (2 / 3));
-        // Cap at 400px — ensures clear gap at all typical desktop widths
-        const w = Math.min(maxByW, maxByH, 400);
+        // Grid handles column widths — pitch just needs a height-driven size
+        // Height budget: subtract header controls (~80px) + download btn (~52px) + py-4 (~32px)
+        const maxByH = Math.floor((H - 164) * (2 / 3));
+        // Also cap by available center column width: container - 2×180px panels - 2×20px gaps - 2×20px outer pad
+        const maxByW = W - 480;
+        const w = Math.min(maxByW, maxByH, 420);
         setPitchSize({ w: Math.max(w, 160), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
@@ -1094,14 +1092,21 @@ function BuilderLayout({
   return (
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
-        /* Desktop: Playmaker LEFT | Pitch CENTER (Download below) | Roster RIGHT */
-        <div className="flex-1 flex gap-6 px-6 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
+        /* Desktop: CSS Grid — 180px | 1fr | 180px. Grid enforces column boundaries — no overlap possible. */
+        <div className="flex-1 overflow-y-auto py-4" style={{
+          display:"grid",
+          gridTemplateColumns:"180px 1fr 180px",
+          gap:"20px",
+          padding:"16px 20px",
+          alignItems:"start",
+          minHeight:0,
+        }}>
           {/* Left — Playmaker always expanded */}
-          <div style={{ width:200, flexShrink:0 }}>{PlaymakerPanel}</div>
-          {/* Center — pitch + Download below, flex-1 so it fills remaining space */}
-          <div className="flex-1 flex flex-col items-center gap-3" style={{ minWidth:0, maxWidth: pitchSize.w }}>
+          <div>{PlaymakerPanel}</div>
+          {/* Center — pitch + Download below, centred in its grid cell */}
+          <div className="flex flex-col items-center gap-3">
             {Pitch}
-            <div className="rounded-2xl overflow-hidden w-full" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
+            <div className="rounded-2xl overflow-hidden w-full" style={{ maxWidth: pitchSize.w, background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
               <button onClick={handleExport} disabled={exporting}
                 className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
                 style={{ background: exporting ? "rgba(45,122,58,0.3)" : BRAND.colors.green }}>
@@ -1116,7 +1121,7 @@ function BuilderLayout({
             </div>
           </div>
           {/* Right — Roster */}
-          <div style={{ width:200, flexShrink:0 }}>
+          <div>
             <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} defaultExpanded={true}/>
           </div>
         </div>
