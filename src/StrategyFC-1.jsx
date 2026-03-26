@@ -837,13 +837,14 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // Grid handles column widths — pitch just needs a height-driven size
-        // Height budget: subtract header controls (~80px) + download btn (~52px) + py-4 (~32px)
-        const maxByH = Math.floor((H - 164) * (2 / 3));
-        // Also cap by available center column width: container - 2×180px panels - 2×20px gaps - 2×20px outer pad
-        const maxByW = W - 480;
-        const w = Math.min(maxByW, maxByH, 420);
-        setPitchSize({ w: Math.max(w, 160), isDesktop: true });
+        // Pitch sits in the auto centre column. Size it by height so the two
+        // 1fr side columns always get equal remaining space.
+        // Height budget: subtract download btn (52px) + top/bottom padding (32px)
+        const maxByH = Math.floor((H - 84) * (2 / 3));
+        // Width guard: pitch must leave at least 180px for each side panel
+        const maxByW = W - 360 - 32; // 180px×2 panels + 16px×2 outer pad
+        const w = Math.min(maxByH, maxByW, 440);
+        setPitchSize({ w: Math.max(w, 200), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
       }
@@ -1092,21 +1093,23 @@ function BuilderLayout({
   return (
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
-        /* Desktop: CSS Grid — 180px | 1fr | 180px. Grid enforces column boundaries — no overlap possible. */
-        <div className="flex-1 overflow-y-auto py-4" style={{
+        /* Desktop: pitch dead centre, each side panel centred in its half of the remaining space */
+        <div className="flex-1 overflow-y-auto" style={{
           display:"grid",
-          gridTemplateColumns:"180px 1fr 180px",
-          gap:"20px",
-          padding:"16px 20px",
+          gridTemplateColumns:"1fr auto 1fr",
           alignItems:"start",
+          padding:"16px 12px",
+          gap:0,
           minHeight:0,
         }}>
-          {/* Left — Playmaker always expanded */}
-          <div>{PlaymakerPanel}</div>
-          {/* Center — pitch + Download below, centred in its grid cell */}
-          <div className="flex flex-col items-center gap-3">
+          {/* Left half — Playmaker centred within it */}
+          <div className="flex justify-center pt-2" style={{ paddingRight:16 }}>
+            <div style={{ width:200 }}>{PlaymakerPanel}</div>
+          </div>
+          {/* Centre — pitch fixed width + Download below */}
+          <div className="flex flex-col items-center gap-3" style={{ width: pitchSize.w }}>
             {Pitch}
-            <div className="rounded-2xl overflow-hidden w-full" style={{ maxWidth: pitchSize.w, background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
+            <div className="rounded-2xl overflow-hidden w-full" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
               <button onClick={handleExport} disabled={exporting}
                 className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
                 style={{ background: exporting ? "rgba(45,122,58,0.3)" : BRAND.colors.green }}>
@@ -1120,9 +1123,11 @@ function BuilderLayout({
               </button>
             </div>
           </div>
-          {/* Right — Roster */}
-          <div>
-            <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} defaultExpanded={true}/>
+          {/* Right half — Roster centred within it */}
+          <div className="flex justify-center pt-2" style={{ paddingLeft:16 }}>
+            <div style={{ width:200 }}>
+              <RosterPanel players={players} subs={subs} teamName={teamName} format={format} formation={formation} defaultExpanded={true}/>
+            </div>
           </div>
         </div>
       ) : (
