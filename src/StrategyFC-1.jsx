@@ -837,16 +837,15 @@ function BuilderLayout({
       const H = el.offsetHeight;
       const desktop = W >= 768;
       if (desktop) {
-        // 3-col: [200px] [24px gap] [pitch] [24px gap] [200px] + 16px outer pad each side
-        const sideColW  = 200;
-        const outerPad  = 16 * 2;   // px-4 on the row = 16px each side
-        const innerGaps = 24 * 2;   // gap between each col
-        const available = W - (sideColW * 2) - outerPad - innerGaps;
-        // Height budget: leave 100px for header rows
-        const byH = Math.floor((H - 100) * (2 / 3));
-        // Hard cap at 420px so pitch never crowds side panels
-        const w = Math.min(available, byH, 420);
-        setPitchSize({ w: Math.max(w, 180), isDesktop: true });
+        // Layout: px-6 (24px) each side + [200px side] + gap-6 (24px) + [pitch] + gap-6 (24px) + [200px side] + px-6 (24px)
+        // Total non-pitch: 48 + 200 + 24 + 24 + 200 = 496px
+        const nonPitch = 496;
+        const maxByW   = W - nonPitch;
+        // Height budget minus download button (~60px) and py-4 padding (~32px)
+        const maxByH   = Math.floor((H - 92) * (2 / 3));
+        // Cap at 400px — ensures clear gap at all typical desktop widths
+        const w = Math.min(maxByW, maxByH, 400);
+        setPitchSize({ w: Math.max(w, 160), isDesktop: true });
       } else {
         setPitchSize({ w: Math.min(W - 24, 440), isDesktop: false });
       }
@@ -1075,10 +1074,10 @@ function BuilderLayout({
         </button>
         {playmakersOpen && playmakeContent}
       </div>
-      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid #ef4444`, boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
         <button onClick={handleExport} disabled={exporting}
           className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
-          style={{ background: exporting ? "rgba(127,29,29,0.5)" : "#dc2626" }}>
+          style={{ background: exporting ? "rgba(45,122,58,0.3)" : BRAND.colors.green }}>
           <div className="flex items-center gap-2">
             <span style={{ fontSize:15 }}>📥</span>
             <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>
@@ -1096,16 +1095,16 @@ function BuilderLayout({
     <div ref={containerRef} className="flex-1 flex" style={{ minHeight:0 }}>
       {pitchSize.isDesktop ? (
         /* Desktop: Playmaker LEFT | Pitch CENTER (Download below) | Roster RIGHT */
-        <div className="flex-1 flex justify-center gap-6 px-4 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
+        <div className="flex-1 flex gap-6 px-6 py-4 overflow-y-auto" style={{ minHeight:0, alignItems:"start" }}>
           {/* Left — Playmaker always expanded */}
           <div style={{ width:200, flexShrink:0 }}>{PlaymakerPanel}</div>
-          {/* Center — pitch + Download below */}
-          <div style={{ width:pitchSize.w, flexShrink:0 }} className="flex flex-col items-center gap-3">
+          {/* Center — pitch + Download below, flex-1 so it fills remaining space */}
+          <div className="flex-1 flex flex-col items-center gap-3" style={{ minWidth:0, maxWidth: pitchSize.w }}>
             {Pitch}
-            <div className="rounded-2xl overflow-hidden w-full" style={{ background:"#0f1b2d", border:`2px solid #ef4444`, boxShadow: exporting ? "none" : "0 0 18px rgba(220,38,38,0.4)" }}>
+            <div className="rounded-2xl overflow-hidden w-full" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.green}`, boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
               <button onClick={handleExport} disabled={exporting}
                 className="w-full flex items-center justify-between gap-2 px-4 py-3 transition-all hover:brightness-110 active:scale-95"
-                style={{ background: exporting ? "rgba(127,29,29,0.5)" : "#dc2626" }}>
+                style={{ background: exporting ? "rgba(45,122,58,0.3)" : BRAND.colors.green }}>
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize:15 }}>📥</span>
                   <span className="font-black tracking-wider" style={{ color:"#fff", fontFamily: BRAND.fonts.display, letterSpacing:2, fontSize:15 }}>
