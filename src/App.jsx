@@ -1368,9 +1368,9 @@ function PostCard({ post, onOpen }) {
 // passes a new function reference (e.g. after loadComments updates state),
 // this component never re-renders — and the textarea never loses focus.
 const CommentComposer = memo(function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
-  const ref          = useRef(null);
-  const busy         = useRef(false);
-  const onSubmitRef  = useRef(onSubmit);   // ← always holds the latest onSubmit
+  const ref         = useRef(null);
+  const busy        = useRef(false);
+  const onSubmitRef = useRef(onSubmit); // ← always holds the latest onSubmit
   const [err,     setErr]     = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -1383,7 +1383,7 @@ const CommentComposer = memo(function CommentComposer({ signedIn, username, post
     busy.current = true;
     setLoading(true); setErr("");
     try {
-      await onSubmitRef.current(postId, text);   // ← call via ref, not prop
+      await onSubmitRef.current(postId, text); // ← call via ref, not prop
       if (ref.current) { ref.current.value = ""; ref.current.focus(); }
     } catch(e) {
       setErr("Failed to post — please try again.");
@@ -1531,7 +1531,7 @@ function SectionHeader({ icon, title, count }) {
   );
 }
 
-function CommunityTab() {
+const CommunityTab = memo(function CommunityTab() {
   const [session,  setSession]  = useState(null);
   const [showAuth, setShowAuth] = useState(false);
 
@@ -1819,7 +1819,7 @@ function CommunityTab() {
     </div>
   );
 
-}
+}); // ← closes memo(CommunityTab)
 
 
 
