@@ -1363,14 +1363,19 @@ function PostCard({ post, onOpen }) {
 }
 
 // ─── CommentComposer ─────────────────────────────────────────────────────────────
-// memo() ensures this NEVER re-renders due to parent changes — the only
-// thing that can cause focus loss on an uncontrolled textarea is React
-// reconciling its ancestors. With memo + stable props it is fully isolated.
+// memo() prevents re-renders from parent prop changes.
+// onSubmitRef holds the latest onSubmit in a ref so that even if the parent
+// passes a new function reference (e.g. after loadComments updates state),
+// this component never re-renders — and the textarea never loses focus.
 const CommentComposer = memo(function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
-  const ref  = useRef(null);
-  const busy = useRef(false);
+  const ref          = useRef(null);
+  const busy         = useRef(false);
+  const onSubmitRef  = useRef(onSubmit);   // ← always holds the latest onSubmit
   const [err,     setErr]     = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Keep the ref current on every render without triggering a re-render
+  onSubmitRef.current = onSubmit;
 
   async function go() {
     const text = ref.current?.value?.trim();
@@ -1378,7 +1383,7 @@ const CommentComposer = memo(function CommentComposer({ signedIn, username, post
     busy.current = true;
     setLoading(true); setErr("");
     try {
-      await onSubmit(postId, text);
+      await onSubmitRef.current(postId, text);   // ← call via ref, not prop
       if (ref.current) { ref.current.value = ""; ref.current.focus(); }
     } catch(e) {
       setErr("Failed to post — please try again.");
@@ -1569,12 +1574,14 @@ function CommunityTab() {
   }
 
   // ── Load comments for a post ───────────────────────────────────────────────
-  async function loadComments(postId) {
+  // useCallback gives this a stable reference so submitComment's deps are correct
+  // and a new submitComment is only created when session actually changes.
+  const loadComments = useCallback(async (postId) => {
     try {
       const data = await sb.select("comments", `?post_id=eq.${postId}&order=created_at.asc`);
       setComments(prev => ({ ...prev, [postId]: Array.isArray(data) ? data : [] }));
     } catch(e) { /* silently fail — UI shows empty state */ }
-  }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadPosts(); }, []);
 
@@ -1633,7 +1640,7 @@ function CommunityTab() {
       }, session.token);
       await loadComments(postId);
     } catch(e) { /* errors handled in CommentComposer */ }
-  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session, loadComments]); // loadComments is stable (useCallback), recreates only on sign-in/out
 
   // ── Open post ─────────────────────────────────────────────────────────────
   function openPost(post) {
