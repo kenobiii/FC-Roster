@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 const BRAND = {
@@ -1363,8 +1363,10 @@ function PostCard({ post, onOpen }) {
 }
 
 // ─── CommentComposer ─────────────────────────────────────────────────────────────
-// Module-scope: owns all state so typing never causes parent re-render / focus loss
-function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
+// memo() ensures this NEVER re-renders due to parent changes — the only
+// thing that can cause focus loss on an uncontrolled textarea is React
+// reconciling its ancestors. With memo + stable props it is fully isolated.
+const CommentComposer = memo(function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
   const ref  = useRef(null);
   const busy = useRef(false);
   const [err,     setErr]     = useState("");
@@ -1414,6 +1416,9 @@ function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
         className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
         style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
         onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
       />
       {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
       <button onClick={go} disabled={loading}
@@ -1423,10 +1428,12 @@ function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
       </button>
     </div>
   );
-}
+}); // ← closes memo()
 
 // ─── PostView ─────────────────────────────────────────────────────────────────
-function PostView({ post, postComments, signedIn, username, onSubmit, onShowAuth, onBack }) {
+// memo() prevents re-renders when CommunityTab's other state (filter, draft,
+// showNewPost, etc.) changes — PostView only re-renders when its own props change.
+const PostView = memo(function PostView({ post, postComments, signedIn, username, onSubmit, onShowAuth, onBack }) {
   return (
     <div className="flex flex-col gap-4">
       <button onClick={onBack} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
@@ -1506,7 +1513,7 @@ function PostView({ post, postComments, signedIn, username, onSubmit, onShowAuth
       </div>
     </div>
   );
-}
+}); // ← closes memo()
 
 // ─── Community Tab ─────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, count }) {
@@ -1647,6 +1654,15 @@ function CommunityTab() {
   const handleShowAuth = useCallback(() => setShowAuth(true), []);
   const handleBack     = useCallback(() => setView("home"), []);
 
+  // ── Memoised PostView props — without these, new object/array refs on every
+  //    render defeat React.memo and the re-render cascade continues ────────────
+  const postComments = useMemo(
+    () => activePost?.source === "user" ? (comments[activePost.id] || []) : [],
+    [activePost, comments]
+  );
+  const signedIn = !!session;
+  const username = session?.email?.split("@")[0] || "";
+
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-2xl mx-auto px-3 sm:px-5 py-5" style={{ fontFamily: BRAND.fonts.body }}>
@@ -1666,9 +1682,9 @@ function CommunityTab() {
         <PostView
           key={activePost.id}
           post={activePost}
-          postComments={activePost?.source === "user" ? (comments[activePost.id] || []) : []}
-          signedIn={!!session}
-          username={session?.email?.split("@")[0] || ""}
+          postComments={postComments}
+          signedIn={signedIn}
+          username={username}
           onSubmit={submitComment}
           onShowAuth={handleShowAuth}
           onBack={handleBack}
