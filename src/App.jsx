@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 const BRAND = {
@@ -1414,7 +1414,6 @@ function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
         className="w-full rounded-xl px-3 py-2 mb-2 focus:outline-none resize-none"
         style={{ background:"rgba(255,255,255,0.06)", border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily:BRAND.fonts.body, fontSize:16 }}
         onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }}
-        onBlur={e => { console.log("TEXTAREA BLUR — focus went to:", document.activeElement?.tagName, document.activeElement?.className?.slice(0,60)); }}
       />
       {err && <p className="text-xs mb-2" style={{ color:"#f87171" }}>{err}</p>}
       <button onClick={go} disabled={loading}
@@ -1427,7 +1426,7 @@ function CommentComposer({ signedIn, username, postId, onSubmit, onShowAuth }) {
 }
 
 // ─── PostView ─────────────────────────────────────────────────────────────────
-function PostView({ post, postComments, loadingCmts, signedIn, username, onSubmit, onShowAuth, onBack }) {
+function PostView({ post, postComments, signedIn, username, onSubmit, onShowAuth, onBack }) {
   return (
     <div className="flex flex-col gap-4">
       <button onClick={onBack} className="flex items-center gap-2 text-xs font-bold transition-opacity hover:opacity-70"
@@ -1464,7 +1463,7 @@ function PostView({ post, postComments, loadingCmts, signedIn, username, onSubmi
         <div className="px-5 py-3 flex items-center gap-2" style={{ background:"rgba(255,255,255,0.04)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
           <span style={{ fontSize:14 }}>💬</span>
           <span className="font-black tracking-wider" style={{ fontFamily: BRAND.fonts.display, fontSize:13, color:"#e2e8f0", letterSpacing:1.5 }}>
-            DISCUSSION {post.source==="user" ? `(${postComments.length})` : ""}
+            DISCUSSION {post.source==="user" && postComments.length > 0 ? `(${postComments.length})` : ""}
           </span>
         </div>
         {post.source === "formation" ? (
@@ -1475,9 +1474,8 @@ function PostView({ post, postComments, loadingCmts, signedIn, username, onSubmi
           </div>
         ) : (
           <>
-            <div className="flex flex-col">
-              {loadingCmts && <p className="text-xs text-center py-4" style={{ color:"#475569" }}>Loading comments…</p>}
-              {!loadingCmts && postComments.length === 0 && (
+            <div className="flex flex-col" style={{ minHeight: 80 }}>
+              {postComments.length === 0 && (
                 <p className="text-xs text-center py-6 italic px-5" style={{ color:"#475569", fontFamily: BRAND.fonts.body }}>
                   No replies yet — be the first!
                 </p>
@@ -1546,7 +1544,6 @@ function CommunityTab() {
   const [userPosts,   setUserPosts]   = useState([]);
   const [comments,    setComments]    = useState({}); // keyed by post_id
   const [loadingPosts, setLoadingPosts] = useState(false);
-  const [loadingCmts,  setLoadingCmts]  = useState(false);
 
   // ── Composer state ────────────────────────────────────────────────────────
   const [showNewPost, setShowNewPost] = useState(false);
@@ -1566,12 +1563,10 @@ function CommunityTab() {
 
   // ── Load comments for a post ───────────────────────────────────────────────
   async function loadComments(postId) {
-    setLoadingCmts(true);
     try {
       const data = await sb.select("comments", `?post_id=eq.${postId}&order=created_at.asc`);
       setComments(prev => ({ ...prev, [postId]: Array.isArray(data) ? data : [] }));
     } catch(e) { /* silently fail — UI shows empty state */ }
-    finally { setLoadingCmts(false); }
   }
 
   useEffect(() => { loadPosts(); }, []);
@@ -1620,7 +1615,7 @@ function CommunityTab() {
   }
 
   // ── Submit comment ────────────────────────────────────────────────────────
-  async function submitComment(postId, body) {
+  const submitComment = useCallback(async (postId, body) => {
     if (!body || !session) return;
     try {
       await sb.authedInsert("comments", {
@@ -1631,7 +1626,7 @@ function CommunityTab() {
       }, session.token);
       await loadComments(postId);
     } catch(e) { /* errors handled in CommentComposer */ }
-  }
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Open post ─────────────────────────────────────────────────────────────
   function openPost(post) {
@@ -1647,6 +1642,10 @@ function CommunityTab() {
     if (session) await sb.signOut(session.token).catch(() => {});
     setSession(null);
   }
+
+  // ── Stable callbacks passed to PostView / CommentComposer ─────────────────
+  const handleShowAuth = useCallback(() => setShowAuth(true), []);
+  const handleBack     = useCallback(() => setView("home"), []);
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
@@ -1668,12 +1667,11 @@ function CommunityTab() {
           key={activePost.id}
           post={activePost}
           postComments={activePost?.source === "user" ? (comments[activePost.id] || []) : []}
-          loadingCmts={loadingCmts}
           signedIn={!!session}
           username={session?.email?.split("@")[0] || ""}
           onSubmit={submitComment}
-          onShowAuth={() => setShowAuth(true)}
-          onBack={() => setView("home")}
+          onShowAuth={handleShowAuth}
+          onBack={handleBack}
         />
       ) : (
         <>
