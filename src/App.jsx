@@ -104,24 +104,24 @@ if (typeof document !== "undefined") {
     el.setAttribute("content", attrs.content);
   }
   const DESC = "FCRoster.com — the free football lineup builder. Set formations, manage your squad, and discuss tactics with coaches worldwide.";
-  const URL  = "https://fcroster.com";
+  const SITE_URL = "https://fcroster.com";
   setMeta({ name:"description", content:DESC });
   setMeta({ name:"robots",         content:"index, follow" });
   setMeta({ name:"referrer",        content:"strict-origin-when-cross-origin" });
   // Open Graph
   setMeta({ property:"og:type",        content:"website" });
-  setMeta({ property:"og:url",         content:URL });
+  setMeta({ property:"og:url",         content:SITE_URL });
   setMeta({ property:"og:title",       content:"FCRoster.com — Connect. Organize. Compete." });
   setMeta({ property:"og:description", content:DESC });
-  setMeta({ property:"og:image",       content:`${URL}/og-image.png` });
+  setMeta({ property:"og:image",       content:`${SITE_URL}/og-image.png` });
   setMeta({ property:"og:site_name",   content:"FCRoster.com" });
   // Twitter Card
   setMeta({ name:"twitter:card",        content:"summary_large_image" });
   setMeta({ name:"twitter:title",       content:"FCRoster.com — Connect. Organize. Compete." });
   setMeta({ name:"twitter:description", content:DESC });
-  setMeta({ name:"twitter:image",       content:`${URL}/og-image.png` });
+  setMeta({ name:"twitter:image",       content:`${SITE_URL}/og-image.png` });
   // Canonical
-  if (!document.querySelector("link[rel='canonical']")) addLink({ rel:"canonical", href:URL });
+  if (!document.querySelector("link[rel='canonical']")) addLink({ rel:"canonical", href:SITE_URL });
 
   // ── JSON-LD structured data ───────────────────────────────────────────────
   if (!document.querySelector("script[data-fcroster-ld]")) {
@@ -132,7 +132,7 @@ if (typeof document !== "undefined") {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "FCRoster.com",
-      "url": URL,
+      "url": SITE_URL,
       "description": DESC,
       "applicationCategory": "SportsApplication",
       "operatingSystem": "Web",
