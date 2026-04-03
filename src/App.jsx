@@ -1313,12 +1313,19 @@ const BuilderLayout = memo(function BuilderLayout({
           </button>
         ))}
 
-        {/* Add Phase button */}
+        {/* Add Phase button — distinct from phase pills */}
         {session ? (
           <button onClick={onAddPhase}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-black transition-all"
-            style={{ background:"rgba(255,255,255,0.03)", color:"#475569", border:"1px dashed rgba(255,255,255,0.15)" }}>
-            + Add
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:brightness-125 active:scale-95"
+            style={{
+              background: "rgba(45,122,58,0.12)",
+              color: BRAND.colors.green,
+              border: `1.5px dashed ${BRAND.colors.green}`,
+              minWidth: 52,
+              letterSpacing: 0.3,
+            }}>
+            <span style={{ fontSize:13, lineHeight:1, marginTop:-1 }}>＋</span>
+            <span>Add</span>
           </button>
         ) : (
           <button onClick={onShowAuth}
@@ -2604,6 +2611,7 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
 const APP_TABS = [
   { id:"builder",   label:"⚽  Builder" },
   { id:"community", label:"🏟️  Community" },
+  { id:"profile",   label:"👤  Profile" },
   { id:"about",     label:"🌍  About" },
 ];
 
@@ -2628,17 +2636,16 @@ function OnboardingModal({ session, onComplete }) {
   async function handleSave() {
     if (!displayName.trim()) return;
     setSaving(true);
-    try {
-      await sb.upsert("profiles", {
-        id:           session.user.id,
-        display_name: displayName.trim(),
-        team_name:    teamName.trim() || null,
-        avatar_emoji: avatar,
-        updated_at:   new Date().toISOString(),
-      }, session.token);
-      onComplete({ display_name: displayName.trim(), team_name: teamName.trim() || null, avatar_emoji: avatar });
-    } catch { /* fail silently — user can edit later */ }
-    setSaving(false);
+    const prof = { display_name: displayName.trim(), team_name: teamName.trim() || null, avatar_emoji: avatar };
+    // Fire-and-forget — always enter the app regardless of save success
+    sb.upsert("profiles", {
+      id:           session.user.id,
+      display_name: prof.display_name,
+      team_name:    prof.team_name,
+      avatar_emoji: prof.avatar_emoji,
+      updated_at:   new Date().toISOString(),
+    }, session.token).catch(() => {}); // editable later via Profile Panel
+    onComplete(prof);
   }
 
   return (
@@ -3002,6 +3009,236 @@ function ManageSquadModal({ session, team, members, onClose, onUpdated }) {
   );
 }
 
+
+// ─── Profile Tab ──────────────────────────────────────────────────────────────
+function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut,
+  onEditProfile, onCreateTeam, onJoinTeam, onManageSquad, onLeaveTeam, players }) {
+
+  // ── Signed-out state ───────────────────────────────────────────────────────
+  if (!session) {
+    return (
+      <div className="w-full max-w-md mx-auto px-4 py-16 flex flex-col items-center gap-6 text-center">
+        <div style={{ fontSize:56 }}>👤</div>
+        <div>
+          <div className="font-black tracking-wide text-white mb-2"
+            style={{ fontFamily:BRAND.fonts.display, fontSize:22, letterSpacing:1 }}>
+            YOUR PROFILE
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color:"#64748b" }}>
+            Sign in to access your profile, manage your squad, track your stats, and connect with teammates.
+          </p>
+        </div>
+        <button onClick={onShowAuth}
+          className="px-8 py-3 rounded-xl font-black text-sm tracking-wide transition-all hover:brightness-110 active:scale-95"
+          style={{ background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+          SIGN IN / CREATE ACCOUNT ⚽
+        </button>
+        <div className="w-full rounded-2xl p-5 text-left" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+          <div className="text-[10px] font-black tracking-widest mb-3" style={{ color:BRAND.colors.yellow, fontFamily:BRAND.fonts.display, letterSpacing:3 }}>
+            WHAT YOU GET
+          </div>
+          {[
+            ["🎖️", "Captain & squad management"],
+            ["⚽", "Load your team onto the pitch in one tap"],
+            ["💾", "Lineup auto-saved across all devices"],
+            ["🏟️", "Community posts & forum history"],
+            ["📊", "Player stats tracking"],
+          ].map(([icon, text]) => (
+            <div key={text} className="flex items-center gap-3 mb-2.5 text-sm" style={{ color:"#94a3b8" }}>
+              <span style={{ fontSize:16 }}>{icon}</span>
+              <span>{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Signed-in state ────────────────────────────────────────────────────────
+  const myMember  = teamMembers.find(m => m.user_id === session?.user?.id);
+  const myRole    = myMember?.role;
+
+  // Aggregate player stats from the current roster
+  const totalGoals    = players.reduce((s, p) => s + (p.goals       || 0), 0);
+  const totalAssists  = players.reduce((s, p) => s + (p.assists     || 0), 0);
+  const totalApps     = players.reduce((s, p) => s + (p.appearances || 0), 0);
+  const totalYellows  = players.reduce((s, p) => s + (p.yellowCards || 0), 0);
+  const totalReds     = players.reduce((s, p) => s + (p.redCards    || 0), 0);
+  const hasStats      = totalGoals + totalAssists + totalApps > 0;
+
+  return (
+    <div className="w-full max-w-2xl mx-auto px-3 sm:px-6 py-6 space-y-5" style={{ fontFamily:BRAND.fonts.body }}>
+
+      {/* ── Identity card ─────────────────────────────────────────────────── */}
+      <div className="rounded-2xl overflow-hidden" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+        <div className="flex items-center gap-4 p-5">
+          <div className="flex items-center justify-center rounded-2xl text-4xl shrink-0"
+            style={{ width:64, height:64, background:GLASS.md, border:`1px solid ${GLASS.border}` }}>
+            {profile?.avatar_emoji || session.email?.[0]?.toUpperCase() || "⚽"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-black text-white text-lg truncate">
+              {profile?.display_name || session.email?.split("@")[0]}
+            </div>
+            {profile?.team_name && (
+              <div className="text-xs mt-0.5" style={{ color:"#64748b" }}>🏟️ {profile.team_name}</div>
+            )}
+            <div className="text-xs mt-0.5 truncate" style={{ color:"#475569" }}>{session.email}</div>
+          </div>
+          <button onClick={onEditProfile}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            style={{ background:GLASS.xs, color:"#94a3b8", border:`1px solid ${GLASS.border}` }}>
+            ✏️ Edit
+          </button>
+        </div>
+      </div>
+
+      {/* ── Team card ─────────────────────────────────────────────────────── */}
+      <div>
+        <div className="text-[10px] font-black tracking-widest mb-3 flex items-center gap-3"
+          style={{ fontFamily:BRAND.fonts.display, color:BRAND.colors.yellow, letterSpacing:3 }}>
+          TEAM
+          <div className="flex-1 h-px" style={{ background:GLASS.sm }}/>
+        </div>
+
+        {team ? (
+          <div className="rounded-2xl overflow-hidden" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div>
+                  <div className="font-black text-white text-base">{team.name}</div>
+                  <div className="text-xs mt-0.5" style={{ color:"#64748b" }}>
+                    {team.format}v{team.format} · {teamMembers.length} player{teamMembers.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                {myRole && myRole !== ROLE_PLAYER && (
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0"
+                    style={{
+                      background: myRole === ROLE_CAPTAIN ? "rgba(245,197,24,0.15)" : "rgba(99,102,241,0.15)",
+                      color:      myRole === ROLE_CAPTAIN ? BRAND.colors.yellow : "#a5b4fc",
+                      border:    `1px solid ${myRole === ROLE_CAPTAIN ? "rgba(245,197,24,0.3)" : "rgba(99,102,241,0.3)"}`,
+                    }}>
+                    {ROLE_BADGE[myRole]} {ROLE_LABEL[myRole]}
+                  </span>
+                )}
+              </div>
+
+              {/* Squad avatars */}
+              {teamMembers.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {teamMembers.map(m => (
+                    <div key={m.user_id} className="flex flex-col items-center gap-1"
+                      title={m.profiles?.display_name || "Player"}>
+                      <div className="flex items-center justify-center rounded-xl text-xl"
+                        style={{ width:40, height:40, background:GLASS.md, border:`1px solid ${m.user_id === session.user.id ? BRAND.colors.yellow : GLASS.border}` }}>
+                        {m.profiles?.avatar_emoji || "⚽"}
+                      </div>
+                      <span className="text-[9px] font-bold truncate" style={{ color:"#64748b", maxWidth:40 }}>
+                        {m.profiles?.display_name?.split(" ")[0] || "Player"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Invite code — visible to captain/assistant */}
+              {(myRole === ROLE_CAPTAIN || myRole === ROLE_ASSISTANT) && team.invite_code && (
+                <div className="rounded-xl px-3 py-2 mb-3 flex items-center justify-between"
+                  style={{ background:GLASS.xs, border:`1px solid ${GLASS.border}` }}>
+                  <div>
+                    <div className="text-[9px] font-bold tracking-widest" style={{ color:"#475569" }}>INVITE CODE</div>
+                    <div className="font-black tracking-widest text-sm" style={{ color:BRAND.colors.yellow, letterSpacing:5 }}>
+                      {team.invite_code}
+                    </div>
+                  </div>
+                  <button onClick={() => navigator.clipboard?.writeText(team.invite_code).catch(()=>{})}
+                    className="text-xs font-bold px-2.5 py-1.5 rounded-lg"
+                    style={{ background:GLASS.sm, color:"#94a3b8", border:`1px solid ${GLASS.border}` }}>
+                    Copy
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button onClick={onManageSquad}
+                  className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
+                  style={{ background:BRAND.colors.green, color:"#fff", border:"none", cursor:"pointer" }}>
+                  Manage Squad
+                </button>
+                <button onClick={onLeaveTeam}
+                  className="py-2 px-3 rounded-lg text-xs font-bold"
+                  style={{ background:"rgba(220,38,38,0.08)", color:"#ef4444", border:"1px solid rgba(220,38,38,0.2)", cursor:"pointer" }}>
+                  Leave
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button onClick={onCreateTeam}
+              className="flex-1 py-3 rounded-xl text-sm font-black tracking-wide transition-all hover:brightness-110"
+              style={{ background:BRAND.colors.green, color:"#fff", border:"none", cursor:"pointer", fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+              CREATE TEAM
+            </button>
+            <button onClick={onJoinTeam}
+              className="flex-1 py-3 rounded-xl text-sm font-black tracking-wide transition-all"
+              style={{ background:GLASS.sm, color:"#94a3b8", border:`1px solid ${GLASS.border}`, cursor:"pointer", fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+              JOIN WITH CODE
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Roster stats ──────────────────────────────────────────────────── */}
+      {hasStats && (
+        <div>
+          <div className="text-[10px] font-black tracking-widest mb-3 flex items-center gap-3"
+            style={{ fontFamily:BRAND.fonts.display, color:BRAND.colors.yellow, letterSpacing:3 }}>
+            SQUAD STATS (CURRENT ROSTER)
+            <div className="flex-1 h-px" style={{ background:GLASS.sm }}/>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {[
+              { label:"Goals",    value:totalGoals,   color:BRAND.colors.green  },
+              { label:"Assists",  value:totalAssists, color:"#6366f1"            },
+              { label:"Apps",     value:totalApps,    color:"#94a3b8"            },
+              { label:"Yellows",  value:totalYellows, color:BRAND.colors.yellow },
+              { label:"Reds",     value:totalReds,    color:BRAND.colors.red    },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="rounded-xl p-3 text-center"
+                style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+                <div className="font-black text-xl" style={{ color }}>{value}</div>
+                <div className="text-[9px] mt-0.5 font-bold" style={{ color:"#475569" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Account ───────────────────────────────────────────────────────── */}
+      <div>
+        <div className="text-[10px] font-black tracking-widest mb-3 flex items-center gap-3"
+          style={{ fontFamily:BRAND.fonts.display, color:BRAND.colors.yellow, letterSpacing:3 }}>
+          ACCOUNT
+          <div className="flex-1 h-px" style={{ background:GLASS.sm }}/>
+        </div>
+        <div className="rounded-2xl p-4 mb-3" style={{ background:"rgba(45,122,58,0.08)", border:`1px solid rgba(45,122,58,0.2)` }}>
+          <div className="text-xs font-bold mb-1" style={{ color:BRAND.colors.green }}>⚽ ROSTER AUTO-SAVE</div>
+          <div className="text-xs leading-relaxed" style={{ color:"#64748b" }}>
+            Your lineup, formation, and team colours are automatically saved and restored on every visit.
+          </div>
+        </div>
+        <button onClick={onSignOut}
+          className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all hover:brightness-110"
+          style={{ background:"rgba(220,38,38,0.1)", color:"#ef4444", border:"1px solid rgba(220,38,38,0.2)", cursor:"pointer" }}>
+          SIGN OUT
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Profile Panel ────────────────────────────────────────────────────────────
 function ProfilePanel({ session, profile, team = null, teamMembers = [], onClose, onSignOut,
   onProfileUpdate, onCreateTeam, onJoinTeam, onManageSquad, onLeaveTeam }) {
@@ -3014,18 +3251,18 @@ function ProfilePanel({ session, profile, team = null, teamMembers = [], onClose
 
   async function handleSave() {
     setSaving(true);
-    try {
-      await sb.upsert("profiles", {
-        id:           session.user.id,
-        display_name: displayName.trim(),
-        team_name:    teamName.trim() || null,
-        avatar_emoji: avatar,
-        updated_at:   new Date().toISOString(),
-      }, session.token);
-      onProfileUpdate({ display_name: displayName.trim(), team_name: teamName.trim() || null, avatar_emoji: avatar });
-      setEditing(false);
-    } catch { /* fail silently */ }
+    const updated = { display_name: displayName.trim(), team_name: teamName.trim() || null, avatar_emoji: avatar };
+    // Optimistic update — apply immediately, sync to Supabase in background
+    onProfileUpdate(updated);
+    setEditing(false);
     setSaving(false);
+    sb.upsert("profiles", {
+      id:           session.user.id,
+      display_name: updated.display_name,
+      team_name:    updated.team_name,
+      avatar_emoji: updated.avatar_emoji,
+      updated_at:   new Date().toISOString(),
+    }, session.token).catch(() => {});
   }
 
   return (
@@ -3356,7 +3593,7 @@ function App() {
 
   // ── GA4: track tab changes as virtual page views ─────────────────────────
   useEffect(() => {
-    const tabTitles = { builder:"Builder", community:"Community", about:"About" };
+    const tabTitles = { builder:"Builder", community:"Community", profile:"Profile", about:"About" };
     track("page_view", {
       page_title: `FCRoster.com — ${tabTitles[activeTab] || activeTab}`,
       page_location: window.location.href,
@@ -4125,6 +4362,26 @@ function App() {
           />
         )}
         {activeTab === "about" && <AboutTab/>}
+        {activeTab === "profile" && (
+          <ProfileTab
+            session={session}
+            profile={profile}
+            team={team}
+            teamMembers={teamMembers}
+            players={players}
+            onShowAuth={() => setShowAuth(true)}
+            onSignOut={handleSignOut}
+            onEditProfile={() => setShowProfile(true)}
+            onCreateTeam={() => setShowCreateTeam(true)}
+            onJoinTeam={() => setShowJoinTeam(true)}
+            onManageSquad={() => setShowManageSquad(true)}
+            onLeaveTeam={async () => {
+              if (!team || !window.confirm(`Leave ${team.name}?`)) return;
+              await sb.leaveTeam(team.id, session.user.id, session.token).catch(() => {});
+              setTeam(null); setTeamMembers([]);
+            }}
+          />
+        )}
         <div style={{ display: activeTab === "community" ? "block" : "none" }}>
           <CommunityTab session={session} setSession={setSession} showAuth={showAuth} setShowAuth={setShowAuth}/>
         </div>
