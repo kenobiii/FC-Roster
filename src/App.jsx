@@ -24,7 +24,7 @@ const BRAND = {
     red:    "#dc2626",
     navy:   "#0f172a",
     card:   "#1e293b",
-    border: GLASS.lg,
+    border: "rgba(255,255,255,0.08)",
     muted:  "#64748b",
     white:  "#ffffff",
   },
