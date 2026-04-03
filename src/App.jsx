@@ -578,7 +578,7 @@ function ColorSwatch({ label, value, onChange, presets }) {
 }
 
 // ─── About Tab ────────────────────────────────────────────────────────────────
-function AboutTab() {
+function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {} }) {
   const features = [
     { icon:"⚽", title:"Players"  },
     { icon:"🎽", title:"Coaches"  },
@@ -761,6 +761,20 @@ function AboutTab() {
       </section>
 
       {/* Ad — above legal link */}
+      {/* Session-aware CTA */}
+      {session ? (
+        <button onClick={onGoProfile}
+          className="mx-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 mb-4"
+          style={{ background:"rgba(45,122,58,0.15)", color:"#4ade80", border:"1px solid rgba(45,122,58,0.3)", display:"flex" }}>
+          {session.email?.split("@")[0] ? `👋 View your profile →` : "👤 Go to Profile →"}
+        </button>
+      ) : (
+        <button onClick={onShowAuth}
+          className="mx-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110 active:scale-95 mb-4"
+          style={{ background:BRAND.colors.green, color:"#fff", border:"none", display:"flex" }}>
+          ⚽ Sign In / Create Account
+        </button>
+      )}
       <AdBanner
         slot="3024866198"
         format="auto"
@@ -2616,7 +2630,8 @@ const APP_TABS = [
 ];
 
 // ─── LocalStorage roster key ──────────────────────────────────────────────────
-const LS_ROSTER_KEY = "fcroster_v1";
+const LS_ROSTER_KEY   = "fcroster_v1";
+const LS_SESSION_KEY  = "fcroster_sess_v1"; // persisted auth token
 
 function saveRosterLocal(data) {
   try { localStorage.setItem(LS_ROSTER_KEY, JSON.stringify(data)); } catch {}
@@ -3485,7 +3500,13 @@ function App() {
   const [activeTab,   setActiveTab]   = useState("builder");
 
   // ── Auth & profile state (global — shared across all tabs) ─────────────────
-  const [session,         setSession]         = useState(null);
+  // Restore persisted session on first load
+  const [session, setSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LS_SESSION_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [showAuth,        setShowAuth]        = useState(false);
   const [showProfile,     setShowProfile]     = useState(false);
   const [profile,         setProfile]         = useState(null);
@@ -3624,12 +3645,36 @@ function App() {
     }
   }, []);
 
+  // Persist session changes to localStorage (save on login, clear on logout)
+  useEffect(() => {
+    try {
+      if (session) {
+        localStorage.setItem(LS_SESSION_KEY, JSON.stringify(session));
+      } else {
+        localStorage.removeItem(LS_SESSION_KEY);
+      }
+    } catch {}
+  }, [session]);
+
+  // On load: validate any restored token — clear it if Supabase says it's expired
+  useEffect(() => {
+    if (!session?.token) return;
+    fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { ...sb.headers, "Authorization": `Bearer ${session.token}` }
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(u => { if (!u?.id) setSession(null); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once on mount only
+
   const onPlayerUpdate = useCallback((id, updates) => {
     setPlayers(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   }, []);
 
   async function handleSignOut() {
     if (session) await sb.signOut(session.token).catch(() => {});
+    try { localStorage.removeItem(LS_SESSION_KEY); } catch {}
     setSession(null);
     setProfile(null);
     setTeam(null);
@@ -4336,7 +4381,7 @@ function App() {
             players={players} setPlayers={setPlayers}
             subs={subs} setSubs={setSubs} onPlayerUpdate={onPlayerUpdate}
             rosterLoading={rosterLoading}
-            session={session} team={team}
+            team={team}
             drawMode={drawMode} drawing={drawing} currentPts={currentPts} strokes={strokes} balls={balls}
             showOpposition={showOpposition} oppPlayers={oppPlayers}
             onCirclePointerDown={handleCirclePointerDown}
@@ -4361,7 +4406,7 @@ function App() {
             session={session} onShowAuth={() => setShowAuth(true)}
           />
         )}
-        {activeTab === "about" && <AboutTab/>}
+        {activeTab === "about" && <AboutTab session={session} onShowAuth={() => setShowAuth(true)} onGoProfile={() => setActiveTab("profile")}/>}
         {activeTab === "profile" && (
           <ProfileTab
             session={session}
