@@ -4084,12 +4084,7 @@ function App() {
                 ))}
               </div>
             </div>
-            {/* Ad — below builder controls */}
-            <AdBanner
-              slot="3024866198"
-              format="auto"
-              style={{ background:"#b8bac0" }}
-            />
+
           </>
         )}
       </header>
