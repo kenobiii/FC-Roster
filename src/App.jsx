@@ -3003,8 +3003,8 @@ function ManageSquadModal({ session, team, members, onClose, onUpdated }) {
 }
 
 // ─── Profile Panel ────────────────────────────────────────────────────────────
-function ProfilePanel({ session, profile, team, teamMembers, onClose, onSignOut, onProfileUpdate,
-  onCreateTeam, onJoinTeam, onManageSquad, onLeaveTeam }) {
+function ProfilePanel({ session, profile, team = null, teamMembers = [], onClose, onSignOut,
+  onProfileUpdate, onCreateTeam, onJoinTeam, onManageSquad, onLeaveTeam }) {
   const [editing,     setEditing]     = useState(false);
   const [displayName, setDisplayName] = useState(profile?.display_name || session?.email?.split("@")[0] || "");
   const [teamName,    setTeamName]    = useState(profile?.team_name || "");
@@ -3135,19 +3135,22 @@ function ProfilePanel({ session, profile, team, teamMembers, onClose, onSignOut,
                     <div className="font-black text-white text-sm truncate">{team.name}</div>
                     <div className="text-[10px] mt-0.5" style={{ color:"#64748b" }}>{team.format}v{team.format} · {teamMembers.length} player{teamMembers.length !== 1 ? "s" : ""}</div>
                   </div>
-                  {/* My role badge */}
-                  {(() => {
-                    const myMember = teamMembers.find(m => m.user_id === session.user.id);
-                    const role = myMember?.role || ROLE_PLAYER;
-                    return ROLE_BADGE[role] ? (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
-                        style={{ background: role === ROLE_CAPTAIN ? "rgba(245,197,24,0.15)" : "rgba(99,102,241,0.15)",
-                          color: role === ROLE_CAPTAIN ? BRAND.colors.yellow : "#a5b4fc",
-                          border:`1px solid ${role === ROLE_CAPTAIN ? "rgba(245,197,24,0.3)" : "rgba(99,102,241,0.3)"}` }}>
-                        {ROLE_BADGE[role]} {ROLE_LABEL[role]}
-                      </span>
-                    ) : null;
-                  })()}
+                  {/* My role badge — compute inline without IIFE */}
+                  {teamMembers.find(m => m.user_id === session?.user?.id)?.role !== ROLE_PLAYER &&
+                   teamMembers.find(m => m.user_id === session?.user?.id)?.role ? (
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+                      style={{
+                        background: teamMembers.find(m => m.user_id === session?.user?.id)?.role === ROLE_CAPTAIN
+                          ? "rgba(245,197,24,0.15)" : "rgba(99,102,241,0.15)",
+                        color: teamMembers.find(m => m.user_id === session?.user?.id)?.role === ROLE_CAPTAIN
+                          ? BRAND.colors.yellow : "#a5b4fc",
+                        border: `1px solid ${teamMembers.find(m => m.user_id === session?.user?.id)?.role === ROLE_CAPTAIN
+                          ? "rgba(245,197,24,0.3)" : "rgba(99,102,241,0.3)"}`,
+                      }}>
+                      {ROLE_BADGE[teamMembers.find(m => m.user_id === session?.user?.id)?.role]}
+                      {" "}{ROLE_LABEL[teamMembers.find(m => m.user_id === session?.user?.id)?.role]}
+                    </span>
+                  ) : null}
                 </div>
                 {/* Squad preview */}
                 {teamMembers.length > 0 && (
