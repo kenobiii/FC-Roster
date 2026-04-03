@@ -1290,6 +1290,32 @@ const BuilderLayout = memo(function BuilderLayout({
   const playmakeContent = (
     <div className="px-4 pb-4 flex flex-col gap-2" style={{ borderTop:`1px solid rgba(255,255,255,0.08)` }}>
 
+      {/* ── PLAYER MOVEMENT ────────────────────────────────────────────────── */}
+      <div className="pt-2 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>Player Movement</div>
+      <button onClick={() => setMoveMode(v => !v)}
+        className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
+        style={{ background: moveMode ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.03)", border:`1px solid ${moveMode ? "#6366f1" : GLASS.md}`, fontFamily: BRAND.fonts.body }}>
+        <div className="flex items-center gap-3">
+          <span style={{ fontSize:16 }}>🕹️</span>
+          <span className={CLS_BADGE} style={{ color: moveMode ? "#a5b4fc" : "#cbd5e1" }}>Move Positions</span>
+        </div>
+        <Toggle on={moveMode} color="#6366f1"/>
+      </button>
+      {positionHistoryLen > 0 && (
+        <div className="flex gap-2">
+          <button onClick={undoPosition}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-1"
+            style={{ background:GLASS.xs, border:`1px solid rgba(255,255,255,0.1)`, color:"#cbd5e1", fontFamily: BRAND.fonts.body }}>
+            ↩ Undo move
+          </button>
+          <button onClick={resetFormation}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-1"
+            style={{ background:"rgba(239,68,68,0.07)", border:`1px solid rgba(239,68,68,0.2)`, color:"#f87171", fontFamily: BRAND.fonts.body }}>
+            ⟳ Reset
+          </button>
+        </div>
+      )}
+
       {/* ── PHASES (premium) ─────────────────────────────────────────────── */}
       <div className="pt-3 pb-1 flex items-center justify-between">
         <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>
@@ -1385,32 +1411,6 @@ const BuilderLayout = memo(function BuilderLayout({
           style={{ background:"rgba(245,197,24,0.07)", color:BRAND.colors.yellow, border:`1px solid rgba(245,197,24,0.2)`, fontFamily:BRAND.fonts.body }}>
           Sign in to unlock phases & animation →
         </button>
-      )}
-
-      {/* ── PLAYER MOVEMENT ────────────────────────────────────────────────── */}
-      <div className="pt-2 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color:"#94a3b8", letterSpacing:2 }}>Player Movement</div>
-      <button onClick={() => setMoveMode(v => !v)}
-        className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
-        style={{ background: moveMode ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.03)", border:`1px solid ${moveMode ? "#6366f1" : GLASS.md}`, fontFamily: BRAND.fonts.body }}>
-        <div className="flex items-center gap-3">
-          <span style={{ fontSize:16 }}>🕹️</span>
-          <span className={CLS_BADGE} style={{ color: moveMode ? "#a5b4fc" : "#cbd5e1" }}>Move Positions</span>
-        </div>
-        <Toggle on={moveMode} color="#6366f1"/>
-      </button>
-      {positionHistoryLen > 0 && (
-        <div className="flex gap-2">
-          <button onClick={undoPosition}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-1"
-            style={{ background:GLASS.xs, border:`1px solid rgba(255,255,255,0.1)`, color:"#cbd5e1", fontFamily: BRAND.fonts.body }}>
-            ↩ Undo move
-          </button>
-          <button onClick={resetFormation}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-1"
-            style={{ background:"rgba(239,68,68,0.07)", border:`1px solid rgba(239,68,68,0.2)`, color:"#f87171", fontFamily: BRAND.fonts.body }}>
-            ⟳ Reset
-          </button>
-        </div>
       )}
 
       {/* ── DRAW ON PITCH ──────────────────────────────────────────────────── */}
@@ -2258,7 +2258,19 @@ const PostView = memo(function PostView({ post, postComments, signedIn, username
           {post.title}
         </div>
         <div className="text-xs mb-4" style={{ color:"#475569" }}>
-          {post.author_name && <>Posted by <span style={{ color:"#94a3b8" }}>{post.author_name}</span> · </>}
+          {post.author_name && (
+            <span className="inline-flex items-center gap-1 flex-wrap">
+              {post.author_avatar && <span style={{ fontSize:12 }}>{post.author_avatar}</span>}
+              <span style={{ color:"#94a3b8" }}>{post.author_name}</span>
+              {post.player_class && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  style={{ background:GLASS.xs, color:"#64748b" }}>
+                  {post.player_class.split(" ")[0]}
+                </span>
+              )}
+              <span> · </span>
+            </span>
+          )}
           {post.created_at ? new Date(post.created_at).toLocaleDateString() : ""}
         </div>
         {post.source === "formation" && post.formation && (
@@ -2310,7 +2322,7 @@ const PostView = memo(function PostView({ post, postComments, signedIn, username
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="rounded-full flex items-center justify-center font-black"
                       style={{ width:26, height:26, background: BRAND.colors.green, color:"#fff", fontSize:10 }}>
-                      {(c.author_name || "A")[0].toUpperCase()}
+                      {c.author_avatar || (c.author_name || "A")[0].toUpperCase()}
                     </div>
                     <span className={CLS_BADGE} style={{ color:"#94a3b8" }}>{c.author_name || "Anonymous"}</span>
                     <span style={{ fontSize:10, color:"#475569" }}>· {new Date(c.created_at).toLocaleDateString()}</span>
@@ -2344,7 +2356,7 @@ function SectionHeader({ icon, title, count }) {
   );
 }
 
-function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
+function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
 
   // ── View state ────────────────────────────────────────────────────────────
   const [view,        setView]        = useState("home"); // "home" | "post"
@@ -2408,11 +2420,13 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
     setSubmitting(true); setError("");
     try {
       await sb.authedInsert("posts", {
-        title:       draft.title.trim(),
-        body:        draft.body.trim(),
-        tag:         COMMUNITY_TAGS.slice(1).includes(draft.tag) ? draft.tag : "General",
-        author_name: session.email.split("@")[0],
-        user_id:     session.user.id,
+        title:        draft.title.trim(),
+        body:         draft.body.trim(),
+        tag:          COMMUNITY_TAGS.slice(1).includes(draft.tag) ? draft.tag : "General",
+        author_name:  profile?.display_name || session.email.split("@")[0],
+        author_avatar: profile?.avatar_emoji || null,
+        player_class: profile?.player_class  || null,
+        user_id:      session.user.id,
       }, session.token);
       track("post_created", { tag: draft.tag });
       setDraft({ title:"", tag:"General", body:"" });
@@ -2429,10 +2443,11 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
     if (!body || !session) return;
     try {
       await sb.authedInsert("comments", {
-        post_id:     postId,
-        body:        body,
-        author_name: session.email.split("@")[0],
-        user_id:     session.user.id,
+        post_id:      postId,
+        body:         body,
+        author_name:  profile?.display_name || session.email.split("@")[0],
+        author_avatar: profile?.avatar_emoji || null,
+        user_id:      session.user.id,
       }, session.token);
       await loadComments(postId);
     } catch(e) { /* errors handled in CommentComposer */ }
@@ -2458,7 +2473,7 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
     [activePost, comments]
   );
   const signedIn = !!session;
-  const username = session?.email?.split("@")[0] || "";
+  const username = profile?.display_name || session?.email?.split("@")[0] || "";
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
@@ -2498,10 +2513,10 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
                 <>
                   <div className={CLS_ROW}>
                     <div className="rounded-full flex items-center justify-center font-black text-xs"
-                      style={{ width:32, height:32, background: BRAND.colors.green, color:"#fff", fontSize:11 }}>
-                      {session.email[0].toUpperCase()}
+                      style={{ width:32, height:32, background: BRAND.colors.green, color:"#fff", fontSize:14 }}>
+                      {profile?.avatar_emoji || session?.email?.[0]?.toUpperCase() || "?"}
                     </div>
-                    <span className={CLS_BADGE} style={{ color:"#94a3b8" }}>{session.email.split("@")[0]}</span>
+                    <span className={CLS_BADGE} style={{ color:"#94a3b8" }}>{profile?.display_name || session?.email?.split("@")[0] || "Me"}</span>
                     <button onClick={async () => { if (session) await sb.signOut(session.token).catch(()=>{}); setSession(null); }}
                       className="text-xs transition-opacity hover:opacity-70"
                       style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b" }}>Sign out</button>
@@ -2622,6 +2637,114 @@ function CommunityTab({ session, setSession, showAuth, setShowAuth }) {
 
 
 
+
+// ─── Player Card System ───────────────────────────────────────────────────────
+const POINT_POOL  = 400;
+const ATTR_MIN    = 10;
+const ATTR_MAX    = 95;
+const ATTRS       = ["pac","sho","pas","dri","def","phy"];
+const ATTR_META   = {
+  pac: { label:"PAC", full:"Pace",         desc:"Speed & Acceleration",        color:"#f97316" },
+  sho: { label:"SHO", full:"Shooting",     desc:"Accuracy & Finishing",        color:"#ef4444" },
+  pas: { label:"PAS", full:"Passing",      desc:"Vision & Distribution",       color:"#60a5fa" },
+  dri: { label:"DRI", full:"Dribbling",    desc:"Agility & Ball Control",      color:"#a78bfa" },
+  def: { label:"DEF", full:"Defending",    desc:"Tackling & Interceptions",    color:"#22c55e" },
+  phy: { label:"PHY", full:"Physicality",  desc:"Strength, Stamina & Grit",    color:"#f5c518" },
+};
+
+const PLAYER_CLASSES = [
+  { emoji:"🌱", name:"Grass Roots", min:0,  max:20,  stars:1, color:"#94a3b8", glow:"rgba(148,163,184,0.3)" },
+  { emoji:"⚽", name:"Rec Player",  min:21, max:40,  stars:2, color:"#4ade80", glow:"rgba(74,222,128,0.3)"  },
+  { emoji:"🏟️", name:"Club/League", min:41, max:60,  stars:3, color:"#60a5fa", glow:"rgba(96,165,250,0.3)"  },
+  { emoji:"📈", name:"Comp Player", min:61, max:80,  stars:4, color:"#a78bfa", glow:"rgba(167,139,250,0.3)" },
+  { emoji:"🌟", name:"Semi-Pro",    min:81, max:95,  stars:5, color:"#f5c518", glow:"rgba(245,197,24,0.3)"  },
+  { emoji:"👑", name:"Pro",         min:96, max:100, stars:6, color:"#fbbf24", glow:"rgba(251,191,36,0.5)"  },
+];
+
+const ROLE_DESIGNATIONS = {
+  referee: { emoji:"🦓", name:"Referee",          skipAttrs:true  },
+  fan:     { emoji:"👀", name:"Fan / Supporter",  skipAttrs:true  },
+};
+
+const ROLES_IN_SPORT = [
+  { id:"player",   label:"Player",             emoji:"⚽" },
+  { id:"captain",  label:"Team Captain",       emoji:"🎖️" },
+  { id:"coach",    label:"Coach / Manager",    emoji:"📋" },
+  { id:"referee",  label:"Referee",            emoji:"🦓" },
+  { id:"scout",    label:"Scout / Analyst",    emoji:"🔭" },
+  { id:"fan",      label:"Fan / Supporter",    emoji:"👀" },
+  { id:"parent",   label:"Parent / Guardian",  emoji:"👨‍👧" },
+  { id:"admin",    label:"Club Administrator", emoji:"🏢" },
+];
+
+const VIBE_CARDS = [
+  { id:"newbie",  label:"Newbie",      emoji:"🌱", desc:"Just getting started",         attrs:{pac:10,sho:10,pas:10,dri:10,def:10,phy:10} },
+  { id:"casual",  label:"Casual",      emoji:"⚽", desc:"Playing for fun",              attrs:{pac:50,sho:50,pas:50,dri:50,def:50,phy:50} },
+  { id:"regular", label:"The Regular", emoji:"🏟️", desc:"Show up every week",           attrs:{pac:65,sho:62,pas:68,dri:65,def:68,phy:72} },
+  { id:"sweat",   label:"Sweat",       emoji:"📈", desc:"Here to compete",              attrs:{pac:85,sho:75,pas:60,dri:80,def:50,phy:50} },
+  { id:"goat",    label:"GOAT",        emoji:"👑", desc:"Elite level — no excuses",     attrs:{pac:68,sho:68,pas:66,dri:66,def:66,phy:66} },
+];
+
+// Countries — name + flag emoji
+const COUNTRIES = [
+  ["Afghanistan","🇦🇫"],["Albania","🇦🇱"],["Algeria","🇩🇿"],["Andorra","🇦🇩"],["Angola","🇦🇴"],
+  ["Antigua & Barbuda","🇦🇬"],["Argentina","🇦🇷"],["Armenia","🇦🇲"],["Australia","🇦🇺"],["Austria","🇦🇹"],
+  ["Azerbaijan","🇦🇿"],["Bahamas","🇧🇸"],["Bahrain","🇧🇭"],["Bangladesh","🇧🇩"],["Barbados","🇧🇧"],
+  ["Belarus","🇧🇾"],["Belgium","🇧🇪"],["Belize","🇧🇿"],["Benin","🇧🇯"],["Bhutan","🇧🇹"],
+  ["Bolivia","🇧🇴"],["Bosnia & Herzegovina","🇧🇦"],["Botswana","🇧🇼"],["Brazil","🇧🇷"],["Brunei","🇧🇳"],
+  ["Bulgaria","🇧🇬"],["Burkina Faso","🇧🇫"],["Burundi","🇧🇮"],["Cambodia","🇰🇭"],["Cameroon","🇨🇲"],
+  ["Canada","🇨🇦"],["Cape Verde","🇨🇻"],["Central African Republic","🇨🇫"],["Chad","🇹🇩"],["Chile","🇨🇱"],
+  ["China","🇨🇳"],["Colombia","🇨🇴"],["Comoros","🇰🇲"],["Congo","🇨🇬"],["Costa Rica","🇨🇷"],
+  ["Croatia","🇭🇷"],["Cuba","🇨🇺"],["Cyprus","🇨🇾"],["Czech Republic","🇨🇿"],["Denmark","🇩🇰"],
+  ["Djibouti","🇩🇯"],["Dominica","🇩🇲"],["Dominican Republic","🇩🇴"],["Ecuador","🇪🇨"],["Egypt","🇪🇬"],
+  ["El Salvador","🇸🇻"],["Equatorial Guinea","🇬🇶"],["Eritrea","🇪🇷"],["Estonia","🇪🇪"],["Eswatini","🇸🇿"],
+  ["Ethiopia","🇪🇹"],["Fiji","🇫🇯"],["Finland","🇫🇮"],["France","🇫🇷"],["Gabon","🇬🇦"],
+  ["Gambia","🇬🇲"],["Georgia","🇬🇪"],["Germany","🇩🇪"],["Ghana","🇬🇭"],["Greece","🇬🇷"],
+  ["Grenada","🇬🇩"],["Guatemala","🇬🇹"],["Guinea","🇬🇳"],["Guinea-Bissau","🇬🇼"],["Guyana","🇬🇾"],
+  ["Haiti","🇭🇹"],["Honduras","🇭🇳"],["Hungary","🇭🇺"],["Iceland","🇮🇸"],["India","🇮🇳"],
+  ["Indonesia","🇮🇩"],["Iran","🇮🇷"],["Iraq","🇮🇶"],["Ireland","🇮🇪"],["Israel","🇮🇱"],
+  ["Italy","🇮🇹"],["Ivory Coast","🇨🇮"],["Jamaica","🇯🇲"],["Japan","🇯🇵"],["Jordan","🇯🇴"],
+  ["Kazakhstan","🇰🇿"],["Kenya","🇰🇪"],["Kosovo","🇽🇰"],["Kuwait","🇰🇼"],["Kyrgyzstan","🇰🇬"],
+  ["Laos","🇱🇦"],["Latvia","🇱🇻"],["Lebanon","🇱🇧"],["Lesotho","🇱🇸"],["Liberia","🇱🇷"],
+  ["Libya","🇱🇾"],["Liechtenstein","🇱🇮"],["Lithuania","🇱🇹"],["Luxembourg","🇱🇺"],["Madagascar","🇲🇬"],
+  ["Malawi","🇲🇼"],["Malaysia","🇲🇾"],["Maldives","🇲🇻"],["Mali","🇲🇱"],["Malta","🇲🇹"],
+  ["Mauritania","🇲🇷"],["Mauritius","🇲🇺"],["Mexico","🇲🇽"],["Moldova","🇲🇩"],["Monaco","🇲🇨"],
+  ["Mongolia","🇲🇳"],["Montenegro","🇲🇪"],["Morocco","🇲🇦"],["Mozambique","🇲🇿"],["Myanmar","🇲🇲"],
+  ["Namibia","🇳🇦"],["Nepal","🇳🇵"],["Netherlands","🇳🇱"],["New Zealand","🇳🇿"],["Nicaragua","🇳🇮"],
+  ["Niger","🇳🇪"],["Nigeria","🇳🇬"],["North Korea","🇰🇵"],["North Macedonia","🇲🇰"],["Norway","🇳🇴"],
+  ["Oman","🇴🇲"],["Pakistan","🇵🇰"],["Palestine","🇵🇸"],["Panama","🇵🇦"],["Papua New Guinea","🇵🇬"],
+  ["Paraguay","🇵🇾"],["Peru","🇵🇪"],["Philippines","🇵🇭"],["Poland","🇵🇱"],["Portugal","🇵🇹"],
+  ["Qatar","🇶🇦"],["Romania","🇷🇴"],["Russia","🇷🇺"],["Rwanda","🇷🇼"],["Saudi Arabia","🇸🇦"],
+  ["Senegal","🇸🇳"],["Serbia","🇷🇸"],["Sierra Leone","🇸🇱"],["Slovakia","🇸🇰"],["Slovenia","🇸🇮"],
+  ["Somalia","🇸🇴"],["South Africa","🇿🇦"],["South Korea","🇰🇷"],["South Sudan","🇸🇸"],["Spain","🇪🇸"],
+  ["Sri Lanka","🇱🇰"],["Sudan","🇸🇩"],["Suriname","🇸🇷"],["Sweden","🇸🇪"],["Switzerland","🇨🇭"],
+  ["Syria","🇸🇾"],["Taiwan","🇹🇼"],["Tajikistan","🇹🇯"],["Tanzania","🇹🇿"],["Thailand","🇹🇭"],
+  ["Togo","🇹🇬"],["Trinidad & Tobago","🇹🇹"],["Tunisia","🇹🇳"],["Turkey","🇹🇷"],["Turkmenistan","🇹🇲"],
+  ["Uganda","🇺🇬"],["Ukraine","🇺🇦"],["United Arab Emirates","🇦🇪"],["United Kingdom","🇬🇧"],
+  ["United States","🇺🇸"],["Uruguay","🇺🇾"],["Uzbekistan","🇺🇿"],["Venezuela","🇻🇪"],["Vietnam","🇻🇳"],
+  ["Yemen","🇾🇪"],["Zambia","🇿🇲"],["Zimbabwe","🇿🇼"],
+];
+
+// ─── Player Card Helpers ──────────────────────────────────────────────────────
+function calcOverall(form) {
+  const vals = ATTRS.map(a => Number(form[`attr_${a}`] || 10));
+  return Math.round(vals.reduce((s,v) => s+v, 0) / vals.length);
+}
+function calcClass(overall) {
+  return PLAYER_CLASSES.find(c => overall >= c.min && overall <= c.max) || PLAYER_CLASSES[0];
+}
+function getTopStats(form) {
+  return ATTRS
+    .map(a => ({ key: ATTR_META[a].label, val: Number(form[`attr_${a}`] || 10), color: ATTR_META[a].color }))
+    .sort((a,b) => b.val - a.val).slice(0,2);
+}
+function pointsUsed(form) {
+  return ATTRS.reduce((s,a) => s + Number(form[`attr_${a}`] || 10), 0);
+}
+function isNonPlayer(role) {
+  return role === "referee" || role === "fan";
+}
+
 const APP_TABS = [
   { id:"builder",   label:"⚽  Builder" },
   { id:"community", label:"🏟️  Community" },
@@ -2640,84 +2763,598 @@ function loadRosterLocal() {
   try { const s = localStorage.getItem(LS_ROSTER_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
 }
 
-// ─── Onboarding Modal ─────────────────────────────────────────────────────────
-function OnboardingModal({ session, onComplete }) {
-  const [displayName, setDisplayName] = useState(session?.email?.split("@")[0] || "");
-  const [teamName,    setTeamName]    = useState("");
-  const [avatar,      setAvatar]      = useState("⚽");
-  const [saving,      setSaving]      = useState(false);
+// ─── Player Setup Wizard (Onboarding + Edit) ─────────────────────────────────
+function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, onClose }) {
+  const isEdit = mode === "edit";
   const AVATARS = ["⚽","🏆","🧤","🦁","🦅","🐯","🔥","⚡","🌟","🎯","💪","🛡️"];
 
-  async function handleSave() {
-    if (!displayName.trim()) return;
-    setSaving(true);
-    const prof = { display_name: displayName.trim(), team_name: teamName.trim() || null, avatar_emoji: avatar };
-    // Fire-and-forget — always enter the app regardless of save success
-    sb.upsert("profiles", {
-      id:           session.user.id,
-      display_name: prof.display_name,
-      team_name:    prof.team_name,
-      avatar_emoji: prof.avatar_emoji,
-      updated_at:   new Date().toISOString(),
-    }, session.token).catch(() => {}); // editable later via Profile Panel
-    onComplete(prof);
+  const initForm = () => ({
+    display_name:     profile?.display_name     || session?.email?.split("@")[0] || "",
+    avatar_emoji:     profile?.avatar_emoji     || "⚽",
+    role_in_sport:    profile?.role_in_sport    || "",
+    attr_pac:         profile?.attr_pac         || 10,
+    attr_sho:         profile?.attr_sho         || 10,
+    attr_pas:         profile?.attr_pas         || 10,
+    attr_dri:         profile?.attr_dri         || 10,
+    attr_def:         profile?.attr_def         || 10,
+    attr_phy:         profile?.attr_phy         || 10,
+    country:          profile?.country          || "",
+    positions:        profile?.positions        || "",
+    preferred_foot:   profile?.preferred_foot   || "",
+    age:              profile?.age              || "",
+    gender:           profile?.gender           || "",
+    show_gender:      profile?.show_gender      || false,
+    show_experience:  profile?.show_experience  !== false,
+    club_name:        profile?.club_name        || "",
+    club_website:     profile?.club_website     || "",
+    bio:              profile?.bio              || "",
+    social_instagram: profile?.social_instagram || "",
+    social_twitter:   profile?.social_twitter   || "",
+    social_tiktok:    profile?.social_tiktok    || "",
+    social_youtube:   profile?.social_youtube   || "",
+  });
+
+  const [step,          setStep]          = React.useState(1);
+  const [form,          setForm]          = React.useState(initForm);
+  const [saving,        setSaving]        = React.useState(false);
+  const [countrySearch, setCountrySearch] = React.useState("");
+  const [showCountryDD, setShowCountryDD] = React.useState(false);
+  const [showPrivacy,   setShowPrivacy]   = React.useState(false);
+  const [vibeChosen,    setVibeChosen]    = React.useState(null);
+
+  const totalSteps = 4;
+  const overall    = calcOverall(form);
+  const cls        = calcClass(overall);
+  const topStats   = getTopStats(form);
+  const used       = pointsUsed(form);
+  const remaining  = POINT_POOL - used;
+  const skipAttrs  = isNonPlayer(form.role_in_sport);
+
+  function set(key, val) { setForm(f => ({...f, [key]: val})); }
+
+  function setAttr(key, newVal) {
+    const others = ATTRS.filter(a => a !== key)
+      .reduce((s,a) => s + Number(form[`attr_${a}`] || 10), 0);
+    const maxAllowed = Math.min(ATTR_MAX, POINT_POOL - others);
+    const clamped = Math.max(ATTR_MIN, Math.min(Number(newVal), maxAllowed));
+    set(`attr_${key}`, clamped);
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background:"rgba(0,0,0,0.75)", backdropFilter:"blur(4px)" }}>
-      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background:"#1e293b", border:"1px solid rgba(255,255,255,0.1)" }}>
-        <div className="text-center mb-5">
-          <div style={{ fontSize:40, marginBottom:6 }}>{avatar}</div>
-          <div className="font-black tracking-wide" style={{ fontFamily: BRAND.fonts.display, fontSize:22, color:"#fff", letterSpacing:1 }}>
-            WELCOME TO FCROSTER
-          </div>
-          <div className="text-xs mt-1" style={{ color:"#64748b" }}>Set up your profile to get started</div>
-        </div>
+  function applyVibe(vibe) {
+    setVibeChosen(vibe.id);
+    setForm(f => ({ ...f,
+      attr_pac: vibe.attrs.pac, attr_sho: vibe.attrs.sho, attr_pas: vibe.attrs.pas,
+      attr_dri: vibe.attrs.dri, attr_def: vibe.attrs.def, attr_phy: vibe.attrs.phy,
+    }));
+  }
 
-        {/* Avatar picker */}
-        <div className="mb-4">
-          <div className="text-xs font-bold mb-2" style={{ color:"#94a3b8" }}>PICK YOUR AVATAR</div>
-          <div className="flex flex-wrap gap-2">
-            {AVATARS.map(e => (
-              <button key={e} onClick={() => setAvatar(e)}
-                className="w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all"
-                style={{ background: avatar===e ? BRAND.colors.green : GLASS.sm,
-                         border: avatar===e ? `2px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.08)" }}>
-                {e}
+  function canProceed() {
+    if (step === 1) return form.display_name.trim().length > 0 && form.role_in_sport;
+    return true;
+  }
+
+  async function handleFinish() {
+    setSaving(true);
+    const payload = {
+      id:               session.user.id,
+      display_name:     form.display_name.trim(),
+      avatar_emoji:     form.avatar_emoji,
+      role_in_sport:    form.role_in_sport,
+      attr_pac:         Number(form.attr_pac),
+      attr_sho:         Number(form.attr_sho),
+      attr_pas:         Number(form.attr_pas),
+      attr_dri:         Number(form.attr_dri),
+      attr_def:         Number(form.attr_def),
+      attr_phy:         Number(form.attr_phy),
+      overall_score:    overall,
+      player_class:     skipAttrs ? (form.role_in_sport === "referee" ? "🦓 Referee" : "👀 Fan") : cls.name,
+      country:          form.country          || null,
+      positions:        form.positions        || null,
+      preferred_foot:   form.preferred_foot   || null,
+      age:              form.age ? Number(form.age) : null,
+      gender:           form.gender           || null,
+      show_gender:      form.show_gender,
+      show_experience:  form.show_experience,
+      club_name:        form.club_name        || null,
+      club_website:     form.club_website     || null,
+      bio:              form.bio              || null,
+      social_instagram: form.social_instagram || null,
+      social_twitter:   form.social_twitter   || null,
+      social_tiktok:    form.social_tiktok    || null,
+      social_youtube:   form.social_youtube   || null,
+      attrs_last_updated: new Date().toISOString(),
+      setup_complete:   true,
+      updated_at:       new Date().toISOString(),
+    };
+    sb.upsert("profiles", payload, session.token).catch(() => {});
+    onComplete(payload);
+    setSaving(false);
+  }
+
+  // ── Step indicators ─────────────────────────────────────────────────────────
+  const stepLabels = ["Identity","Vibe","Attributes","Your World"];
+
+  // ── Filtered countries ───────────────────────────────────────────────────────
+  const filteredCountries = COUNTRIES.filter(([name]) =>
+    name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-3"
+      style={{ background:"rgba(0,0,0,0.85)", backdropFilter:"blur(6px)" }}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+        style={{ background:"#0f172a", border:"1px solid rgba(255,255,255,0.1)", maxHeight:"92vh" }}>
+
+        {/* ── Header ── */}
+        <div className="px-5 pt-5 pb-3 shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-black tracking-widest text-white"
+              style={{ fontFamily:BRAND.fonts.display, fontSize:15, letterSpacing:2 }}>
+              {isEdit ? "EDIT PROFILE" : "PLAYER EVALUATION"}
+            </div>
+            {isEdit && (
+              <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b", fontSize:18 }}>✕</button>
+            )}
+          </div>
+          {/* Step pills */}
+          <div className="flex gap-1.5">
+            {stepLabels.map((label, i) => (
+              <button key={i} onClick={() => isEdit && setStep(i+1)}
+                className="flex-1 py-1 rounded-lg text-[9px] font-black tracking-wide transition-all"
+                style={{
+                  background: step === i+1 ? BRAND.colors.green : step > i+1 ? "rgba(45,122,58,0.25)" : GLASS.xs,
+                  color:      step === i+1 ? "#fff"             : step > i+1 ? "#4ade80"               : "#475569",
+                  border:     step === i+1 ? "none" : "1px solid rgba(255,255,255,0.06)",
+                  cursor:     isEdit ? "pointer" : "default",
+                }}>
+                {step > i+1 ? "✓" : label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Display name */}
-        <div className="mb-3">
-          <div className="text-xs font-bold mb-1.5" style={{ color:"#94a3b8" }}>DISPLAY NAME *</div>
-          <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-            style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.12)`, color:"#fff" }}
-            value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={30}
-            placeholder="How you appear in the community"/>
+        {/* ── Content ── */}
+        <div className="flex-1 overflow-y-auto px-5 pb-2">
+
+          {/* ═══════════════════════════════════════════════════
+              STEP 1 — IDENTITY
+          ═══════════════════════════════════════════════════ */}
+          {step === 1 && (
+            <div className="space-y-4 py-2">
+              {/* Avatar */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-2" style={{ color:"#64748b" }}>PICK YOUR AVATAR</div>
+                <div className="flex flex-wrap gap-2">
+                  {AVATARS.map(e => (
+                    <button key={e} onClick={() => set("avatar_emoji", e)}
+                      className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
+                      style={{ background: form.avatar_emoji===e ? BRAND.colors.green : GLASS.sm,
+                               border:     form.avatar_emoji===e ? `2px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.08)" }}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Display name */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>
+                  DISPLAY NAME <span style={{ color:BRAND.colors.red }}>*</span>
+                </div>
+                <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.12)`, color:"#fff" }}
+                  value={form.display_name} maxLength={30}
+                  placeholder="How you appear in the community"
+                  onChange={e => set("display_name", e.target.value)}/>
+              </div>
+
+              {/* Role in football */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-2" style={{ color:"#64748b" }}>
+                  ROLE IN FOOTBALL <span style={{ color:BRAND.colors.red }}>*</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {ROLES_IN_SPORT.map(r => (
+                    <button key={r.id} onClick={() => set("role_in_sport", r.id)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left"
+                      style={{
+                        background: form.role_in_sport===r.id ? "rgba(45,122,58,0.2)"  : GLASS.xs,
+                        border:     form.role_in_sport===r.id ? `1.5px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.07)",
+                        color:      form.role_in_sport===r.id ? "#fff" : "#94a3b8",
+                      }}>
+                      <span style={{ fontSize:16 }}>{r.emoji}</span>
+                      <span>{r.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════
+              STEP 2 — VIBE CHECK
+          ═══════════════════════════════════════════════════ */}
+          {step === 2 && (
+            <div className="space-y-3 py-2">
+              <p className="text-xs" style={{ color:"#64748b" }}>
+                Pick the card that feels most like you right now. It'll pre-fill your attribute sliders — you can fine-tune them next.
+              </p>
+              <div className="space-y-2">
+                {VIBE_CARDS.map(v => (
+                  <button key={v.id} onClick={() => applyVibe(v)}
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all"
+                    style={{
+                      background: vibeChosen===v.id ? "rgba(45,122,58,0.18)" : GLASS.sm,
+                      border:     vibeChosen===v.id ? `1.5px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.07)",
+                    }}>
+                    <span style={{ fontSize:28, minWidth:36 }}>{v.emoji}</span>
+                    <div className="flex-1">
+                      <div className="font-black text-sm text-white">{v.label}</div>
+                      <div className="text-xs mt-0.5" style={{ color:"#64748b" }}>{v.desc}</div>
+                    </div>
+                    {vibeChosen===v.id && <span style={{ color:BRAND.colors.green, fontSize:18 }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+              {skipAttrs && (
+                <div className="rounded-xl p-3 text-xs" style={{ background:"rgba(245,197,24,0.08)", border:"1px solid rgba(245,197,24,0.2)", color:BRAND.colors.yellow }}>
+                  As a {ROLES_IN_SPORT.find(r => r.id===form.role_in_sport)?.label}, attribute sliders are optional. Skip ahead when you're ready.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════
+              STEP 3 — ATTRIBUTES
+          ═══════════════════════════════════════════════════ */}
+          {step === 3 && (
+            <div className="py-2">
+              {skipAttrs ? (
+                <div className="text-center py-8">
+                  <div style={{ fontSize:48, marginBottom:8 }}>
+                    {form.role_in_sport === "referee" ? "🦓" : "👀"}
+                  </div>
+                  <div className="font-black text-white mb-2">
+                    {form.role_in_sport === "referee" ? "Referee Mode" : "Fan Mode"}
+                  </div>
+                  <div className="text-xs" style={{ color:"#64748b", lineHeight:1.6 }}>
+                    Attribute stats are for players. You'll show up as{" "}
+                    <strong style={{ color:BRAND.colors.yellow }}>
+                      {form.role_in_sport === "referee" ? "🦓 Referee" : "👀 Fan"}
+                    </strong>{" "}
+                    in the community.<br/>You can always add stats later from your profile.
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  {/* Sliders */}
+                  <div className="flex-1 space-y-3">
+                    {/* Point pool bar */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-black tracking-widest" style={{ color:"#64748b" }}>POINTS REMAINING</span>
+                        <span className="text-sm font-black" style={{ color: remaining < 30 ? BRAND.colors.red : BRAND.colors.green }}>
+                          {remaining}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background:GLASS.md }}>
+                        <div className="h-full rounded-full transition-all"
+                          style={{ width:`${(used/POINT_POOL)*100}%`, background: remaining < 30 ? BRAND.colors.red : BRAND.colors.green }}/>
+                      </div>
+                    </div>
+
+                    {ATTRS.map(a => {
+                      const m = ATTR_META[a];
+                      const val = Number(form[`attr_${a}`] || 10);
+                      return (
+                        <div key={a}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div>
+                              <span className="text-xs font-black" style={{ color:m.color }}>{m.label}</span>
+                              <span className="text-[9px] ml-1.5" style={{ color:"#475569" }}>{m.desc}</span>
+                            </div>
+                            <span className="text-sm font-black" style={{ color:m.color }}>{val}</span>
+                          </div>
+                          <input type="range" min={ATTR_MIN} max={ATTR_MAX} value={val}
+                            onChange={e => setAttr(a, e.target.value)}
+                            className="w-full" style={{ accentColor:m.color }}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Live card preview */}
+                  <div className="shrink-0 w-28 sticky top-0 self-start">
+                    <div className="rounded-2xl p-2.5 text-center"
+                      style={{ background:`linear-gradient(160deg, #1e293b 0%, #0f172a 100%)`,
+                               border:`2px solid ${cls.color}`,
+                               boxShadow:`0 0 20px ${cls.glow}` }}>
+                      <div style={{ fontSize:28 }}>{cls.emoji}</div>
+                      <div className="font-black text-2xl" style={{ color:cls.color, lineHeight:1 }}>{overall}</div>
+                      <div className="text-[8px] font-bold mt-0.5 mb-2" style={{ color:"#94a3b8" }}>{cls.name}</div>
+                      {ATTRS.map(a => {
+                        const m = ATTR_META[a];
+                        const val = Number(form[`attr_${a}`] || 10);
+                        return (
+                          <div key={a} className="flex items-center gap-1 mb-0.5">
+                            <span className="text-[7px] font-black w-5 text-right" style={{ color:m.color }}>{m.label}</span>
+                            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background:GLASS.md }}>
+                              <div style={{ width:`${val}%`, height:"100%", background:m.color, borderRadius:99 }}/>
+                            </div>
+                            <span className="text-[7px] font-black w-4" style={{ color:"#fff" }}>{val}</span>
+                          </div>
+                        );
+                      })}
+                      {/* Stars */}
+                      <div className="mt-1.5 text-[10px]">
+                        {Array.from({length:Math.min(cls.stars,5)}).map((_,i) => (
+                          <span key={i} style={{ color:cls.color }}>★</span>
+                        ))}
+                        {cls.stars === 6 && <span>👑</span>}
+                      </div>
+                      {/* Top stats */}
+                      {topStats.length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {topStats.map(s => (
+                            <div key={s.key} className="text-[8px] font-black"
+                              style={{ color:s.color }}>
+                              {s.key} {s.val}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-[8px] text-center mt-1" style={{ color:"#334155" }}>
+                      Live preview
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════
+              STEP 4 — YOUR WORLD
+          ═══════════════════════════════════════════════════ */}
+          {step === 4 && (
+            <div className="space-y-4 py-2">
+              {/* Country */}
+              <div className="relative">
+                <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>COUNTRY</div>
+                <div className="relative">
+                  <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                    style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.12)`, color:"#fff" }}
+                    placeholder="Search country…"
+                    value={form.country
+                      ? `${COUNTRIES.find(([n]) => n===form.country)?.[1] || ""} ${form.country}`
+                      : countrySearch}
+                    onChange={e => { setCountrySearch(e.target.value); set("country",""); setShowCountryDD(true); }}
+                    onFocus={() => { setShowCountryDD(true); setCountrySearch(""); }}/>
+                  {showCountryDD && (
+                    <div className="absolute z-20 w-full mt-1 rounded-xl overflow-hidden overflow-y-auto"
+                      style={{ background:"#1e293b", border:"1px solid rgba(255,255,255,0.1)", maxHeight:180 }}>
+                      {filteredCountries.slice(0,40).map(([name, flag]) => (
+                        <button key={name}
+                          className="w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:brightness-125"
+                          style={{ color: form.country===name ? "#fff" : "#94a3b8",
+                                   background: form.country===name ? GLASS.md : "transparent" }}
+                          onClick={() => { set("country", name); setShowCountryDD(false); setCountrySearch(""); }}>
+                          <span style={{ fontSize:18 }}>{flag}</span>{name}
+                        </button>
+                      ))}
+                      {filteredCountries.length === 0 && (
+                        <div className="px-3 py-2 text-xs" style={{ color:"#475569" }}>No results</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Positions */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>POSITION(S)</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {ALL_POSITIONS.map(pos => {
+                    const selected = (form.positions || "").split(",").filter(Boolean).includes(pos);
+                    return (
+                      <button key={pos} onClick={() => {
+                        const arr = (form.positions || "").split(",").filter(Boolean);
+                        const next = selected ? arr.filter(p => p!==pos) : [...arr, pos];
+                        set("positions", next.join(","));
+                      }}
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all"
+                      style={{
+                        background: selected ? "rgba(45,122,58,0.2)"  : GLASS.xs,
+                        border:     selected ? `1px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.07)",
+                        color:      selected ? "#fff" : "#64748b",
+                      }}>
+                        {pos}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Preferred foot */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>PREFERRED FOOT</div>
+                <div className="flex gap-2">
+                  {["Left","Right","Both"].map(f => (
+                    <button key={f} onClick={() => set("preferred_foot", form.preferred_foot===f ? "" : f)}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: form.preferred_foot===f ? "rgba(45,122,58,0.2)"  : GLASS.xs,
+                        border:     form.preferred_foot===f ? `1.5px solid ${BRAND.colors.green}` : "1px solid rgba(255,255,255,0.07)",
+                        color:      form.preferred_foot===f ? "#fff" : "#64748b",
+                      }}>
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Age + Gender */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>
+                    AGE <span style={{ color:"#334155" }}>(private)</span>
+                  </div>
+                  <input type="number" min={5} max={99}
+                    className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                    style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#fff" }}
+                    value={form.age} placeholder="—"
+                    onChange={e => set("age", e.target.value)}/>
+                </div>
+                <div>
+                  <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>GENDER</div>
+                  <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                    style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color: form.gender ? "#fff" : "#64748b" }}
+                    value={form.gender} onChange={e => set("gender", e.target.value)}>
+                    <option value="">Prefer not to say</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                  </select>
+                  {form.gender && (
+                    <label className="flex items-center gap-1.5 mt-1.5 cursor-pointer">
+                      <input type="checkbox" checked={form.show_gender}
+                        onChange={e => set("show_gender", e.target.checked)}
+                        style={{ accentColor:BRAND.colors.green }}/>
+                      <span className="text-[9px]" style={{ color:"#64748b" }}>Show publicly</span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Club info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>LOCAL CLUB</div>
+                  <input className="w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none"
+                    style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#fff" }}
+                    value={form.club_name} placeholder="Club name" maxLength={60}
+                    onChange={e => set("club_name", e.target.value)}/>
+                </div>
+                <div>
+                  <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>CLUB WEBSITE</div>
+                  <input className="w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none"
+                    style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#fff" }}
+                    value={form.club_website} placeholder="https://…" maxLength={120}
+                    onChange={e => set("club_website", e.target.value)}/>
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-1.5" style={{ color:"#64748b" }}>
+                  BIO <span style={{ color:"#334155" }}>({120 - (form.bio?.length||0)} left)</span>
+                </div>
+                <textarea rows={2}
+                  className="w-full rounded-xl px-3 py-2.5 text-xs focus:outline-none resize-none"
+                  style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#fff" }}
+                  value={form.bio} placeholder="A sentence about yourself…" maxLength={120}
+                  onChange={e => set("bio", e.target.value)}/>
+              </div>
+
+              {/* Social links */}
+              <div>
+                <div className="text-[9px] font-black tracking-widest mb-2" style={{ color:"#64748b" }}>SOCIAL LINKS</div>
+                <div className="space-y-2">
+                  {[
+                    { key:"social_instagram", icon:"📸", placeholder:"Instagram username" },
+                    { key:"social_twitter",   icon:"🐦", placeholder:"X / Twitter handle" },
+                    { key:"social_tiktok",    icon:"🎵", placeholder:"TikTok username" },
+                    { key:"social_youtube",   icon:"▶️", placeholder:"YouTube channel" },
+                  ].map(({ key, icon, placeholder }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span style={{ fontSize:16, width:22 }}>{icon}</span>
+                      <input className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none"
+                        style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.08)`, color:"#fff" }}
+                        value={form[key]} placeholder={placeholder} maxLength={80}
+                        onChange={e => set(key, e.target.value)}/>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Privacy info */}
+              <button onClick={() => setShowPrivacy(v => !v)}
+                className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg text-xs"
+                style={{ background:GLASS.xs, border:"1px solid rgba(255,255,255,0.06)", color:"#64748b" }}>
+                <span>ℹ️ What's shown publicly?</span>
+                <span>{showPrivacy ? "▲" : "▼"}</span>
+              </button>
+              {showPrivacy && (
+                <div className="rounded-xl p-3 text-xs space-y-1.5"
+                  style={{ background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.2)" }}>
+                  <div style={{ color:"#a5b4fc", fontWeight:"bold" }}>👁️ Always public</div>
+                  <div style={{ color:"#94a3b8" }}>Display name · Avatar · Role in football · Country · Club name · Bio · Social links · Player class & stats (if set to show)</div>
+                  <div className="mt-2" style={{ color:"#a5b4fc", fontWeight:"bold" }}>🔒 Always private</div>
+                  <div style={{ color:"#94a3b8" }}>Email address · Age</div>
+                  <div className="mt-2" style={{ color:"#a5b4fc", fontWeight:"bold" }}>🔒 Private unless you toggle</div>
+                  <div style={{ color:"#94a3b8" }}>Gender · Experience level</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Team name */}
-        <div className="mb-5">
-          <div className="text-xs font-bold mb-1.5" style={{ color:"#94a3b8" }}>TEAM NAME <span style={{ color:"#475569" }}>(optional)</span></div>
-          <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-            style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.12)`, color:"#fff" }}
-            value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={40}
-            placeholder="Your club or team name"/>
+        {/* ── Footer navigation ── */}
+        <div className="px-5 py-4 shrink-0 space-y-2" style={{ borderTop:`1px solid ${GLASS.sm}` }}>
+          <div className="flex gap-2">
+            {step > 1 && (
+              <button onClick={() => setStep(s => s-1)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={{ background:GLASS.sm, color:"#64748b", border:`1px solid ${GLASS.border}`, cursor:"pointer" }}>
+                ← Back
+              </button>
+            )}
+            {step < totalSteps ? (
+              <>
+                <button onClick={() => setStep(s => s+1)} disabled={!canProceed()}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+                  style={{
+                    background: canProceed() ? BRAND.colors.green : GLASS.sm,
+                    color:      canProceed() ? "#fff" : "#475569",
+                    border:"none", cursor: canProceed() ? "pointer" : "not-allowed",
+                    fontFamily:BRAND.fonts.display, letterSpacing:1,
+                  }}>
+                  NEXT →
+                </button>
+                {step >= 2 && !isEdit && (
+                  <button onClick={() => setStep(s => s+1)}
+                    className="px-3 py-2.5 rounded-xl text-xs font-bold"
+                    style={{ background:GLASS.xs, color:"#475569", border:`1px solid ${GLASS.border}`, cursor:"pointer" }}>
+                    Skip
+                  </button>
+                )}
+              </>
+            ) : (
+              <button onClick={handleFinish} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+                style={{ background:BRAND.colors.green, color:"#fff", border:"none", cursor:"pointer",
+                         fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+                {saving ? "SAVING…" : isEdit ? "SAVE CHANGES ✓" : "START PLAYING ⚽"}
+              </button>
+            )}
+          </div>
+          {!isEdit && step === 1 && (
+            <div className="text-center space-y-1.5">
+              <div className="text-[9px]" style={{ color:"#334155" }}>
+                You can update everything from your profile at any time
+              </div>
+              <button onClick={handleFinish}
+                className="text-[10px] font-bold transition-opacity hover:opacity-80"
+                style={{ background:"none", border:"none", cursor:"pointer", color:"#475569", textDecoration:"underline" }}>
+                Just here for the forums? Skip setup →
+              </button>
+            </div>
+          )}
         </div>
-
-        <button onClick={handleSave} disabled={saving || !displayName.trim()}
-          className="w-full py-3 rounded-xl font-black text-sm tracking-wide transition-all hover:brightness-110 active:scale-95"
-          style={{ background: BRAND.colors.green, color:"#fff", opacity: (!displayName.trim()||saving) ? 0.5 : 1 }}>
-          {saving ? "SAVING…" : "START PLAYING ⚽"}
-        </button>
       </div>
     </div>
   );
 }
-
 
 // ─── CreateTeamModal ──────────────────────────────────────────────────────────
 function CreateTeamModal({ session, onClose, onCreated }) {
@@ -3101,12 +3738,88 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
             <div className="text-xs mt-0.5 truncate" style={{ color:"#475569" }}>{session.email}</div>
           </div>
           <button onClick={onEditProfile}
-            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-            style={{ background:GLASS.xs, color:"#94a3b8", border:`1px solid ${GLASS.border}` }}>
-            ✏️ Edit
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all hover:brightness-110"
+            style={{ background:BRAND.colors.green, color:"#fff", border:"none" }}>
+            ✏️ Edit Profile
           </button>
         </div>
       </div>
+
+      {/* ── Player Card ───────────────────────────────────────────────────── */}
+      {!isNonPlayer(profile?.role_in_sport) && (() => {
+        const pOverall = profile?.overall_score || calcOverall(profile || {});
+        const pClass   = calcClass(pOverall);
+        const pTop     = getTopStats(profile || {});
+        const lastUp   = profile?.attrs_last_updated;
+        const daysLeft = lastUp
+          ? Math.max(0, 30 - Math.floor((Date.now() - new Date(lastUp).getTime()) / 86400000))
+          : 0;
+        return (
+          <div>
+            <div className="text-[10px] font-black tracking-widest mb-3 flex items-center gap-3"
+              style={{ fontFamily:BRAND.fonts.display, color:BRAND.colors.yellow, letterSpacing:3 }}>
+              PLAYER CARD
+              <div className="flex-1 h-px" style={{ background:GLASS.sm }}/>
+            </div>
+            <div className="rounded-2xl p-4 flex items-center gap-4"
+              style={{ background:`linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
+                       border:`2px solid ${pClass.color}`, boxShadow:`0 0 24px ${pClass.glow}` }}>
+              {/* Big class display */}
+              <div className="text-center shrink-0">
+                <div style={{ fontSize:40 }}>{pClass.emoji}</div>
+                <div className="font-black text-3xl leading-none mt-0.5" style={{ color:pClass.color }}>{pOverall}</div>
+                <div className="text-[9px] font-bold mt-1" style={{ color:"#94a3b8" }}>{pClass.name}</div>
+                <div className="mt-1">
+                  {Array.from({length:Math.min(pClass.stars,5)}).map((_,i) => (
+                    <span key={i} style={{ color:pClass.color, fontSize:10 }}>★</span>
+                  ))}
+                  {pClass.stars === 6 && <span style={{ fontSize:12 }}>👑</span>}
+                </div>
+              </div>
+              {/* Attribute bars */}
+              <div className="flex-1 space-y-1.5">
+                {ATTRS.map(a => {
+                  const m = ATTR_META[a];
+                  const val = Number(profile?.[`attr_${a}`] || 10);
+                  return (
+                    <div key={a} className="flex items-center gap-2">
+                      <span className="text-[9px] font-black w-6" style={{ color:m.color }}>{m.label}</span>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background:GLASS.md }}>
+                        <div style={{ width:`${val}%`, height:"100%", background:m.color, borderRadius:99 }}/>
+                      </div>
+                      <span className="text-[9px] font-black w-5 text-right" style={{ color:"#fff" }}>{val}</span>
+                    </div>
+                  );
+                })}
+                {pTop.length > 0 && (
+                  <div className="flex gap-2 mt-1">
+                    {pTop.map(s => (
+                      <span key={s.key} className="text-[9px] font-black px-1.5 py-0.5 rounded"
+                        style={{ background:`${s.color}22`, color:s.color }}>
+                        Top: {s.key} {s.val}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Re-spec button */}
+            <div className="mt-2">
+              {daysLeft > 0 ? (
+                <div className="text-center text-[10px]" style={{ color:"#475569" }}>
+                  🔒 Next stat update in {daysLeft} day{daysLeft!==1?"s":""}
+                </div>
+              ) : (
+                <button onClick={onEditProfile}
+                  className="w-full py-2 rounded-xl text-xs font-bold transition-all hover:brightness-110"
+                  style={{ background:GLASS.sm, color:"#94a3b8", border:`1px solid ${GLASS.border}` }}>
+                  ⚡ Update My Stats
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Team card ─────────────────────────────────────────────────────── */}
       <div>
@@ -3511,6 +4224,7 @@ function App() {
   const [showProfile,     setShowProfile]     = useState(false);
   const [profile,         setProfile]         = useState(null);
   const [showOnboarding,  setShowOnboarding]  = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   // ── Team state ────────────────────────────────────────────────────────────
   const [team,            setTeam]            = useState(null);
   const [teamMembers,     setTeamMembers]     = useState([]);
@@ -3574,8 +4288,8 @@ function App() {
       setRosterLoading(true);
       // Load profile
       const prof = await sb.getProfile(session.user.id, session.token).catch(() => null);
-      if (!prof) {
-        setShowOnboarding(true); // first sign-in — trigger onboarding
+      if (!prof?.setup_complete) {
+        setShowOnboarding(true); // first sign-in or incomplete setup
       } else {
         setProfile(prof);
         if (prof.team_name && teamName === "My Team FC") setTeamName(prof.team_name);
@@ -3680,6 +4394,8 @@ function App() {
     setTeam(null);
     setTeamMembers([]);
     setShowProfile(false);
+    setShowOnboarding(false);
+    setShowEditProfile(false);
   }
 
   useEffect(() => { moveModeRef.current = moveMode; }, [moveMode]);
@@ -4254,10 +4970,13 @@ function App() {
           {/* Profile / Sign In */}
           {session ? (
             <button onClick={() => setShowProfile(true)}
-              className="flex items-center justify-center rounded-full transition-all hover:opacity-80 shrink-0 ml-3"
+              className="flex items-center gap-1.5 px-2.5 rounded-full transition-all hover:opacity-90 shrink-0 ml-2"
               title="My Profile"
-              style={{ width:38, height:38, background: BRAND.colors.green, border:`2px solid ${BRAND.colors.green}`, color:"#fff", fontSize:15, fontWeight:"bold" }}>
-              {profile?.avatar_emoji || session.email[0].toUpperCase()}
+              style={{ height:36, background: BRAND.colors.green, border:`2px solid ${BRAND.colors.green}`, color:"#fff", maxWidth:140 }}>
+              <span style={{ fontSize:15 }}>{profile?.avatar_emoji || session?.email?.[0]?.toUpperCase() || "?"}</span>
+              <span className="text-xs font-black truncate" style={{ maxWidth:80, letterSpacing:0.3 }}>
+                {profile?.display_name || session?.email?.split("@")[0] || "Me"}
+              </span>
             </button>
           ) : (
             <button onClick={() => setShowAuth(true)}
@@ -4416,7 +5135,7 @@ function App() {
             players={players}
             onShowAuth={() => setShowAuth(true)}
             onSignOut={handleSignOut}
-            onEditProfile={() => setShowProfile(true)}
+            onEditProfile={() => setShowEditProfile(true)}
             onCreateTeam={() => setShowCreateTeam(true)}
             onJoinTeam={() => setShowJoinTeam(true)}
             onManageSquad={() => setShowManageSquad(true)}
@@ -4428,7 +5147,7 @@ function App() {
           />
         )}
         <div style={{ display: activeTab === "community" ? "block" : "none" }}>
-          <CommunityTab session={session} setSession={setSession} showAuth={showAuth} setShowAuth={setShowAuth}/>
+          <CommunityTab session={session} profile={profile} setSession={setSession} showAuth={showAuth} setShowAuth={setShowAuth}/>
         </div>
       </main>
 
@@ -4506,9 +5225,28 @@ function App() {
 
       {/* ── Onboarding Modal (first login) ── */}
       {showOnboarding && session && (
-        <OnboardingModal
+        <PlayerSetupModal
           session={session}
-          onComplete={prof => { setProfile(prof); setShowOnboarding(false); if (prof.team_name) setTeamName(prof.team_name); }}
+          profile={profile}
+          mode="onboarding"
+          onComplete={prof => {
+            setProfile(prev => ({ ...prev, ...prof }));
+            setShowOnboarding(false);
+            if (prof.team_name) setTeamName(prof.team_name);
+          }}
+        />
+      )}
+      {showEditProfile && session && (
+        <PlayerSetupModal
+          session={session}
+          profile={profile}
+          mode="edit"
+          onClose={() => setShowEditProfile(false)}
+          onComplete={prof => {
+            setProfile(prev => ({ ...prev, ...prof }));
+            setShowEditProfile(false);
+            if (prof.team_name) setTeamName(prof.team_name);
+          }}
         />
       )}
     </div>
