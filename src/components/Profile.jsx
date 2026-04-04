@@ -448,20 +448,26 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
               ) : (
                 <div className="space-y-3">
 
-                  {/* Overall score pill — live update */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <span style={{ fontSize:22 }}>{cls.emoji}</span>
+                  {/* Overall score — large, prominent, no side card */}
+                  <div className="rounded-xl px-4 py-3 flex items-center justify-between"
+                    style={{ background:`${cls.color}18`, border:`1.5px solid ${cls.color}44` }}>
+                    <div className="flex items-center gap-3">
+                      <span style={{ fontSize:28, lineHeight:1 }}>{cls.emoji}</span>
                       <div>
-                        <span className="font-black text-2xl" style={{ color:cls.color }}>{overall}</span>
-                        <span className="text-xs font-bold ml-2" style={{ color:"#64748b" }}>{cls.name}</span>
+                        <div className="font-black leading-none" style={{ fontSize:36, color:cls.color }}>{overall}</div>
+                        <div className="text-[10px] font-bold mt-0.5" style={{ color:"#64748b" }}>{cls.name}</div>
                       </div>
                     </div>
-                    <div>
-                      {Array.from({length:Math.min(cls.stars,5)}).map((_,i) => (
-                        <span key={i} style={{ color:cls.color, fontSize:12 }}>★</span>
-                      ))}
-                      {cls.stars === 6 && <span style={{ fontSize:13 }}>👑</span>}
+                    <div className="text-right">
+                      <div style={{ color:cls.color }}>
+                        {Array.from({length:Math.min(cls.stars,5)}).map((_,i) => (
+                          <span key={i} style={{ fontSize:14 }}>★</span>
+                        ))}
+                        {cls.stars === 6 && <span style={{ fontSize:16 }}>👑</span>}
+                      </div>
+                      <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>
+                        Stat ceiling: <span style={{ color:cls.color }}>{cls.max}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -488,10 +494,14 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                     </div>
                   )}
 
-                  {/* Full-width sliders */}
+                  {/* Full-width sliders with class ceiling indicator */}
                   {ATTRS.map(a => {
-                    const m = ATTR_META[a];
+                    const m   = ATTR_META[a];
                     const val = Number(form[`attr_${a}`] || 10);
+                    // Class ceiling as % of full track (ATTR_MIN to ATTR_MAX)
+                    const ceilPct = ((cls.max - ATTR_MIN) / (ATTR_MAX - ATTR_MIN)) * 100;
+                    const valPct  = ((val       - ATTR_MIN) / (ATTR_MAX - ATTR_MIN)) * 100;
+                    const overCeiling = val > cls.max;
                     return (
                       <div key={a}>
                         <div className="flex items-center justify-between mb-1">
@@ -499,11 +509,50 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                             <span className="text-xs font-black w-8" style={{ color:m.color }}>{m.label}</span>
                             <span className="text-[10px]" style={{ color:"#475569" }}>{m.desc}</span>
                           </div>
-                          <span className="text-base font-black w-8 text-right" style={{ color:m.color }}>{val}</span>
+                          <span className="text-base font-black w-8 text-right"
+                            style={{ color: overCeiling ? BRAND.colors.yellow : m.color }}>
+                            {val}{overCeiling && <span style={{ fontSize:8, marginLeft:1 }}>↑</span>}
+                          </span>
                         </div>
-                        <input type="range" min={ATTR_MIN} max={ATTR_MAX} value={val}
-                          onChange={e => setAttr(a, e.target.value)}
-                          className="w-full" style={{ accentColor:m.color, height:20 }}/>
+                        {/* Custom track so we can show the class ceiling */}
+                        <div className="relative" style={{ height:20, display:"flex", alignItems:"center" }}>
+                          {/* Track background */}
+                          <div className="absolute inset-x-0 rounded-full overflow-hidden" style={{ height:6 }}>
+                            {/* Active fill */}
+                            <div style={{ position:"absolute", left:0, width:`${valPct}%`,
+                              height:"100%", background:m.color, borderRadius:99 }}/>
+                            {/* Beyond-class zone */}
+                            <div style={{ position:"absolute", left:`${ceilPct}%`,
+                              right:0, height:"100%",
+                              background:`repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 3px, transparent 3px, transparent 6px)`,
+                              borderLeft:`1.5px solid ${cls.color}88` }}/>
+                            {/* Track base */}
+                            <div style={{ position:"absolute", inset:0, zIndex:-1,
+                              background:"rgba(255,255,255,0.07)", borderRadius:99 }}/>
+                          </div>
+                          {/* Class ceiling tick */}
+                          <div style={{ position:"absolute", left:`${ceilPct}%`, top:0, bottom:0,
+                            display:"flex", flexDirection:"column", alignItems:"center",
+                            transform:"translateX(-50%)", pointerEvents:"none", zIndex:2 }}>
+                            <div style={{ width:2, height:"100%", background:cls.color, opacity:0.6, borderRadius:1 }}/>
+                          </div>
+                          {/* Native range input overlay (invisible track, visible thumb) */}
+                          <input type="range" min={ATTR_MIN} max={ATTR_MAX} value={val}
+                            onChange={e => setAttr(a, e.target.value)}
+                            className="absolute inset-x-0"
+                            style={{ accentColor:m.color, height:20, opacity:1,
+                              WebkitAppearance:"none", appearance:"none",
+                              background:"transparent", cursor:"pointer" }}/>
+                        </div>
+                        {/* Class ceiling label — only show if near or over */}
+                        {val >= cls.max - 5 && (
+                          <div className="text-[8px] text-right mt-0.5"
+                            style={{ color: overCeiling ? BRAND.colors.yellow : "#475569" }}>
+                            {overCeiling
+                              ? `↑ Above ${cls.name} ceiling (${cls.max})`
+                              : `${cls.name} ceiling: ${cls.max}`}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
