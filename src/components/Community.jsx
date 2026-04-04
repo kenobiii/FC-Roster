@@ -4,6 +4,7 @@ import { GLASS, BRAND, CLS_HDR, CLS_BADGE, CLS_CARD, CLS_ROW } from "../tokens.j
 import { sb }                                                     from "../supabase.js";
 import { track }                                                   from "../helpers.js";
 import { COMMUNITY_TAGS, COMMUNITY_TAG_COLORS,
+         REACTIONS, RED_CARD_MOD_THRESHOLD,
          PLAYER_CLASSES, COUNTRIES }                              from "../playerData.js";
 import { FORMATION_POSTS }                                        from "../data.js";
 import { AdBanner }                                               from "./Shared.jsx";
@@ -457,7 +458,7 @@ const PostView = memo(function PostView({ post, postComments, signedIn, username
 // ─── Community Tab ─────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, count }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
+    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
       <span style={{ fontSize:16 }}>{icon}</span>
       <span className={CLS_HDR} style={{ fontFamily: BRAND.fonts.display, fontSize:14, color:"#e2e8f0", letterSpacing:1.5 }}>{title}</span>
       {count !== undefined && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background:GLASS.lg, color:"#64748b" }}>{count}</span>}
@@ -598,10 +599,10 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-2xl mx-auto px-3 sm:px-5 py-5" style={{ fontFamily: BRAND.fonts.body }}>
+    <div style={{ width:"100%", maxWidth:672, margin:"0 auto", padding:"20px 12px" }} style={{ fontFamily: BRAND.fonts.body }}>
 
       {/* Privacy notice */}
-      <div className="rounded-xl px-4 py-3 mb-5 flex gap-3 items-start"
+      <div style={{ borderRadius:12, padding:"12px 16px", marginBottom:20, display:"flex", gap:12, alignItems:"flex-start" }}
         style={{ background:"rgba(99,102,241,0.08)", border:`1px solid rgba(99,102,241,0.2)` }}>
         <span style={{ fontSize:14, flexShrink:0 }}>🔒</span>
         <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.55)" }}>
@@ -626,12 +627,12 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
       ) : (
         <>
           {/* Header + auth + new post */}
-          <div className="flex items-start justify-between mb-5 gap-3">
+          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12 }}>
             <div>
               <div className="font-black" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(22px,6vw,30px)", color:"#fff", letterSpacing:1 }}>COMMUNITY</div>
               <div className="text-xs" style={{ color:"#475569" }}>Tactics · Formations · Coaching</div>
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8, flexShrink:0 }}>
               {session ? (
                 <>
                   <div className={CLS_ROW}>
@@ -645,7 +646,7 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
                       style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b" }}>Sign out</button>
                   </div>
                   <button onClick={() => setShowNewPost(v => !v)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl font-black text-xs tracking-wide transition-all hover:brightness-110 active:scale-95"
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", borderRadius:12, fontSize:12, fontWeight:900, letterSpacing:1, cursor:"pointer", border:"none" }}
                     style={{ background: showNewPost ? "rgba(245,197,24,0.15)" : BRAND.colors.yellow,
                       color: showNewPost ? BRAND.colors.yellow : "#111",
                       border:`2px solid ${BRAND.colors.yellow}`, fontFamily: BRAND.fonts.body }}>
@@ -654,8 +655,7 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
                 </>
               ) : (
                 <button onClick={() => setShowAuth(true)}
-                  className="px-4 py-2 rounded-xl font-black text-xs tracking-wide transition-all hover:brightness-110"
-                  style={{ background: BRAND.colors.yellow, color:"#111", border:`2px solid ${BRAND.colors.yellow}`, fontFamily: BRAND.fonts.body }}>
+                  style={{ padding:"8px 16px", borderRadius:12, fontWeight:900, fontSize:12, cursor:"pointer", background:BRAND.colors.yellow, color:"#111", border:"none", letterSpacing:1 }}>
                   Sign In
                 </button>
               )}
@@ -664,13 +664,13 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
 
           {/* New post composer */}
           {showNewPost && session && (
-            <div className="rounded-2xl overflow-hidden mb-4" style={{ background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}20` }}>
-              <div className="flex items-center gap-2 px-5 py-3" style={{ background:"rgba(245,197,24,0.08)", borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+            <div style={{ borderRadius:16, overflow:"hidden", marginBottom:16, background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}20` }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 20px", background:"rgba(245,197,24,0.08)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
                 <span style={{ fontSize:15 }}>✏️</span>
                 <span className={CLS_HDR} style={{ fontFamily: BRAND.fonts.display, fontSize:13, color: BRAND.colors.yellow, letterSpacing:2 }}>NEW DISCUSSION</span>
               </div>
-              <div className="p-5 flex flex-col gap-3">
-                <div className="flex gap-2 flex-wrap">
+              <div style={{ padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                   {["General","11v11","9v9","7v7","5v5"].map(t => (
                     <button key={t} onClick={() => setDraft(d => ({ ...d, tag:t }))}
                       className="px-3 py-1 rounded-full text-xs font-bold transition-all"
