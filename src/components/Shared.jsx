@@ -185,12 +185,12 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
 
   return (
     <>
-    <div className="w-full max-w-2xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-8 sm:space-y-10" style={{ fontFamily: BRAND.fonts.body }}>
+    <div style={{ width:"100%", maxWidth:672, margin:"0 auto", padding:"24px 16px", display:"flex", flexDirection:"column", gap:32, fontFamily:BRAND.fonts.body }}>
 
       {/* Hero */}
-      <div className="rounded-2xl relative overflow-hidden" style={{ background:"#fdfef8", border:`1px solid rgba(0,0,0,0.08)` }}>
+      <div style={{ borderRadius:16, position:"relative", overflow:"hidden", background:"#fdfef8", border:"1px solid rgba(0,0,0,0.08)" }}>
         {/* Pitch lines in background */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+        <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none" }} viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
           <rect x="16" y="10" width="368" height="200" rx="4" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="1.5"/>
           <line x1="16" y1="110" x2="384" y2="110" stroke="rgba(0,0,0,0.08)" strokeWidth="1"/>
           <circle cx="200" cy="110" r="40" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="1"/>
@@ -201,7 +201,7 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
           <rect x="160" y="192" width="80" height="18" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="1"/>
         </svg>
         {/* Content */}
-        <div className="relative flex flex-col items-center justify-center py-10 px-6 text-center gap-4">
+        <div style={{ position:"relative", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px", textAlign:"center", gap:16 }}>
           {/* Logo fills its container */}
           <img src={LOGO_SRC} alt="FCRoster.com" loading="lazy" style={{ width:"min(180px, 45vw)", height:"min(180px, 45vw)", objectFit:"contain" }}/>
           <div>
@@ -224,14 +224,14 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
 
       {/* Who it's for */}
       <section>
-        <div className="text-[10px] font-black tracking-widest uppercase mb-4 flex items-center gap-3"
+        <div style={{ fontSize:10, fontWeight:900, letterSpacing:3, textTransform:"uppercase", marginBottom:16, display:"flex", alignItems:"center", gap:12 }}
           style={{ fontFamily: BRAND.fonts.display, color: BRAND.colors.yellow, letterSpacing:3 }}>
           Who It's For
           <div className="flex-1 h-px" style={{ background: BRAND.colors.border }}/>
         </div>
-        <div className="flex gap-3">
+        <div style={{ display:"flex", gap:12 }}>
           {features.map(({ icon, title }) => (
-            <div key={title} className="flex-1 rounded-xl p-4 flex flex-col items-center gap-2 text-center"
+            <div key={title} style={{ flex:1, borderRadius:12, padding:16, display:"flex", flexDirection:"column", alignItems:"center", gap:8, textAlign:"center" }}
               style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
               <div className="text-2xl">{icon}</div>
               <div className="text-sm font-bold text-white">{title}</div>
@@ -242,13 +242,13 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
 
       {/* Feedback */}
       <section>
-        <div className="text-[10px] font-black tracking-widest uppercase mb-4 flex items-center gap-3"
+        <div style={{ fontSize:10, fontWeight:900, letterSpacing:3, textTransform:"uppercase", marginBottom:16, display:"flex", alignItems:"center", gap:12 }}
           style={{ fontFamily: BRAND.fonts.display, color: BRAND.colors.yellow, letterSpacing:3 }}>
           Share Your Thoughts
           <div className="flex-1 h-px" style={{ background: BRAND.colors.border }}/>
         </div>
 
-        <div className="rounded-2xl p-5" style={{ background: BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
+        <div style={{ borderRadius:16, padding:20, background:BRAND.colors.card, border:`1px solid ${BRAND.colors.border}` }}>
           {submitted ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <div style={{ fontSize:40 }}>🙏</div>
@@ -263,7 +263,7 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.55)" }}>
                 Got an idea? Found something that could be better? We're all ears — this tool is shaped by the community that uses it. Drop us a note below.
               </p>

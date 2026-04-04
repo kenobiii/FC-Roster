@@ -1063,7 +1063,7 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
   // ── Signed-out state ───────────────────────────────────────────────────────
   if (!session) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 py-16 flex flex-col items-center gap-6 text-center">
+      <div style={{ width:"100%", maxWidth:448, margin:"0 auto", padding:"64px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:24, textAlign:"center" }}>
         <div style={{ fontSize:56 }}>👤</div>
         <div>
           <div className="font-black tracking-wide text-white mb-2"
@@ -1075,11 +1075,12 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
           </p>
         </div>
         <button onClick={onShowAuth}
-          className="px-8 py-3 rounded-xl font-black text-sm tracking-wide transition-all hover:brightness-110 active:scale-95"
-          style={{ background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+          style={{ padding:"12px 32px", borderRadius:12, fontWeight:900, fontSize:14,
+            letterSpacing:1, cursor:"pointer", border:"none",
+            background:BRAND.colors.green, color:"#fff", fontFamily:BRAND.fonts.display }}>
           SIGN IN / CREATE ACCOUNT ⚽
         </button>
-        <div className="w-full rounded-2xl p-5 text-left" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+        <div style={{ width:"100%", borderRadius:16, padding:20, textAlign:"left", background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
           <div className="text-[10px] font-black tracking-widest mb-3" style={{ color:BRAND.colors.yellow, fontFamily:BRAND.fonts.display, letterSpacing:3 }}>
             WHAT YOU GET
           </div>
@@ -1090,7 +1091,7 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
             ["🏟️", "Community posts & forum history"],
             ["📊", "Player stats tracking"],
           ].map(([icon, text]) => (
-            <div key={text} className="flex items-center gap-3 mb-2.5 text-sm" style={{ color:"#94a3b8" }}>
+            <div key={text} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10, fontSize:14, color:"#94a3b8" }}>
               <span style={{ fontSize:16 }}>{icon}</span>
               <span>{text}</span>
             </div>
