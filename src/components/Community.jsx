@@ -4,7 +4,6 @@ import { GLASS, BRAND, CLS_HDR, CLS_BADGE, CLS_CARD, CLS_ROW } from "../tokens.j
 import { sb }                                                     from "../supabase.js";
 import { track }                                                   from "../helpers.js";
 import { COMMUNITY_TAGS, COMMUNITY_TAG_COLORS,
-         REACTIONS, RED_CARD_MOD_THRESHOLD,
          PLAYER_CLASSES, COUNTRIES }                              from "../playerData.js";
 import { FORMATION_POSTS }                                        from "../data.js";
 import { AdBanner }                                               from "./Shared.jsx";

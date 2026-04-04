@@ -505,6 +505,8 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                   )}
                 </div>
           )}
+            </div>
+          )}
 
           {/* ═══════════════════════════════════════════════════
               STEP 4 — YOUR WORLD
