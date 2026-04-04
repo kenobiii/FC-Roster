@@ -528,7 +528,7 @@ function App() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col" style={{ minHeight:"100dvh", background:BRAND.colors.navy,
+    <div className="flex flex-col" style={{ minHeight:"100dvh", width:"100%", background:BRAND.colors.navy,
       color:BRAND.colors.white, fontFamily:BRAND.fonts.body,
       WebkitFontSmoothing:"antialiased", MozOsxFontSmoothing:"grayscale" }}>
 
