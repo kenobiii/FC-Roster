@@ -18,6 +18,7 @@ injectHead({ ga4Id: "" });
 const TABS = [
   { id:"builder",   label:"⚽  Builder"   },
   { id:"community", label:"🏟️  Community" },
+  { id:"profile",   label:"👤  Profile"   },
   { id:"about",     label:"🌍  About"     },
 ];
 
@@ -573,7 +574,7 @@ function App() {
           {/* Auth / profile button top-right */}
           <div className="ml-auto shrink-0">
             {session ? (
-              <button onClick={e => { e.stopPropagation(); setShowProfile(v => !v); }}
+              <button onClick={e => { e.stopPropagation(); setActiveTab("profile"); }}
                 style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 14px",
                   borderRadius:12, border:"none", cursor:"pointer",
                   background:BRAND.colors.green, color:"#fff",
@@ -670,7 +671,7 @@ function App() {
       )}
 
       {/* ── Content ── */}
-      <main style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden" }}>
+      <main style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflowY:"auto" }}>
         {activeTab === "builder" && (
           <BuilderLayout
             exportRef={exportRef} pitchRef={pitchRef} drawRef={drawRef}
@@ -701,6 +702,23 @@ function App() {
           <CommunityTab session={session} profile={profile}/>
         </div>
 
+        {activeTab === "profile" && (
+          <ProfileTab
+            session={session} profile={profile}
+            team={team} teamMembers={teamMembers}
+            players={players}
+            onShowAuth={() => setShowAuth(true)}
+            onSignOut={handleSignOut}
+            onEditProfile={() => setShowEditProfile(true)}
+            onCreateTeam={t => { setTeam(t); fetchTeam(t.id, session); }}
+            onJoinTeam={t  => { setTeam(t); fetchTeam(t.id, session); }}
+            onManageSquad={() => {}}
+            onLeaveTeam={async () => {
+              if (!team || !session) return;
+              await sb.removeMember(team.id, session.user.id, session.token).catch(() => {});
+              setTeam(null); setTeamMembers([]);
+            }}/>
+        )}
         {activeTab === "about" && <AboutTab/>}
       </main>
 
