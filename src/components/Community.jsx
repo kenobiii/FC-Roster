@@ -6,7 +6,6 @@ import { track }                                                   from "../help
 import { COMMUNITY_TAGS, COMMUNITY_TAG_COLORS,
          PLAYER_CLASSES, COUNTRIES }                              from "../playerData.js";
 import { FORMATION_POSTS }                                        from "../data.js";
-import { AdBanner }                                               from "./Shared.jsx";
 
 // ─── TagPill ──────────────────────────────────────────────────────────────────
 function TagPill({ tag, small }) {
@@ -457,7 +456,7 @@ const PostView = memo(function PostView({ post, postComments, signedIn, username
 // ─── Community Tab ─────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, count }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+    <div className="flex items-center gap-2 mb-3">
       <span style={{ fontSize:16 }}>{icon}</span>
       <span className={CLS_HDR} style={{ fontFamily: BRAND.fonts.display, fontSize:14, color:"#e2e8f0", letterSpacing:1.5 }}>{title}</span>
       {count !== undefined && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background:GLASS.lg, color:"#64748b" }}>{count}</span>}
@@ -596,235 +595,244 @@ function CommunityTab({ session, profile, setSession, showAuth, setShowAuth }) {
     if (activePost?.id === deletedPost.id) setActivePost(prev => ({ ...prev, ...deletedPost }));
   }
 
-  // ── Main render ───────────────────────────────────────────────────────────
+  // ── Main render ─────────────────────────────────────────────────────────────
+  const S = {
+    page:    { width:"100%", maxWidth:672, margin:"0 auto", padding:"20px 14px 40px", fontFamily:BRAND.fonts.body },
+    card:    { borderRadius:14, overflow:"hidden", background:"#0f1b2d", border:"1px solid rgba(255,255,255,0.1)", marginBottom:12 },
+    inp:     { width:"100%", borderRadius:10, padding:"10px 12px", fontSize:15, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"#f1f5f9", fontFamily:BRAND.fonts.body, boxSizing:"border-box" },
+  };
+
   return (
-    <div style={{ width:"100%", maxWidth:672, margin:"0 auto", padding:"20px 12px" }} style={{ fontFamily: BRAND.fonts.body }}>
+    <div style={{ overflowY:"auto", flex:1 }}>
+      <div style={S.page}>
 
-      {/* Privacy notice */}
-      <div style={{ borderRadius:12, padding:"12px 16px", marginBottom:20, display:"flex", gap:12, alignItems:"flex-start" }}
-        style={{ background:"rgba(99,102,241,0.08)", border:`1px solid rgba(99,102,241,0.2)` }}>
-        <span style={{ fontSize:14, flexShrink:0 }}>🔒</span>
-        <p className="text-xs leading-relaxed" style={{ color:"rgba(255,255,255,0.55)" }}>
-          <strong style={{ color:"rgba(255,255,255,0.8)" }}>Data & Privacy.</strong> Posts and comments are stored securely in our database. Your email is never shown publicly — only your username (email prefix) appears. Accounts are protected by Supabase Auth. By posting you agree to keep discussions respectful and on-topic.
-        </p>
-      </div>
-
-      {view === "post" && activePost ? (
-        <PostView
-          key={activePost.id}
-          post={activePost}
-          postComments={postComments}
-          signedIn={signedIn}
-          username={username}
-          session={session}
-          onSubmit={submitComment}
-          onShowAuth={handleShowAuth}
-          onBack={handleBack}
-          onPostUpdated={handlePostUpdated}
-          onPostDeleted={handlePostDeleted}
-        />
-      ) : (
-        <>
-          {/* Header + auth + new post */}
-          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12 }}>
-            <div>
-              <div className="font-black" style={{ fontFamily: BRAND.fonts.display, fontSize:"clamp(22px,6vw,30px)", color:"#fff", letterSpacing:1 }}>COMMUNITY</div>
-              <div className="text-xs" style={{ color:"#475569" }}>Tactics · Formations · Coaching</div>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8, flexShrink:0 }}>
-              {session ? (
-                <>
-                  <div className={CLS_ROW}>
-                    <div className="rounded-full flex items-center justify-center font-black text-xs"
-                      style={{ width:32, height:32, background: BRAND.colors.green, color:"#fff", fontSize:14 }}>
-                      {profile?.avatar_emoji || session?.email?.[0]?.toUpperCase() || "?"}
-                    </div>
-                    <span className={CLS_BADGE} style={{ color:"#94a3b8" }}>{profile?.display_name || session?.email?.split("@")[0] || "Me"}</span>
-                    <button onClick={async () => { if (session) await sb.signOut(session.token).catch(()=>{}); setSession(null); }}
-                      className="text-xs transition-opacity hover:opacity-70"
-                      style={{ background:"none", border:"none", cursor:"pointer", color:"#64748b" }}>Sign out</button>
-                  </div>
-                  <button onClick={() => setShowNewPost(v => !v)}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", borderRadius:12, fontSize:12, fontWeight:900, letterSpacing:1, cursor:"pointer", border:"none" }}
-                    style={{ background: showNewPost ? "rgba(245,197,24,0.15)" : BRAND.colors.yellow,
-                      color: showNewPost ? BRAND.colors.yellow : "#111",
-                      border:`2px solid ${BRAND.colors.yellow}`, fontFamily: BRAND.fonts.body }}>
-                    {showNewPost ? "✕ Cancel" : "+ New Post"}
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => setShowAuth(true)}
-                  style={{ padding:"8px 16px", borderRadius:12, fontWeight:900, fontSize:12, cursor:"pointer", background:BRAND.colors.yellow, color:"#111", border:"none", letterSpacing:1 }}>
-                  Sign In
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* New post composer */}
-          {showNewPost && session && (
-            <div style={{ borderRadius:16, overflow:"hidden", marginBottom:16, background:"#0f1b2d", border:`2px solid ${BRAND.colors.yellow}`, boxShadow:`0 0 18px ${BRAND.colors.yellow}20` }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 20px", background:"rgba(245,197,24,0.08)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-                <span style={{ fontSize:15 }}>✏️</span>
-                <span className={CLS_HDR} style={{ fontFamily: BRAND.fonts.display, fontSize:13, color: BRAND.colors.yellow, letterSpacing:2 }}>NEW DISCUSSION</span>
+        {view === "post" && activePost ? (
+          <PostView
+            key={activePost.id}
+            post={activePost}
+            postComments={postComments}
+            signedIn={signedIn}
+            username={username}
+            session={session}
+            onSubmit={submitComment}
+            onShowAuth={handleShowAuth}
+            onBack={handleBack}
+            onPostUpdated={handlePostUpdated}
+            onPostDeleted={handlePostDeleted}
+          />
+        ) : (
+          <>
+            {/* ── Header ─────────────────────────────────────────────────── */}
+            <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12 }}>
+              <div>
+                <div style={{ fontFamily:BRAND.fonts.display, fontSize:28, fontWeight:900, color:"#fff", letterSpacing:1 }}>COMMUNITY</div>
+                <div style={{ fontSize:12, color:"#475569", marginTop:2 }}>Tactics · Formations · Coaching</div>
               </div>
-              <div style={{ padding:20, display:"flex", flexDirection:"column", gap:12 }}>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                  {["General","11v11","9v9","7v7","5v5"].map(t => (
-                    <button key={t} onClick={() => setDraft(d => ({ ...d, tag:t }))}
-                      className="px-3 py-1 rounded-full text-xs font-bold transition-all"
-                      style={{ background: draft.tag===t ? COMMUNITY_TAG_COLORS[t] : GLASS.sm,
-                        color: draft.tag===t ? "#fff" : "#64748b",
-                        border:`1px solid ${draft.tag===t ? COMMUNITY_TAG_COLORS[t] : "rgba(255,255,255,0.1)"}`,
-                        fontFamily: BRAND.fonts.body }}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <input id="post-title" name="post-title" autoComplete="off"
-                  className="w-full rounded-xl px-3 py-2 font-bold focus:outline-none"
-                  style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
-                  maxLength={120} placeholder="Discussion title…" value={draft.title} onChange={e => setDraft(d => ({ ...d, title:e.target.value }))}/>
-                <textarea rows={4} maxLength={5000} id="post-body" name="post-body" autoComplete="off"
-                  className="w-full rounded-xl px-3 py-2 focus:outline-none resize-none"
-                  style={{ background:GLASS.sm, border:`1px solid rgba(255,255,255,0.1)`, color:"#f1f5f9", fontFamily: BRAND.fonts.body, fontSize:16 }}
-                  placeholder="Share your question, tactic, or insight…" value={draft.body} onChange={e => setDraft(d => ({ ...d, body:e.target.value }))}/>
-                {error && <p className="text-xs" style={{ color:"#f87171" }}>{error}</p>}
-                <button onClick={submitPost} disabled={submitting || !draft.title.trim() || !draft.body.trim()}
-                  className="px-5 py-2.5 rounded-xl text-sm font-black tracking-wide transition-all hover:brightness-110 active:scale-95 self-start"
-                  style={{ background: draft.title.trim() && draft.body.trim() ? BRAND.colors.yellow : GLASS.sm,
-                    color: draft.title.trim() && draft.body.trim() ? "#111" : "#475569",
-                    fontFamily: BRAND.fonts.body, border:"none",
-                    cursor: draft.title.trim() && draft.body.trim() ? "pointer" : "default" }}>
-                  {submitting ? "Posting…" : "Post Discussion"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Filter pills */}
-          <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling:"touch" }}>
-            {COMMUNITY_TAGS.map(t => (
-              <button key={t} onClick={() => setFilter(t)}
-                className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all"
-                style={{ background: filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : GLASS.sm,
-                  color: filter===t ? "#fff" : "#64748b",
-                  border:`1px solid ${filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : "rgba(255,255,255,0.1)"}`,
-                  fontFamily: BRAND.fonts.body }}>
-                {t === "all" ? "All Topics" : t}
-              </button>
-            ))}
-          </div>
-
-          {/* Formation guides — always pinned at top */}
-          {filteredFormations.length > 0 && (
-            <div className="mb-5">
-              <SectionHeader icon="📖" title="FORMATION GUIDES" count={filteredFormations.length}/>
-              <div className="flex flex-col gap-2">
-                {filteredFormations.map(p => <PostCard key={p.id} post={p} onOpen={openPost}/>)}
-              </div>
-            </div>
-          )}
-
-          {/* Discussions — grouped when "All Topics", flat when specific tag */}
-          {loadingPosts ? (
-            <p className="text-xs text-center py-6" style={{ color:"#475569" }}>Loading discussions…</p>
-          ) : filter === "all" ? (
-            // ── Grouped view ──────────────────────────────────────────────────
-            <div className="space-y-3">
-              {COMMUNITY_TAGS.slice(1).map(tag => {
-                const tagPosts = allUserPostsMapped.filter(p => p.tag === tag);
-                if (tagPosts.length === 0) return null;
-                const isExpanded = !!expandedTags[tag];
-                const tagColor   = COMMUNITY_TAG_COLORS[tag] || BRAND.colors.green;
-                const previewPosts  = [...tagPosts]
-                  .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
-                  .slice(0, 3);
-                const expandedPosts = [...tagPosts]
-                  .sort((a,b) => (b.commentCount||0) - (a.commentCount||0));
-                const displayPosts  = isExpanded ? expandedPosts : previewPosts;
-                const hiddenCount   = tagPosts.length - 3;
-                return (
-                  <div key={tag} className="rounded-2xl overflow-hidden"
-                    style={{ border:`1px solid ${tagColor}33`, background:GLASS.xs }}>
-                    {/* Section header */}
-                    <button onClick={() => toggleTag(tag)}
-                      className="w-full flex items-center justify-between px-4 py-3 transition-all hover:brightness-110"
-                      style={{ background:GLASS.sm, borderBottom:`1px solid ${tagColor}22` }}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black px-2 py-0.5 rounded-full"
-                          style={{ background:`${tagColor}22`, color:tagColor, border:`1px solid ${tagColor}44` }}>
-                          {tag}
-                        </span>
-                        <span className="text-[10px] font-bold" style={{ color:"#475569" }}>
-                          {tagPosts.length} post{tagPosts.length !== 1 ? "s" : ""}
-                        </span>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8, flexShrink:0 }}>
+                {session ? (
+                  <>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <div style={{ width:30, height:30, borderRadius:"50%", background:BRAND.colors.green,
+                        color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:13, fontWeight:900, flexShrink:0 }}>
+                        {profile?.avatar_emoji || session?.email?.[0]?.toUpperCase() || "?"}
                       </div>
-                      <span className="text-xs font-black" style={{ color:tagColor }}>
-                        {isExpanded ? "▲ Collapse" : `▼ ${hiddenCount > 0 ? `+${hiddenCount} more` : "expand"}`}
+                      <span style={{ fontSize:12, color:"#94a3b8", fontWeight:600 }}>
+                        {profile?.display_name || session?.email?.split("@")[0] || "Me"}
                       </span>
-                    </button>
-                    {/* Posts */}
-                    <div className="flex flex-col gap-0">
-                      {displayPosts.map((p, i) => (
-                        <div key={p.id}
-                          style={{ borderBottom: i < displayPosts.length-1 ? `1px solid rgba(255,255,255,0.04)` : "none" }}>
-                          <PostCard post={p} onOpen={openPost}/>
-                        </div>
-                      ))}
                     </div>
-                    {/* Expand prompt */}
-                    {!isExpanded && hiddenCount > 0 && (
-                      <button onClick={() => toggleTag(tag)}
-                        className="w-full py-2.5 text-[10px] font-bold transition-all hover:brightness-110"
-                        style={{ color:tagColor, background:`${tagColor}0a`,
-                                 borderTop:`1px solid ${tagColor}22` }}>
-                        Show all {tagPosts.length} posts — sorted by most discussed ▼
-                      </button>
-                    )}
-                    {/* Collapse from bottom */}
-                    {isExpanded && (
-                      <button onClick={() => toggleTag(tag)}
-                        className="w-full py-2 text-[10px] font-bold transition-all hover:brightness-110"
-                        style={{ color:"#475569", background:GLASS.xs,
-                                 borderTop:`1px solid rgba(255,255,255,0.05)` }}>
-                        ▲ Show less
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {allUserPostsMapped.length === 0 && (
-                <p className="text-xs text-center py-8 italic" style={{ color:"#475569" }}>
-                  No posts yet — be the first!
-                </p>
-              )}
+                    <button onClick={() => setShowNewPost(v => !v)}
+                      style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px",
+                        borderRadius:10, fontSize:12, fontWeight:900, cursor:"pointer",
+                        background: showNewPost ? "rgba(245,197,24,0.12)" : BRAND.colors.yellow,
+                        color: showNewPost ? BRAND.colors.yellow : "#111",
+                        border:`2px solid ${BRAND.colors.yellow}`, fontFamily:BRAND.fonts.body }}>
+                      {showNewPost ? "✕ Cancel" : "+ New Post"}
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => setShowAuth(true)}
+                    style={{ padding:"8px 16px", borderRadius:10, fontSize:12, fontWeight:900,
+                      cursor:"pointer", background:BRAND.colors.yellow, color:"#111",
+                      border:"none", fontFamily:BRAND.fonts.body }}>
+                    Sign In
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            // ── Flat filtered view for specific tag ───────────────────────────
-            filteredUserPosts.length > 0 ? (
-              <div className="mb-6">
-                <SectionHeader icon="💬" title="DISCUSSIONS" count={filteredUserPosts.length}/>
-                <div className="flex flex-col gap-2">
-                  {filteredUserPosts
-                    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
-                    .map(p => <PostCard key={p.id} post={p} onOpen={openPost}/>)}
+
+            {/* ── Privacy notice ─────────────────────────────────────────── */}
+            <div style={{ borderRadius:12, padding:"10px 14px", marginBottom:16, display:"flex",
+              gap:10, alignItems:"flex-start",
+              background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.2)" }}>
+              <span style={{ fontSize:13, flexShrink:0 }}>🔒</span>
+              <p style={{ fontSize:11, color:"rgba(255,255,255,0.5)", lineHeight:1.6, margin:0 }}>
+                <strong style={{ color:"rgba(255,255,255,0.75)" }}>Data & Privacy.</strong> Posts are stored securely. Your email is never public — only your username appears. By posting you agree to keep discussions respectful.
+              </p>
+            </div>
+
+            {/* ── New post composer ──────────────────────────────────────── */}
+            {showNewPost && session && (
+              <div style={{ ...S.card, border:`2px solid ${BRAND.colors.yellow}`, marginBottom:20 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 16px",
+                  background:"rgba(245,197,24,0.08)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+                  <span>✏️</span>
+                  <span style={{ fontFamily:BRAND.fonts.display, fontSize:13, color:BRAND.colors.yellow, fontWeight:900, letterSpacing:2 }}>NEW DISCUSSION</span>
                 </div>
+                <div style={{ padding:16, display:"flex", flexDirection:"column", gap:10 }}>
+                  <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                    {["General","Tactics","Formation","Coaching","Fitness","Debate"].map(t => (
+                      <button key={t} onClick={() => setDraft(d => ({ ...d, tag:t }))}
+                        style={{ padding:"5px 12px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer",
+                          background: draft.tag===t ? COMMUNITY_TAG_COLORS[t]||BRAND.colors.green : "rgba(255,255,255,0.05)",
+                          color: draft.tag===t ? "#fff" : "#64748b",
+                          border:`1px solid ${draft.tag===t ? COMMUNITY_TAG_COLORS[t]||BRAND.colors.green : "rgba(255,255,255,0.1)"}` }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <input maxLength={120} placeholder="Discussion title…" value={draft.title}
+                    onChange={e => setDraft(d => ({ ...d, title:e.target.value }))} style={S.inp}/>
+                  <textarea rows={4} maxLength={5000} placeholder="Share your question, tactic, or insight…"
+                    value={draft.body} onChange={e => setDraft(d => ({ ...d, body:e.target.value }))}
+                    style={{ ...S.inp, resize:"none" }}/>
+                  {error && <p style={{ fontSize:12, color:"#f87171", margin:0 }}>{error}</p>}
+                  <button onClick={submitPost} disabled={submitting || !draft.title.trim() || !draft.body.trim()}
+                    style={{ padding:"10px 20px", borderRadius:10, fontSize:14, fontWeight:900, border:"none",
+                      cursor: draft.title.trim() && draft.body.trim() ? "pointer" : "default", alignSelf:"flex-start",
+                      background: draft.title.trim() && draft.body.trim() ? BRAND.colors.yellow : "rgba(255,255,255,0.05)",
+                      color: draft.title.trim() && draft.body.trim() ? "#111" : "#475569",
+                      fontFamily:BRAND.fonts.body }}>
+                    {submitting ? "Posting…" : "Post Discussion"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Tag filter pills ───────────────────────────────────────── */}
+            <div style={{ display:"flex", gap:8, marginBottom:20, overflowX:"auto", paddingBottom:4,
+              WebkitOverflowScrolling:"touch" }}>
+              {COMMUNITY_TAGS.map(t => (
+                <button key={t} onClick={() => setFilter(t)}
+                  style={{ padding:"6px 14px", borderRadius:20, fontSize:11, fontWeight:700,
+                    whiteSpace:"nowrap", cursor:"pointer", flexShrink:0,
+                    background: filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : "rgba(255,255,255,0.05)",
+                    color: filter===t ? "#fff" : "#64748b",
+                    border:`1px solid ${filter===t ? (COMMUNITY_TAG_COLORS[t]||BRAND.colors.green) : "rgba(255,255,255,0.1)"}` }}>
+                  {t === "all" ? "All Topics" : t}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Formation guides ───────────────────────────────────────── */}
+            {filteredFormations.length > 0 && (
+              <div style={{ marginBottom:24 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                  <span style={{ fontSize:16 }}>📖</span>
+                  <span style={{ fontFamily:BRAND.fonts.display, fontSize:13, fontWeight:900,
+                    color:"#fff", letterSpacing:2 }}>FORMATION GUIDES</span>
+                  <span style={{ padding:"1px 8px", borderRadius:20, fontSize:10, fontWeight:700,
+                    background:"rgba(255,255,255,0.08)", color:"#94a3b8" }}>
+                    {filteredFormations.length}
+                  </span>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                  {filteredFormations.map(p => <PostCard key={p.id} post={p} onOpen={openPost}/>)}
+                </div>
+              </div>
+            )}
+
+            {/* ── Discussions ────────────────────────────────────────────── */}
+            {loadingPosts ? (
+              <p style={{ fontSize:12, textAlign:"center", padding:"24px 0", color:"#475569" }}>
+                Loading discussions…
+              </p>
+            ) : filter === "all" ? (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {COMMUNITY_TAGS.slice(1).map(tag => {
+                  const tagPosts = allUserPostsMapped.filter(p => p.tag === tag);
+                  if (tagPosts.length === 0) return null;
+                  const isExpanded  = !!expandedTags[tag];
+                  const tagColor    = COMMUNITY_TAG_COLORS[tag] || BRAND.colors.green;
+                  const previewPosts  = [...tagPosts].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,3);
+                  const expandedPosts = [...tagPosts].sort((a,b) => (b.commentCount||0)-(a.commentCount||0));
+                  const displayPosts  = isExpanded ? expandedPosts : previewPosts;
+                  const hiddenCount   = tagPosts.length - 3;
+                  return (
+                    <div key={tag} style={{ borderRadius:14, overflow:"hidden",
+                      border:`1px solid ${tagColor}33`, background:"rgba(255,255,255,0.02)" }}>
+                      <button onClick={() => toggleTag(tag)}
+                        style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+                          padding:"12px 16px", cursor:"pointer", border:"none",
+                          background:`${tagColor}08`, borderBottom:`1px solid ${tagColor}22` }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:700,
+                            background:`${tagColor}22`, color:tagColor, border:`1px solid ${tagColor}44` }}>
+                            {tag}
+                          </span>
+                          <span style={{ fontSize:11, color:"#475569", fontWeight:600 }}>
+                            {tagPosts.length} post{tagPosts.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <span style={{ fontSize:11, fontWeight:900, color:tagColor }}>
+                          {isExpanded ? "▲ Less" : `▼ ${hiddenCount > 0 ? `+${hiddenCount} more` : "expand"}`}
+                        </span>
+                      </button>
+                      <div>
+                        {displayPosts.map((p, i) => (
+                          <div key={p.id} style={{ borderBottom: i < displayPosts.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                            <PostCard post={p} onOpen={openPost}/>
+                          </div>
+                        ))}
+                      </div>
+                      {!isExpanded && hiddenCount > 0 && (
+                        <button onClick={() => toggleTag(tag)}
+                          style={{ width:"100%", padding:"10px", fontSize:11, fontWeight:700, cursor:"pointer",
+                            border:"none", color:tagColor, background:`${tagColor}0a`,
+                            borderTop:`1px solid ${tagColor}22` }}>
+                          Show all {tagPosts.length} posts ▼
+                        </button>
+                      )}
+                      {isExpanded && (
+                        <button onClick={() => toggleTag(tag)}
+                          style={{ width:"100%", padding:"8px", fontSize:11, fontWeight:700, cursor:"pointer",
+                            border:"none", color:"#475569", background:"rgba(255,255,255,0.02)",
+                            borderTop:"1px solid rgba(255,255,255,0.05)" }}>
+                          ▲ Show less
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {allUserPostsMapped.length === 0 && (
+                  <p style={{ fontSize:12, textAlign:"center", padding:"32px 0", color:"#475569", fontStyle:"italic" }}>
+                    No posts yet — be the first!
+                  </p>
+                )}
               </div>
             ) : (
-              <p className="text-xs text-center py-8 italic" style={{ color:"#475569" }}>
-                No posts in this category yet — be the first!
-              </p>
-            )
-          )}
-
-          {/* Ad between discussions and formations */}
-          {filteredFormations.length > 0 && allUserPostsMapped.length > 0 && (
-            <AdBanner slot="3024866198" format="auto"
-              style={{ margin:"8px 0", borderRadius:8, overflow:"hidden" }}/>
-          )}
-        </>
-      )}
+              filteredUserPosts.length > 0 ? (
+                <div style={{ marginBottom:24 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                    <span style={{ fontSize:16 }}>💬</span>
+                    <span style={{ fontFamily:BRAND.fonts.display, fontSize:13, fontWeight:900, color:"#fff", letterSpacing:2 }}>DISCUSSIONS</span>
+                    <span style={{ padding:"1px 8px", borderRadius:20, fontSize:10, fontWeight:700, background:"rgba(255,255,255,0.08)", color:"#94a3b8" }}>{filteredUserPosts.length}</span>
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                    {filteredUserPosts.sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).map(p => (
+                      <PostCard key={p.id} post={p} onOpen={openPost}/>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p style={{ fontSize:12, textAlign:"center", padding:"32px 0", color:"#475569", fontStyle:"italic" }}>
+                  No posts in this category yet — be the first!
+                </p>
+              )
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 
