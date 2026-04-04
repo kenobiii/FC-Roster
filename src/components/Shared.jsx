@@ -10,13 +10,13 @@ import { track } from "../helpers.js";
 function AdBanner({ slot = "auto", format = "auto", style = {} }) {
   const ref = useRef(null);
   useEffect(() => {
-    // Guard: only push once per mount, and only when the script is loaded
     try {
-      if (ref.current && ref.current.offsetWidth > 0) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      // Only push if adsbygoogle script is actually loaded
+      if (ref.current && ref.current.offsetWidth > 0 && window.adsbygoogle) {
+        window.adsbygoogle.push({});
       }
     } catch (e) {
-      // adsbygoogle not ready yet — silently ignore
+      // silently ignore — AdSense not ready
     }
   }, []);
 
@@ -341,11 +341,7 @@ function AboutTab({ session = null, onShowAuth = () => {}, onGoProfile = () => {
           ⚽ Sign In / Create Account
         </button>
       )}
-      <AdBanner
-        slot="3024866198"
-        format="auto"
-        style={{ margin:"8px 0", borderRadius:12, overflow:"hidden" }}
-      />
+      {/* AdBanner placeholder — add when AdSense is approved */}
 
       {/* Legal link */}
       <div className="text-center pt-2 pb-4">
