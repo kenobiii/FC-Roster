@@ -161,7 +161,7 @@ function RosterPanel({ players, subs, teamName, format, formation, defaultExpand
   const hasAnyName = rows.some(r => r.starter || r.sub);
 
   return (
-    <div style={{ borderRadius:16, overflow:"hidden", background:"#0f1b2d", border:"2px solid rgba(255,255,255,0.18)", boxShadow:"0 0 18px rgba(255,255,255,0.06)" }}>
+    <div style={{ borderRadius:20, overflow:"hidden", background:"#0f1b2d", border:"2px solid rgba(255,255,255,0.18)", boxShadow:"0 0 18px rgba(255,255,255,0.06)" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, padding:"12px 16px", background:"rgba(255,255,255,0.07)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:16 }}>📋</span>
@@ -546,9 +546,9 @@ function BuilderLayout({
   );
 
   const DownloadBtn = (
-    <div style={{ borderRadius:16, overflow:"hidden", width:"100%", background:"#0f1b2d",
+    <div style={{ borderRadius:20, overflow:"hidden", width:"100%", background:"#0f1b2d",
       border:`2px solid ${BRAND.colors.green}`,
-      boxShadow: exporting ? "none" : `0 0 18px ${BRAND.colors.green}50` }}>
+      boxShadow: exporting ? "none" : `0 0 24px ${BRAND.colors.green}50` }}>
       <button onClick={handleExport} disabled={exporting}
         style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
           gap:8, padding:"16px 20px", cursor:"pointer", border:"none",
