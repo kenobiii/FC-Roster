@@ -1,51 +1,258 @@
-// ─── Static data — formations, blog posts, reactions ─────────────────────────
+// ─── Static data — formations, formation posts, blog posts ────────────────────
 
+// ── Formations ────────────────────────────────────────────────────────────────
+export const FORMATIONS = {
+  11: {
+    "4-4-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:72, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:72, pos:"LB" },
+      { id:"rm",  x:82, y:52, pos:"RM" }, { id:"rcm", x:62, y:52, pos:"CM" },
+      { id:"lcm", x:38, y:52, pos:"CM" }, { id:"lm",  x:18, y:52, pos:"LM" },
+      { id:"rs",  x:62, y:24, pos:"ST" }, { id:"ls",  x:38, y:24, pos:"ST" },
+    ],
+    "4-3-3": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:72, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:72, pos:"LB" },
+      { id:"rcm", x:68, y:52, pos:"CM" }, { id:"cm",  x:50, y:56, pos:"CM" },
+      { id:"lcm", x:32, y:52, pos:"CM" },
+      { id:"rw",  x:78, y:22, pos:"RW" }, { id:"st",  x:50, y:16, pos:"ST" },
+      { id:"lw",  x:22, y:22, pos:"LW" },
+    ],
+    "4-2-3-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:74, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:74, pos:"LB" },
+      { id:"rdm", x:62, y:60, pos:"DM" }, { id:"ldm", x:38, y:60, pos:"DM" },
+      { id:"ram", x:72, y:40, pos:"AM" }, { id:"cam", x:50, y:38, pos:"AM" },
+      { id:"lam", x:28, y:40, pos:"AM" },
+      { id:"st",  x:50, y:18, pos:"ST" },
+    ],
+    "3-5-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:68, y:72, pos:"CB" }, { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"lcb", x:32, y:72, pos:"CB" },
+      { id:"rwb", x:84, y:52, pos:"RWB"},{ id:"rcm", x:64, y:52, pos:"CM" },
+      { id:"cm",  x:50, y:48, pos:"CM" }, { id:"lcm", x:36, y:52, pos:"CM" },
+      { id:"lwb", x:16, y:52, pos:"LWB"},
+      { id:"rs",  x:62, y:22, pos:"ST" }, { id:"ls",  x:38, y:22, pos:"ST" },
+    ],
+    "3-4-3": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:68, y:72, pos:"CB" }, { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"lcb", x:32, y:72, pos:"CB" },
+      { id:"rm",  x:78, y:52, pos:"RM" }, { id:"rcm", x:60, y:52, pos:"CM" },
+      { id:"lcm", x:40, y:52, pos:"CM" }, { id:"lm",  x:22, y:52, pos:"LM" },
+      { id:"rw",  x:72, y:22, pos:"RW" }, { id:"st",  x:50, y:16, pos:"ST" },
+      { id:"lw",  x:28, y:22, pos:"LW" },
+    ],
+    "4-1-4-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:74, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:74, pos:"LB" },
+      { id:"dm",  x:50, y:60, pos:"DM" },
+      { id:"rm",  x:80, y:44, pos:"RM" }, { id:"rcm", x:62, y:44, pos:"CM" },
+      { id:"lcm", x:38, y:44, pos:"CM" }, { id:"lm",  x:20, y:44, pos:"LM" },
+      { id:"st",  x:50, y:20, pos:"ST" },
+    ],
+    "4-5-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:80, y:74, pos:"RB" }, { id:"rcb", x:62, y:74, pos:"CB" },
+      { id:"lcb", x:38, y:74, pos:"CB" }, { id:"lb",  x:20, y:74, pos:"LB" },
+      { id:"rm",  x:82, y:50, pos:"RM" }, { id:"rcm", x:64, y:50, pos:"CM" },
+      { id:"cm",  x:50, y:50, pos:"CM" }, { id:"lcm", x:36, y:50, pos:"CM" },
+      { id:"lm",  x:18, y:50, pos:"LM" },
+      { id:"st",  x:50, y:20, pos:"ST" },
+    ],
+    "3-4-2-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:68, y:74, pos:"CB" }, { id:"cb",  x:50, y:74, pos:"CB" },
+      { id:"lcb", x:32, y:74, pos:"CB" },
+      { id:"rm",  x:78, y:54, pos:"RM" }, { id:"rcm", x:60, y:54, pos:"CM" },
+      { id:"lcm", x:40, y:54, pos:"CM" }, { id:"lm",  x:22, y:54, pos:"LM" },
+      { id:"rss", x:62, y:32, pos:"SS" }, { id:"lss", x:38, y:32, pos:"SS" },
+      { id:"st",  x:50, y:16, pos:"ST" },
+    ],
+    "5-3-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rwb", x:84, y:72, pos:"RWB"},{ id:"rcb", x:67, y:74, pos:"CB" },
+      { id:"cb",  x:50, y:76, pos:"CB" }, { id:"lcb", x:33, y:74, pos:"CB" },
+      { id:"lwb", x:16, y:72, pos:"LWB"},
+      { id:"rcm", x:65, y:50, pos:"CM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lcm", x:35, y:50, pos:"CM" },
+      { id:"rs",  x:62, y:22, pos:"ST" }, { id:"ls",  x:38, y:22, pos:"ST" },
+    ],
+    "5-4-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rwb", x:84, y:72, pos:"RWB"},{ id:"rcb", x:67, y:74, pos:"CB" },
+      { id:"cb",  x:50, y:76, pos:"CB" }, { id:"lcb", x:33, y:74, pos:"CB" },
+      { id:"lwb", x:16, y:72, pos:"LWB"},
+      { id:"rm",  x:78, y:50, pos:"RM" }, { id:"rcm", x:60, y:50, pos:"CM" },
+      { id:"lcm", x:40, y:50, pos:"CM" }, { id:"lm",  x:22, y:50, pos:"LM" },
+      { id:"st",  x:50, y:20, pos:"ST" },
+    ],
+  },
+  9: {
+    "3-3-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:75, y:72, pos:"RB" }, { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"lb",  x:25, y:72, pos:"LB" },
+      { id:"rm",  x:72, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lm",  x:28, y:50, pos:"LM" },
+      { id:"rs",  x:65, y:24, pos:"ST" }, { id:"ls",  x:35, y:24, pos:"ST" },
+    ],
+    "3-2-3": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:75, y:72, pos:"RB" }, { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"lb",  x:25, y:72, pos:"LB" },
+      { id:"rcm", x:65, y:52, pos:"CM" }, { id:"lcm", x:35, y:52, pos:"CM" },
+      { id:"rw",  x:75, y:24, pos:"RW" }, { id:"st",  x:50, y:18, pos:"ST" },
+      { id:"lw",  x:25, y:24, pos:"LW" },
+    ],
+    "2-3-3": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:65, y:74, pos:"CB" }, { id:"lcb", x:35, y:74, pos:"CB" },
+      { id:"rm",  x:75, y:52, pos:"RM" }, { id:"cm",  x:50, y:52, pos:"CM" },
+      { id:"lm",  x:25, y:52, pos:"LM" },
+      { id:"rw",  x:72, y:24, pos:"RW" }, { id:"st",  x:50, y:18, pos:"ST" },
+      { id:"lw",  x:28, y:24, pos:"LW" },
+    ],
+    "4-2-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:78, y:72, pos:"RB" }, { id:"rcb", x:60, y:72, pos:"CB" },
+      { id:"lcb", x:40, y:72, pos:"CB" }, { id:"lb",  x:22, y:72, pos:"LB" },
+      { id:"rcm", x:65, y:50, pos:"CM" }, { id:"lcm", x:35, y:50, pos:"CM" },
+      { id:"rs",  x:65, y:24, pos:"ST" }, { id:"ls",  x:35, y:24, pos:"ST" },
+    ],
+    "2-4-2": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rcb", x:65, y:74, pos:"CB" }, { id:"lcb", x:35, y:74, pos:"CB" },
+      { id:"rm",  x:78, y:52, pos:"RM" }, { id:"rcm", x:58, y:52, pos:"CM" },
+      { id:"lcm", x:42, y:52, pos:"CM" }, { id:"lm",  x:22, y:52, pos:"LM" },
+      { id:"rs",  x:65, y:24, pos:"ST" }, { id:"ls",  x:35, y:24, pos:"ST" },
+    ],
+    "3-4-1": [
+      { id:"gk",  x:50, y:90, pos:"GK" },
+      { id:"rb",  x:75, y:72, pos:"RB" }, { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"lb",  x:25, y:72, pos:"LB" },
+      { id:"rm",  x:78, y:52, pos:"RM" }, { id:"rcm", x:58, y:52, pos:"CM" },
+      { id:"lcm", x:42, y:52, pos:"CM" }, { id:"lm",  x:22, y:52, pos:"LM" },
+      { id:"st",  x:50, y:20, pos:"ST" },
+    ],
+  },
+  7: {
+    "3-2-1": [
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"rb", x:72, y:70, pos:"RB" }, { id:"cb", x:50, y:70, pos:"CB" },
+      { id:"lb", x:28, y:70, pos:"LB" },
+      { id:"rm", x:68, y:48, pos:"CM" }, { id:"lm", x:32, y:48, pos:"CM" },
+      { id:"st", x:50, y:22, pos:"ST" },
+    ],
+    "2-3-1": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
+      { id:"rm",  x:75, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lm",  x:25, y:50, pos:"LM" },
+      { id:"st",  x:50, y:22, pos:"ST" },
+    ],
+    "2-2-2": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
+      { id:"rcm", x:65, y:52, pos:"CM" }, { id:"lcm", x:35, y:52, pos:"CM" },
+      { id:"rs",  x:65, y:22, pos:"ST" }, { id:"ls",  x:35, y:22, pos:"ST" },
+    ],
+    "3-1-2": [
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"rb", x:72, y:70, pos:"RB" }, { id:"cb", x:50, y:70, pos:"CB" },
+      { id:"lb", x:28, y:70, pos:"LB" },
+      { id:"cm", x:50, y:50, pos:"CM" },
+      { id:"rs", x:65, y:22, pos:"ST" }, { id:"ls", x:35, y:22, pos:"ST" },
+    ],
+    "1-3-2": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"cb",  x:50, y:72, pos:"CB" },
+      { id:"rm",  x:75, y:52, pos:"RM" }, { id:"cm",  x:50, y:52, pos:"CM" },
+      { id:"lm",  x:25, y:52, pos:"LM" },
+      { id:"rs",  x:65, y:22, pos:"ST" }, { id:"ls",  x:35, y:22, pos:"ST" },
+    ],
+    "2-3-2": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"rcb", x:65, y:72, pos:"CB" }, { id:"lcb", x:35, y:72, pos:"CB" },
+      { id:"rm",  x:75, y:50, pos:"RM" }, { id:"cm",  x:50, y:50, pos:"CM" },
+      { id:"lm",  x:25, y:50, pos:"LM" },
+      { id:"rs",  x:67, y:22, pos:"ST" }, { id:"ls",  x:33, y:22, pos:"ST" },
+    ],
+  },
+  5: {
+    "1-2-1": [
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"cb", x:50, y:68, pos:"CB" },
+      { id:"rm", x:72, y:46, pos:"CM" }, { id:"lm", x:28, y:46, pos:"CM" },
+      { id:"st", x:50, y:22, pos:"ST" },
+    ],
+    "2-1-1": [
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"rd", x:67, y:70, pos:"CB" }, { id:"ld", x:33, y:70, pos:"CB" },
+      { id:"cm", x:50, y:50, pos:"CM" },
+      { id:"st", x:50, y:22, pos:"ST" },
+    ],
+    "1-1-2": [
+      { id:"gk", x:50, y:88, pos:"GK" },
+      { id:"cb", x:50, y:70, pos:"CB" },
+      { id:"cm", x:50, y:50, pos:"CM" },
+      { id:"rs", x:67, y:22, pos:"ST" }, { id:"ls", x:33, y:22, pos:"ST" },
+    ],
+    "2-2": [
+      { id:"gk",  x:50, y:88, pos:"GK" },
+      { id:"rd",  x:67, y:68, pos:"CB" }, { id:"ld",  x:33, y:68, pos:"CB" },
+      { id:"ram", x:67, y:32, pos:"AM" }, { id:"lam", x:33, y:32, pos:"AM" },
+    ],
+  },
+};
 
+export const FORMAT_DEFAULTS = { 11:"4-4-2", 9:"3-3-2", 7:"3-2-1", 5:"1-2-1" };
 
-const BLOG_POSTS = [
-  { id:"442", tag:"11v11", formation:"4-4-2", title:"4-4-2: The Classic Balanced Attack", why:"A foundational tactic and defensive juggernaut. It excels at controlling the center and protecting the goalkeeper with two organized lines. It's balanced and easy for players to learn and execute on game day.", fundamentals:"Requires solid team chemistry and a disciplined work rate from all players. Midfielders must understand they are the engine room, providing key links between defensive blocks and the attacking front two, making it perfect for high-pressing strategies." },
-  { id:"433", tag:"11v11", formation:"4-3-3", title:"4-3-3: Total Football & High Press", why:"The heartbeat of modern, attacking soccer (pioneered by Cruyff's Ajax and Barcelona). It creates dangerous 1v1 situations for wingers, stretches opponent defenses, and enables devastating counter-attacks and an unstoppable high press.", fundamentals:"Success relies on the creative playmaker and defensive discipline. The holding midfielder is essential to breaking up opponent attacks, while outside backs must possess the engine for key overlaps and defensive recovery." },
-  { id:"4231", tag:"11v11", formation:"4-2-3-1", title:"4-2-3-1: Modern Pragmatism & Central Overload", why:"The current professional standard. A masterclass in strategic flexibility, it utilizes defensive depth (two Pivots) to secure the box while allowing the front four creative freedom to create scoring chances.", fundamentals:"Critical role for the specialized number 10 playmaker. The two defensive midfielders must coordinate perfectly, one breaking up play, the other orchestrating possession and protecting the defensive line." },
-  { id:"352", tag:"11v11", formation:"3-5-2", title:"3-5-2: Midfield Dominance", why:"A dynamic strategy to control the center circle with an overload of five midfielders. It offers strong defensive stability with three center-backs and creates instant width through tireless wing-backs.", fundamentals:"The engine of the team rests on the wing-backs; they are essentially full-backs and wingers combined. Midfielders must be comfortable playing under pressure and adept at winning second balls." },
-  { id:"343", tag:"11v11", formation:"3-4-3", title:"3-4-3: The Risk & Reward Attacking Overload", why:"An aggressive, all-out attack formation designed to swarm the final third and suffocate opponents in possession. Ideal for teams with dominant players and confident central defenders.", fundamentals:"Demands incredible physical conditioning from the two central midfielders. The narrow attacking trio must have elite understanding and inter-changeability." },
-  { id:"532", tag:"11v11", formation:"5-3-2", title:"5-3-2: The Counter-Attacking Stronghold", why:"The defensive park-the-bus masterpiece, often used when protecting a lead or facing a stronger opponent. A tactical fortress designed to clog the penalty box and lure the opponent in before launching lethal counter-attacks.", fundamentals:"Requires absolute mental focus and defensive organization. Striker chemistry must be precise; they have few chances and must be ruthlessly clinical." },
-  { id:"541", tag:"11v11", formation:"5-4-1", title:"5-4-1: The Low Block Fortress", why:"The most extreme defensive setup. It's about limiting space, making it nearly impossible for the opposition to break through the lines. Ideal for grinding out a result or managing a narrow lead.", fundamentals:"Discipline is paramount; players must stay narrow and communicate constantly. It focuses on forcing opponent mistakes near the box and relies on set-pieces or rare breaks for scoring opportunities." },
-  { id:"4141", tag:"11v11", formation:"4-1-4-1", title:"4-1-4-1: Possession Control & Positional Play", why:"The ultimate midfield chess match formation. It provides maximum passing options and positional flexibility. Ideal for teams that value slow, rhythmic build-up play.", fundamentals:"Everything pivots on the lone defensive midfielder. Outside midfielders operate as dynamic attacking threats, connecting play in the central attacking channel while full-backs provide necessary width." },
-  { id:"451", tag:"11v11", formation:"4-5-1", title:"4-5-1: The Midfield Wall", why:"One of the most common professional formations. Controls the middle of the park with five midfielders while remaining defensively solid with a compact four-man backline.", fundamentals:"The lone striker must be physically imposing and capable of holding up play. The wide midfielders are key — they must contribute both defensively and provide width in attack." },
-  { id:"3421", tag:"11v11", formation:"3-4-2-1", title:"3-4-2-1: The Christmas Tree (Wide)", why:"Provides a three-man defensive base with two creative shadow strikers supporting one centre forward. Creates overloads in the final third and is difficult to defend against.", fundamentals:"The two shadow strikers (SS) must have excellent movement and timing to avoid being offside. Wing midfielders must track back to protect the exposed flanks." },
-  { id:"332-9v9", tag:"9v9", formation:"3-3-2", title:"3-3-2: The Balanced Classic", why:"The direct predecessor to the 4-4-2. It provides a stable spine with three defenders and a clear attacking partnership up front. The gold standard for teaching fundamental roles and zonal marking.", fundamentals:"Success hinges on the Midfield 3 acting as a unit. The wide midfielders must provide the width that the back three lacks, essentially acting as wing-backs to prevent being flanked." },
-  { id:"323-9v9", tag:"9v9", formation:"3-2-3", title:"3-2-3: The Attacking Overload", why:"Favored by coaches who want to dominate the final third. By putting three players high up the pitch, you force the opposition deep and create constant goal-scoring opportunities.", fundamentals:"The two central midfielders must be highly disciplined. They are the insurance policy; if they push too high, the team is exposed to a vertical counter-attack." },
-  { id:"233-9v9", tag:"9v9", formation:"2-3-3", title:"2-3-3: Total Offense", why:"An aggressive, high-risk setup designed for ball-dominant teams. It stretches the field horizontally and vertically, making it perfect for possession-based soccer.", fundamentals:"Requires two elite, fast center-backs capable of winning 1v1 duels in space. The midfield three must retreat instantly on transitions to support a vulnerable backline." },
-  { id:"422-9v9", tag:"9v9", formation:"4-2-2", title:"4-2-2: Defensive Solidity", why:"Transitioning players into a traditional four-man backline early. A hard to beat formation that emphasizes clean sheets and organized defensive blocks.", fundamentals:"Focuses on the full-back's development. They must learn when to overlap into the attack and when to tuck in to support the center-backs." },
-  { id:"242-9v9", tag:"9v9", formation:"2-4-2", title:"2-4-2: The Midfield Engine", why:"Designed to win the battle for the center circle. With four midfielders, you create a diamond that allows for superior passing triangles and keeps the ball away from the opponent.", fundamentals:"Movement off the ball is key. Players must constantly rotate to create passing lanes. If the midfield remains static, the two strikers become isolated." },
-  { id:"341-9v9", tag:"9v9", formation:"3-4-1", title:"3-4-1: The Creative Hub", why:"Built entirely around a Number 10. This formation provides a massive safety net of seven players behind one creative playmaker who pulls the strings for a lone, clinical striker.", fundamentals:"The lone striker must be a target man, capable of holding up play while the four midfielders join the attack." },
-  { id:"321-7v7", tag:"7v7", formation:"3-2-1", title:"3-2-1: The Christmas Tree (Defensive Base)", why:"The most secure 7v7 setup. It provides a solid three-man backline to prevent easy goals while maintaining a central spine that is difficult for opponents to play through.", fundamentals:"Success depends on the two midfielders transition speed. They must support the lone striker to avoid isolation and quickly drop back to form a defensive block." },
-  { id:"231-7v7", tag:"7v7", formation:"2-3-1", title:"2-3-1: The Total Football Prototype", why:"The gold standard for youth development. It creates natural passing triangles across the whole pitch. It encourages defenders to step up and wingers to track back.", fundamentals:"The Wingers are the key. They must provide the width to stretch the defense. If they stay too central, the pitch becomes small and the attack stalls." },
-  { id:"222-7v7", tag:"7v7", formation:"2-2-2", title:"2-2-2: The Box Balanced", why:"Simplicity and symmetry. It pairs players up in every third. This makes player rotations and substitution patterns easy for coaches and intuitive for players.", fundamentals:"Requires elite communication between pairs. It's a masterclass in staggered positioning to avoid standing on the same vertical line." },
-  { id:"312-7v7", tag:"7v7", formation:"3-1-2", title:"3-1-2: The Counter-Attack Specialist", why:"It prioritizes a clean sheet with three dedicated defenders while keeping two strikers high to exploit long-ball transitions.", fundamentals:"The lone Holding Midfielder is the pivot. They must have a high interception rate and the vision to launch immediate vertical passes to the two strikers." },
-  { id:"132-7v7", tag:"7v7", formation:"1-3-2", title:"1-3-2: The High Press Gamble", why:"An aggressive formation used to suffocate the opponent in their own half. By loading the midfield and attack, you force turnovers near the opponent's goal for quick-strike scoring.", fundamentals:"The lone defender must be a Sweeper-Keeper hybrid. They need the pace to cover the entire back half of the field." },
-  { id:"232-7v7", tag:"7v7", formation:"2-3-2", title:"2-3-2: The Midfield Overload", why:"Extremely common in youth 7-a-side. Provides a balanced defensive base with two CBs while overloading the midfield and maintaining a two-striker threat.", fundamentals:"The three midfielders must constantly shift as a unit. Wide midfielders push forward when the team has the ball, tracking back when defending." },
-  { id:"121-5v5", tag:"5v5", formation:"1-2-1", title:"1-2-1: The Diamond", why:"The most balanced and widely used 5v5 setup. It provides depth, width, and a clear point in the attack. Designed to create passing triangles naturally, making it the king of ball retention.", fundamentals:"The Anchor (defender) and Pivot (striker) must stay connected. The two wide midfielders are the lungs of the team, providing constant rotation to pull defenders out of position." },
-  { id:"211-5v5", tag:"5v5", formation:"2-1-1", title:"2-1-1: The Pyramid (Defensive Base)", why:"A safety-first approach. It prioritizes a solid foundation with two defenders, making it extremely difficult for opponents to find a direct path to the goal. Perfect for counter-attacking teams.", fundamentals:"The lone midfielder is the Engine. They must have the high-intensity work rate to support the striker while tracking back to ensure the two defenders aren't overloaded." },
-  { id:"112-5v5", tag:"5v5", formation:"1-1-2", title:"1-1-2: The Heavy Press", why:"An aggressive, front-loaded strategy. By keeping two strikers high, you force the opponent's keeper into risky throws and look for high-turnover goals. High-risk, high-reward soccer.", fundamentals:"Requires a Last Man defender with elite anticipation. The lone defender and midfielder must stay compact to prevent the long ball from beating the entire team." },
-  { id:"22-5v5", tag:"5v5", formation:"2-2", title:"2-2: The Square (The Box)", why:"Total symmetry and simplicity. The easiest formation for zonal defending. Great for beginners to learn covering and for pros to execute highly disciplined man-to-man defensive shifts.", fundamentals:"Fluidity is mandatory. If the Box stays static, the team becomes easy to defend. Players must practice interchanging roles — when a defender carries the ball forward, a forward must rotate back." },
+// ── Formation posts (community seeded content) ────────────────────────────────
+export const FORMATION_POSTS = [
+  {
+    id: "fp-442",
+    title: "The 4-4-2: Why It Still Works in Sunday League",
+    tag: "Formation",
+    body: "The classic 4-4-2 remains one of the best formations for recreational football. Two banks of four give you defensive solidity while the twin strikers offer constant threat. The key is discipline from your midfield four — they need to track back and press as a unit. Works especially well when your wingers are willing to defend.",
+    likes: 47,
+    formation: "4-4-2",
+    author: "FCRoster",
+    isGuide: true,
+  },
+  {
+    id: "fp-433",
+    title: "Mastering the 4-3-3 — High Press Edition",
+    tag: "Formation",
+    body: "The 4-3-3 is built for teams that love to press high and attack in numbers. Your three forwards must work as a pressing unit, cutting off passing lanes from the back. The central three in midfield need good fitness — one holding midfielder sits deeper while the other two box-to-box. Devastating when executed well, exhausting when not.",
+    likes: 38,
+    formation: "4-3-3",
+    author: "FCRoster",
+    isGuide: true,
+  },
+  {
+    id: "fp-4231",
+    title: "4-2-3-1: The Tactical Swiss Army Knife",
+    tag: "Formation",
+    body: "The 4-2-3-1 offers elite defensive cover (double pivot) and elite attacking support (number 10 + wide players). The two DMs protect the back four and recycle possession, while the attacking three support a lone striker. Works best when your CAM is your best player — give them freedom to roam.",
+    likes: 52,
+    formation: "4-2-3-1",
+    author: "FCRoster",
+    isGuide: true,
+  },
+  {
+    id: "fp-352",
+    title: "3-5-2: Dominate with Wing-Backs",
+    tag: "Formation",
+    body: "The 3-5-2 is all about your wing-backs. They must be your fittest players, constantly overlapping in attack and tracking back in defence. Three CBs give you aerial dominance and cover against pace. The midfield three can control the game centrally while the WBs provide the width. Requires disciplined, fit players to execute.",
+    likes: 29,
+    formation: "3-5-2",
+    author: "FCRoster",
+    isGuide: true,
+  },
 ];
-
-// ─── Supabase Client ──────────────────────────────────────────────────────────
-
-const FORMATION_POSTS = BLOG_POSTS.map(p => ({
-  ...p, source:"formation", commentCount:0, lastActivity:"Formation guide", created_at:"2025-01-01",
-}));
-
-const REACTIONS = [
-  { type:"handshake", emoji:"🤝", label:"Fair Play",  color:"#22c55e" },
-  { type:"yellow_card", emoji:"🟨", label:"Caution",  color:"#f5c518" },
-  { type:"red_card",    emoji:"🟥", label:"Red Card", color:"#dc2626" },
-];
-const RED_CARD_MOD_THRESHOLD = 5; // auto-flag threshold
-
-const RED_CARD_MOD_THRESHOLD = 5; // auto-flag threshold
-
-//
-
-export { FORMATIONS, FORMAT_DEFAULTS, BLOG_POSTS, FORMATION_POSTS, REACTIONS, RED_CARD_MOD_THRESHOLD };

@@ -1415,16 +1415,6 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="rounded-xl p-3 text-center" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
-            <div className="font-black text-2xl" style={{ color:BRAND.colors.green }}>{profile?.post_count ?? "—"}</div>
-            <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>POSTS</div>
-          </div>
-          <div className="rounded-xl p-3 text-center" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
-            <div className="font-black text-2xl" style={{ color:BRAND.colors.yellow }}>{profile?.overall_score || 10}</div>
-            <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>OVERALL</div>
-          </div>
-        </div>
         <div className="rounded-2xl p-4 mb-3" style={{ background:"rgba(45,122,58,0.08)", border:`1px solid rgba(45,122,58,0.2)` }}>
           <div className="text-xs font-bold mb-1" style={{ color:BRAND.colors.green }}>⚽ ROSTER AUTO-SAVE</div>
           <div className="text-xs leading-relaxed" style={{ color:"#64748b" }}>
