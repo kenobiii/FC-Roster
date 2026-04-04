@@ -68,6 +68,7 @@ function App() {
   const [showAuth,        setShowAuth]        = useState(false);
   const [showProfile,     setShowProfile]     = useState(false);
   const [profile,         setProfile]         = useState(null);
+  const [profileReady,    setProfileReady]    = useState(false); // true once profile fetch completes
   const [showOnboarding,  setShowOnboarding]  = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   // ── Team state ────────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ function App() {
 
   // ── On login: load Supabase roster + profile ──────────────────────────────
   useEffect(() => {
-    if (!session) return;
+    if (!session) { setProfileReady(true); return; } // no session = no profile to wait for
     (async () => {
       setRosterLoading(true);
       // Load profile
@@ -138,6 +139,7 @@ function App() {
         setProfile(prof);
         if (prof.team_name && teamName === "My Team FC") setTeamName(prof.team_name);
       }
+      setProfileReady(true); // profile fetch complete — safe to show/hide wizard now
       if (!prof?.setup_complete) {
         setShowOnboarding(true); // first sign-in or incomplete setup — wizard pre-fills from profile
       } else {
@@ -251,6 +253,7 @@ function App() {
     setShowProfile(false);
     setShowOnboarding(false);
     setShowEditProfile(false);
+    setProfileReady(false); // reset so guard works correctly on next sign-in
   }
 
   useEffect(() => { moveModeRef.current = moveMode; }, [moveMode]);
@@ -1076,7 +1079,7 @@ function App() {
       )}
 
       {/* ── Onboarding Modal (first login) ── */}
-      {showOnboarding && session && (
+      {showOnboarding && session && profileReady && (
         <Suspense fallback={null}>
           <PlayerSetupModal
             session={session}

@@ -10,9 +10,6 @@ import { PLAYER_CLASSES, VIBE_CARDS, ATTR_META, ATTRS,
          ATTR_MIN, ATTR_MAX, POINT_POOL, ROLES_IN_SPORT,
          COUNTRIES, ALL_POSITIONS, ROLE_DESIGNATIONS }        from "../playerData.js";
 
-// ─── FC-Style Player Card & Badge ────────────────────────────────────────────
-
-// Card background styles per class
 const CLASS_CARD_STYLES = {
   "Grass Roots": { bg:"linear-gradient(160deg,#7c5c32 0%,#3d2b12 100%)", accent:"#cd9f5a", dark:"rgba(0,0,0,0.4)" },
   "Rec Player":  { bg:"linear-gradient(160deg,#4b5563 0%,#1f2937 100%)", accent:"#9ca3af", dark:"rgba(0,0,0,0.4)" },
@@ -175,7 +172,6 @@ function FCPlayerCard({ profile, compact = false }) {
   );
 }
 
-// ─── Player Setup Wizard (Onboarding + Edit) ─────────────────────────────────
 function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, onClose }) {
   const isEdit = mode === "edit";
   const AVATARS = ["⚽","🏆","🧤","🦁","🦅","🐯","🔥","⚡","🌟","🎯","💪","🛡️"];
@@ -283,10 +279,7 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
       updated_at:       new Date().toISOString(),
     };
     const saved = await sb.upsert("profiles", payload, session.token).catch(() => null);
-    if (!saved) {
-      // Retry once before giving up
-      await sb.upsert("profiles", payload, session.token).catch(() => {});
-    }
+    if (!saved) { await sb.upsert("profiles", payload, session.token).catch(() => {}); }
     onComplete(payload);
     setSaving(false);
   }
@@ -448,26 +441,20 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
               ) : (
                 <div className="space-y-3">
 
-                  {/* Overall score — large, prominent, no side card */}
-                  <div className="rounded-xl px-4 py-3 flex items-center justify-between"
-                    style={{ background:`${cls.color}18`, border:`1.5px solid ${cls.color}44` }}>
-                    <div className="flex items-center gap-3">
-                      <span style={{ fontSize:28, lineHeight:1 }}>{cls.emoji}</span>
+                  {/* Overall score pill — live update */}
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span style={{ fontSize:22 }}>{cls.emoji}</span>
                       <div>
-                        <div className="font-black leading-none" style={{ fontSize:36, color:cls.color }}>{overall}</div>
-                        <div className="text-[10px] font-bold mt-0.5" style={{ color:"#64748b" }}>{cls.name}</div>
+                        <span className="font-black text-2xl" style={{ color:cls.color }}>{overall}</span>
+                        <span className="text-xs font-bold ml-2" style={{ color:"#64748b" }}>{cls.name}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div style={{ color:cls.color }}>
-                        {Array.from({length:Math.min(cls.stars,5)}).map((_,i) => (
-                          <span key={i} style={{ fontSize:14 }}>★</span>
-                        ))}
-                        {cls.stars === 6 && <span style={{ fontSize:16 }}>👑</span>}
-                      </div>
-                      <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>
-                        Stat ceiling: <span style={{ color:cls.color }}>{cls.max}</span>
-                      </div>
+                    <div>
+                      {Array.from({length:Math.min(cls.stars,5)}).map((_,i) => (
+                        <span key={i} style={{ color:cls.color, fontSize:12 }}>★</span>
+                      ))}
+                      {cls.stars === 6 && <span style={{ fontSize:13 }}>👑</span>}
                     </div>
                   </div>
 
@@ -485,23 +472,10 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                     </div>
                   </div>
 
-                  {/* Hint when all points used */}
-                  {remaining === 0 && (
-                    <div className="text-center text-[10px] py-1 rounded-lg"
-                      style={{ color: BRAND.colors.yellow, background:"rgba(245,197,24,0.08)",
-                               border:"1px solid rgba(245,197,24,0.15)" }}>
-                      💡 Lower one stat to free up points and raise another
-                    </div>
-                  )}
-
-                  {/* Full-width sliders with class ceiling indicator */}
+                  {/* Full-width sliders */}
                   {ATTRS.map(a => {
-                    const m   = ATTR_META[a];
+                    const m = ATTR_META[a];
                     const val = Number(form[`attr_${a}`] || 10);
-                    // Class ceiling as % of full track (ATTR_MIN to ATTR_MAX)
-                    const ceilPct = ((cls.max - ATTR_MIN) / (ATTR_MAX - ATTR_MIN)) * 100;
-                    const valPct  = ((val       - ATTR_MIN) / (ATTR_MAX - ATTR_MIN)) * 100;
-                    const overCeiling = val > cls.max;
                     return (
                       <div key={a}>
                         <div className="flex items-center justify-between mb-1">
@@ -509,50 +483,11 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                             <span className="text-xs font-black w-8" style={{ color:m.color }}>{m.label}</span>
                             <span className="text-[10px]" style={{ color:"#475569" }}>{m.desc}</span>
                           </div>
-                          <span className="text-base font-black w-8 text-right"
-                            style={{ color: overCeiling ? BRAND.colors.yellow : m.color }}>
-                            {val}{overCeiling && <span style={{ fontSize:8, marginLeft:1 }}>↑</span>}
-                          </span>
+                          <span className="text-base font-black w-8 text-right" style={{ color:m.color }}>{val}</span>
                         </div>
-                        {/* Custom track so we can show the class ceiling */}
-                        <div className="relative" style={{ height:20, display:"flex", alignItems:"center" }}>
-                          {/* Track background */}
-                          <div className="absolute inset-x-0 rounded-full overflow-hidden" style={{ height:6 }}>
-                            {/* Active fill */}
-                            <div style={{ position:"absolute", left:0, width:`${valPct}%`,
-                              height:"100%", background:m.color, borderRadius:99 }}/>
-                            {/* Beyond-class zone */}
-                            <div style={{ position:"absolute", left:`${ceilPct}%`,
-                              right:0, height:"100%",
-                              background:`repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 3px, transparent 3px, transparent 6px)`,
-                              borderLeft:`1.5px solid ${cls.color}88` }}/>
-                            {/* Track base */}
-                            <div style={{ position:"absolute", inset:0, zIndex:-1,
-                              background:"rgba(255,255,255,0.07)", borderRadius:99 }}/>
-                          </div>
-                          {/* Class ceiling tick */}
-                          <div style={{ position:"absolute", left:`${ceilPct}%`, top:0, bottom:0,
-                            display:"flex", flexDirection:"column", alignItems:"center",
-                            transform:"translateX(-50%)", pointerEvents:"none", zIndex:2 }}>
-                            <div style={{ width:2, height:"100%", background:cls.color, opacity:0.6, borderRadius:1 }}/>
-                          </div>
-                          {/* Native range input overlay (invisible track, visible thumb) */}
-                          <input type="range" min={ATTR_MIN} max={ATTR_MAX} value={val}
-                            onChange={e => setAttr(a, e.target.value)}
-                            className="absolute inset-x-0"
-                            style={{ accentColor:m.color, height:20, opacity:1,
-                              WebkitAppearance:"none", appearance:"none",
-                              background:"transparent", cursor:"pointer" }}/>
-                        </div>
-                        {/* Class ceiling label — only show if near or over */}
-                        {val >= cls.max - 5 && (
-                          <div className="text-[8px] text-right mt-0.5"
-                            style={{ color: overCeiling ? BRAND.colors.yellow : "#475569" }}>
-                            {overCeiling
-                              ? `↑ Above ${cls.name} ceiling (${cls.max})`
-                              : `${cls.name} ceiling: ${cls.max}`}
-                          </div>
-                        )}
+                        <input type="range" min={ATTR_MIN} max={ATTR_MAX} value={val}
+                          onChange={e => setAttr(a, e.target.value)}
+                          className="w-full" style={{ accentColor:m.color, height:20 }}/>
                       </div>
                     );
                   })}
@@ -735,29 +670,24 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                 </div>
               </div>
 
-              {/* Privacy toggles */}
-              <div className="rounded-xl p-3 space-y-2"
-                style={{ background:GLASS.xs, border:"1px solid rgba(255,255,255,0.06)" }}>
-                <div className="text-[9px] font-black tracking-widest mb-2"
-                  style={{ color:"#64748b", letterSpacing:2 }}>WHAT'S SHOWN PUBLICLY</div>
-                {[
-                  { key:"show_experience", label:"Show my player class & stats", sub:"Your overall score and attribute bars" },
-                  { key:"show_gender",     label:"Show my gender",               sub:"Only if you've set it above" },
-                ].map(({ key, label, sub }) => (
-                  <label key={key} className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={!!form[key]}
-                      onChange={e => set(key, e.target.checked)}
-                      className="mt-0.5 shrink-0" style={{ width:14, height:14, accentColor: BRAND.colors.green }}/>
-                    <div>
-                      <div className="text-xs font-bold" style={{ color:"#94a3b8" }}>{label}</div>
-                      <div className="text-[9px]" style={{ color:"#475569" }}>{sub}</div>
-                    </div>
-                  </label>
-                ))}
-                <div className="text-[9px] pt-1" style={{ color:"#334155" }}>
-                  🔒 Email and age are always private
+              {/* Privacy info */}
+              <button onClick={() => setShowPrivacy(v => !v)}
+                className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg text-xs"
+                style={{ background:GLASS.xs, border:"1px solid rgba(255,255,255,0.06)", color:"#64748b" }}>
+                <span>ℹ️ What's shown publicly?</span>
+                <span>{showPrivacy ? "▲" : "▼"}</span>
+              </button>
+              {showPrivacy && (
+                <div className="rounded-xl p-3 text-xs space-y-1.5"
+                  style={{ background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.2)" }}>
+                  <div style={{ color:"#a5b4fc", fontWeight:"bold" }}>👁️ Always public</div>
+                  <div style={{ color:"#94a3b8" }}>Display name · Avatar · Role in football · Country · Club name · Bio · Social links · Player class & stats (if set to show)</div>
+                  <div className="mt-2" style={{ color:"#a5b4fc", fontWeight:"bold" }}>🔒 Always private</div>
+                  <div style={{ color:"#94a3b8" }}>Email address · Age</div>
+                  <div className="mt-2" style={{ color:"#a5b4fc", fontWeight:"bold" }}>🔒 Private unless you toggle</div>
+                  <div style={{ color:"#94a3b8" }}>Gender · Experience level</div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -793,22 +723,12 @@ function PlayerSetupModal({ session, profile, mode = "onboarding", onComplete, o
                 )}
               </>
             ) : (
-              <>
-                <button onClick={handleFinish} disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
-                  style={{ background:BRAND.colors.green, color:"#fff", border:"none", cursor:"pointer",
-                           fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
-                  {saving ? "SAVING…" : isEdit ? "SAVE CHANGES ✓" : "START PLAYING ⚽"}
-                </button>
-                {!isEdit && (
-                  <button onClick={handleFinish} disabled={saving}
-                    className="px-3 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style={{ background:GLASS.xs, color:"#475569", border:`1px solid ${GLASS.border}`,
-                             cursor:"pointer" }}>
-                    Skip
-                  </button>
-                )}
-              </>
+              <button onClick={handleFinish} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:brightness-110"
+                style={{ background:BRAND.colors.green, color:"#fff", border:"none", cursor:"pointer",
+                         fontFamily:BRAND.fonts.display, letterSpacing:1 }}>
+                {saving ? "SAVING…" : isEdit ? "SAVE CHANGES ✓" : "START PLAYING ⚽"}
+              </button>
             )}
           </div>
           {!isEdit && step === 1 && (
@@ -1181,6 +1101,8 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
   // ── Signed-in state ────────────────────────────────────────────────────────
   const myMember  = teamMembers.find(m => m.user_id === session?.user?.id);
   const myRole    = myMember?.role;
+  const [showExp,    setShowExp]    = useState(profile?.show_experience !== false);
+  const [showGender, setShowGender] = useState(!!profile?.show_gender);
   const lastUp    = profile?.attrs_last_updated;
   const daysLeft  = lastUp
     ? Math.max(0, 30 - Math.floor((Date.now() - new Date(lastUp).getTime()) / 86400000))
@@ -1221,6 +1143,7 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
         </div>
       </div>
 
+
       {/* ── Profile Details ──────────────────────────────────────────────── */}
       <div>
         <div className="text-[10px] font-black tracking-widest mb-3 flex items-center gap-3"
@@ -1228,76 +1151,33 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
           PROFILE DETAILS
           <div className="flex-1 h-px" style={{ background:GLASS.sm }}/>
           <button onClick={onEditProfile}
-            className="text-[9px] font-bold px-2.5 py-1 rounded-lg transition-all hover:brightness-125"
+            className="text-[9px] font-bold px-2.5 py-1 rounded-lg"
             style={{ background:GLASS.sm, color:"#64748b", border:`1px solid ${GLASS.border}` }}>
             ✏️ Edit
           </button>
         </div>
-
-        <div className="rounded-2xl overflow-hidden divide-y"
-          style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}`,
-                   borderColor: GLASS.border, divideColor: GLASS.border }}>
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
           {[
-            {
-              icon: "🎭", label: "Role",
-              value: ROLES_IN_SPORT.find(r => r.id === profile?.role_in_sport)?.label,
-              empty: "Not set",
-            },
-            {
-              icon: "🌍", label: "Country",
-              value: profile?.country
-                ? `${COUNTRIES.find(([n]) => n === profile.country)?.[1] || ""} ${profile.country}`
-                : null,
-              empty: "Add your country",
-            },
-            {
-              icon: "📍", label: "Position(s)",
-              value: profile?.positions
-                ? profile.positions.split(",").filter(Boolean).join(" · ")
-                : null,
-              empty: "Not set",
-            },
-            {
-              icon: "👟", label: "Preferred foot",
-              value: profile?.preferred_foot || null,
-              empty: "Not set",
-            },
-            {
-              icon: "🏟️", label: "Club",
-              value: profile?.club_name || null,
-              empty: "Add your club",
-            },
-            {
-              icon: "📝", label: "Bio",
-              value: profile?.bio || null,
-              empty: "Add a bio",
-              wide: true,
-            },
-            {
-              icon: "📸", label: "Instagram",
-              value: profile?.social_instagram ? `@${profile.social_instagram}` : null,
-              empty: "Not linked",
-            },
-            {
-              icon: "🐦", label: "X / Twitter",
-              value: profile?.social_twitter ? `@${profile.social_twitter}` : null,
-              empty: "Not linked",
-            },
-            {
-              icon: "🎵", label: "TikTok",
-              value: profile?.social_tiktok ? `@${profile.social_tiktok}` : null,
-              empty: "Not linked",
-            },
-            {
-              icon: "▶️", label: "YouTube",
-              value: profile?.social_youtube || null,
-              empty: "Not linked",
-            },
-            {
-              icon: "🔒", label: "Age",
-              value: "Private — never shown publicly",
-              muted: true,
-            },
+            { icon:"🎭", label:"Role",
+              value:ROLES_IN_SPORT.find(r => r.id === profile?.role_in_sport)?.label, empty:"Not set" },
+            { icon:"🌍", label:"Country",
+              value:profile?.country ? `${COUNTRIES.find(([n]) => n===profile.country)?.[1]||""} ${profile.country}` : null,
+              empty:"Add your country" },
+            { icon:"📍", label:"Position(s)",
+              value:profile?.positions ? profile.positions.split(",").filter(Boolean).join(" · ") : null,
+              empty:"Not set" },
+            { icon:"👟", label:"Preferred foot", value:profile?.preferred_foot||null, empty:"Not set" },
+            { icon:"🏟️", label:"Club",           value:profile?.club_name||null,      empty:"Add your club" },
+            { icon:"📝", label:"Bio",             value:profile?.bio||null,            empty:"Add a bio", wide:true },
+            { icon:"📸", label:"Instagram",
+              value:profile?.social_instagram ? `@${profile.social_instagram}` : null, empty:"Not linked" },
+            { icon:"🐦", label:"X / Twitter",
+              value:profile?.social_twitter ? `@${profile.social_twitter}` : null, empty:"Not linked" },
+            { icon:"🎵", label:"TikTok",
+              value:profile?.social_tiktok ? `@${profile.social_tiktok}` : null, empty:"Not linked" },
+            { icon:"▶️", label:"YouTube", value:profile?.social_youtube||null, empty:"Not linked" },
+            { icon:"🔒", label:"Age", value:"Private — never shown publicly", muted:true },
           ].map(({ icon, label, value, empty, wide, muted }) => (
             <div key={label} className="flex items-start gap-3 px-4 py-2.5"
               style={{ borderBottom:`1px solid rgba(255,255,255,0.04)` }}>
@@ -1306,61 +1186,49 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
                 <span className="text-[10px] font-bold" style={{ color:"#475569" }}>{label}</span>
               </div>
               <div className={wide ? "text-xs leading-relaxed" : "text-xs font-bold"}
-                style={{ color: muted ? "#334155" : value ? "#f1f5f9" : "#334155",
-                         fontStyle: muted ? "italic" : "normal", flex:1 }}>
+                style={{ color:muted ? "#334155" : value ? "#f1f5f9" : "#334155", flex:1 }}>
                 {muted
                   ? <span style={{ color:"#334155", fontStyle:"italic" }}>{value}</span>
                   : value || (
                     <span className="flex items-center gap-1.5" style={{ color:"#334155" }}>
                       <span>{empty}</span>
-                      <span style={{ color: BRAND.colors.green, fontSize:10 }}>+</span>
+                      <span style={{ color:BRAND.colors.green, fontSize:10 }}>+</span>
                     </span>
                   )}
               </div>
             </div>
           ))}
         </div>
-
-        {/* Live privacy toggles */}
         <div className="mt-2 rounded-xl p-3 space-y-2"
           style={{ background:GLASS.xs, border:`1px solid rgba(255,255,255,0.06)` }}>
-          <div className="text-[9px] font-black tracking-widest"
+          <div className="text-[9px] font-black tracking-widest mb-1"
             style={{ color:"#475569", letterSpacing:2 }}>WHAT'S SHOWN PUBLICLY</div>
           {[
-            {
-              key:   "show_experience",
-              label: "Player class & stats",
-              sub:   profile?.show_experience !== false ? "Visible to others" : "Hidden",
-            },
-            {
-              key:   "show_gender",
-              label: "Gender",
-              sub:   profile?.gender
-                ? (profile?.show_gender ? `Shown (${profile.gender})` : "Hidden")
-                : "Set a gender first in Edit Profile",
-              disabled: !profile?.gender,
-            },
-          ].map(({ key, label, sub, disabled }) => (
-            <label key={key}
-              className={`flex items-center gap-3 ${disabled ? "" : "cursor-pointer"}`}>
-              <input type="checkbox"
-                checked={!!profile?.[key]}
-                disabled={!!disabled}
+            { key:"show_experience", val:showExp, set:setShowExp,
+              label:"Player class & stats", sub:showExp ? "Visible to others" : "Hidden" },
+            { key:"show_gender", val:showGender, set:setShowGender,
+              label:"Gender",
+              sub:profile?.gender ? (showGender ? `Shown (${profile.gender})` : "Hidden")
+                                  : "Set a gender first in Edit Profile",
+              disabled:!profile?.gender },
+          ].map(({ key, val, set, label, sub, disabled }) => (
+            <label key={key} className={`flex items-center gap-3 ${disabled ? "" : "cursor-pointer"}`}>
+              <input type="checkbox" checked={!!val} disabled={!!disabled}
                 onChange={async e => {
-                  const val = e.target.checked;
+                  const newVal = e.target.checked;
+                  set(newVal);
                   await sb.upsert("profiles", {
-                    id: session.user.id, [key]: val, updated_at: new Date().toISOString(),
+                    id:session.user.id, [key]:newVal, updated_at:new Date().toISOString(),
                   }, session.token).catch(() => {});
-                  // optimistic — parent will re-load on next visit
                 }}
                 style={{ width:14, height:14,
-                  accentColor: disabled ? "#334155" : BRAND.colors.green,
-                  cursor: disabled ? "not-allowed" : "pointer" }}/>
+                  accentColor:disabled ? "#334155" : BRAND.colors.green,
+                  cursor:disabled ? "not-allowed" : "pointer" }}/>
               <div>
                 <div className="text-xs font-bold"
-                  style={{ color: disabled ? "#334155" : "#94a3b8" }}>{label}</div>
+                  style={{ color:disabled ? "#334155" : "#94a3b8" }}>{label}</div>
                 <div className="text-[9px]"
-                  style={{ color: disabled ? "#1e293b" : "#475569" }}>{sub}</div>
+                  style={{ color:disabled ? "#1e293b" : "#475569" }}>{sub}</div>
               </div>
             </label>
           ))}
@@ -1547,6 +1415,16 @@ function ProfileTab({ session, profile, team, teamMembers, onShowAuth, onSignOut
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="rounded-xl p-3 text-center" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+            <div className="font-black text-2xl" style={{ color:BRAND.colors.green }}>{profile?.post_count ?? "—"}</div>
+            <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>POSTS</div>
+          </div>
+          <div className="rounded-xl p-3 text-center" style={{ background:GLASS.sm, border:`1px solid ${GLASS.border}` }}>
+            <div className="font-black text-2xl" style={{ color:BRAND.colors.yellow }}>{profile?.overall_score || 10}</div>
+            <div className="text-[9px] font-bold mt-0.5" style={{ color:"#475569" }}>OVERALL</div>
+          </div>
+        </div>
         <div className="rounded-2xl p-4 mb-3" style={{ background:"rgba(45,122,58,0.08)", border:`1px solid rgba(45,122,58,0.2)` }}>
           <div className="text-xs font-bold mb-1" style={{ color:BRAND.colors.green }}>⚽ ROSTER AUTO-SAVE</div>
           <div className="text-xs leading-relaxed" style={{ color:"#64748b" }}>
