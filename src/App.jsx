@@ -670,7 +670,7 @@ function App() {
       )}
 
       {/* ── Content ── */}
-      <main className="flex-1 flex flex-col">
+      <main style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden" }}>
         {activeTab === "builder" && (
           <BuilderLayout
             exportRef={exportRef} pitchRef={pitchRef} drawRef={drawRef}
