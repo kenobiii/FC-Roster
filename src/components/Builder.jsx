@@ -269,7 +269,8 @@ function BuilderLayout({
         const w = Math.min(maxByH, maxByW, 440);
         setPitchSize({ w: Math.max(w, 200), isDesktop:true });
       } else {
-        setPitchSize({ w: Math.min(W - 24, 440), isDesktop:false });
+        // Mobile: pitch width fills screen with minimal padding
+        setPitchSize({ w: Math.min(W - 16, 420), isDesktop:false });
       }
     }
     measure();
@@ -564,7 +565,7 @@ function BuilderLayout({
   );
 
   return (
-    <div ref={containerRef} style={{ flex:1, display:"flex", minHeight:0 }}>
+    <div ref={containerRef} style={{ flex:1, display:"flex", minHeight:0, height:"100%" }}>
       {pitchSize.isDesktop ? (
         <div style={{
           flex:1, overflowY:"auto",
